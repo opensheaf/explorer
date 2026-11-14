@@ -8,7 +8,7 @@ import { Budget, presentedVersion } from './resolve.js';
 import { explain, LIMITS } from './http.js';
 
 const KINDS = {
-  archive: 'An archive collection: it keeps objects whole, each member pinned with all its versions up to the pinned one (section 10.1).',
+  catalogue: 'A catalogue: it keeps objects whole, each member pinned with all its versions up to the pinned one (section 10.1).',
   selection: 'A selection: it vets particular revisions of documents; each member pins a revision set, and only those revisions belong to it (section 10.1).',
 };
 
@@ -54,7 +54,7 @@ export async function showCollection(ctx, root, id, ver) {
   const list = memberList(ctx, a, members, 1, budget, mem?.type);
   append(root,
     h('header', { class: 'page-head' },
-      h('p', { class: 'kicker' }, mem?.type === 'selection' ? 'Selection' : 'Archive collection', ' · ',
+      h('p', { class: 'kicker' }, mem?.type === 'selection' ? 'Selection' : 'Catalogue', ' · ',
         h('a', { href: pages.archive() }, a.name)),
       h('h1', {}, rich(titleOf(dc) || id)),
       h('p', { class: 'creators' }, creatorsOf(dc).join('; ')),
@@ -202,7 +202,7 @@ function memberItem(ctx, home, m, k, level, list, type) {
       const members = Array.isArray(mem?.members) ? mem.members : [];
       const sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
       sub.budget = list.budget;
-      clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'An archive collection'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
+      clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'A catalogue'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
       if (deep) await sub.checkAll(true);
       const counts = item.counts;
       item.counts = () => {

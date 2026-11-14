@@ -4,7 +4,7 @@ Resolving members
 A collection names its members by the pair (archive identifier, object
 identifier), with the address of the member's archive when the collection
 version was made, and pins each of them: an object version and the
-SHA-512 of its inventory (an archive collection), or a revision set, each
+SHA-512 of its inventory (a catalogue), or a revision set, each
 revision with its pin and the document version it holds (a selection;
 section 10.2). Nothing is copied: to show a member, or to check it, the
 explorer *resolves* it, as section 6.4 says:
@@ -176,7 +176,7 @@ The version presented
 
 The version presented for a member is the last revision of a selection's
 member (the revision "presented as the selection's", section 10.2) or the
-pinned version of an archive collection's member, whose current version
+pinned version of a catalogue's member, whose current version
 is then read from its history.
 
     // in the version presented for a member:

@@ -8,7 +8,7 @@
     "06f50c58cfb577ea4e5f70e869c2344a45eb6332a2ba1ea61770409c1549961baab4021ba75e11b6673b997dc9130e22b67657284329dd0993ff58be96a52117": [
       "v1/content/datacite.json"
     ],
-    "ac3eef6181557536d02d47f111eecb021193bd06e1e88c4f7dfb014dfedea0fa931a1d664d9037e6731a274735def2954c4d61f2c80f2462b2d270fbb190efcd": [
+    "b2e565700e1e4e5dd3aabb481c6d07a21084dd7e8d23734c9d6f6b200839f78f49ce97b37e690ed93c9439ec852378c81a22a738a2d5079f2466bff6376d5420": [
       "v1/content/members.json"
     ],
     "be3a1c1bae07b76b93d2bfdb240ba317775e505b8a3589756fb553b781fe4ee75dcaec3d822c8638f04a24248843d3c7b9b6dd96087e6d12ad9bdf9b18323afb": [
@@ -17,7 +17,7 @@
   },
   "versions": {
     "v1": {
-      "created": "2026-11-14T09:31:04Z",
+      "created": "2026-11-14T10:25:33Z",
       "message": "Collection version 1: 0 documents",
       "user": {
         "name": "Ada Example",
@@ -27,7 +27,7 @@
         "06f50c58cfb577ea4e5f70e869c2344a45eb6332a2ba1ea61770409c1549961baab4021ba75e11b6673b997dc9130e22b67657284329dd0993ff58be96a52117": [
           "datacite.json"
         ],
-        "ac3eef6181557536d02d47f111eecb021193bd06e1e88c4f7dfb014dfedea0fa931a1d664d9037e6731a274735def2954c4d61f2c80f2462b2d270fbb190efcd": [
+        "b2e565700e1e4e5dd3aabb481c6d07a21084dd7e8d23734c9d6f6b200839f78f49ce97b37e690ed93c9439ec852378c81a22a738a2d5079f2466bff6376d5420": [
           "members.json"
         ],
         "be3a1c1bae07b76b93d2bfdb240ba317775e505b8a3589756fb553b781fe4ee75dcaec3d822c8638f04a24248843d3c7b9b6dd96087e6d12ad9bdf9b18323afb": [
@@ -41,7 +41,7 @@
       "330ac7d664e48a39ff258a3b544b4f23": [
         "v1/content/datacite.json"
       ],
-      "d3d6e458be88da064f103f0d4be15341": [
+      "fb5717d064f27e815f524045a64a7f58": [
         "v1/content/members.json"
       ],
       "382ebe3851c25d9290d988b05f19e8f1": [
@@ -52,7 +52,7 @@
       "a7382c5a61ac868d1d254d22a800d18e1859657c0bbf12f578c8c3759c62ecb0": [
         "v1/content/datacite.json"
       ],
-      "01a58eb613ae5bce9ca7e2aac1995885e4683339a2d4ecfb090e23b875f6f834": [
+      "2b1ac3729e8a8acf761f7306b6e42c37536dfe1994486ae873a775597f76c01a": [
         "v1/content/members.json"
       ],
       "de4a5c7f9f966a1e0b776a2bf38ae6a568ce824ef72bd5e70ce0ee21e86254a4": [

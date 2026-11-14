@@ -1,6 +1,6 @@
 {
   "format": "opensheaf-collection/0.1",
-  "type": "archive",
+  "type": "catalogue",
   "order": "issued-desc",
   "members": [
     {
@@ -9,7 +9,7 @@
       "archiveUrl": "http://127.0.0.1:8765/archive/",
       "id": "alpha",
       "version": "v4",
-      "inventorySha512": "5ed4bbbe29daa628750c1f6109ba40fcf94207e1471089de4e0e1a5bda0850a98e98191314449884d9f44c4b5a85aed2403ab2da23b62b9755adbb7a4a30351e",
+      "inventorySha512": "727dc11dc2b2bf4c30f204b974acb0428af543d0a56ad6474cf2b675c53391c573375d7a376093e3e6a38cbd0b824a60b89a7a43e09d998263641a4aca521f6f",
       "follow": "latest",
       "cite": {
         "title": "Alpha: $\\alpha$-stable laws",
@@ -26,7 +26,7 @@
       "archiveUrl": "http://127.0.0.1:8765/archive/",
       "id": "beta",
       "version": "v2",
-      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "inventorySha512": "01c34b738e3b8a22cbaed0ffccd6fee8faef74528fc1ae40b66b6a786a7f678e660384dc40930d1ca06a718db49b722095fa7f204e876e58d0f87dd061cdd98e",
       "follow": "latest",
       "cite": {
         "title": "Beta",
@@ -43,7 +43,7 @@
       "archiveUrl": "http://127.0.0.1:8765/archive/",
       "id": "gamma",
       "version": "v2",
-      "inventorySha512": "2ed3c1f39730b517fff92ec33cc6f8fa276e71ab381250baecd77e3e6c2eb65ba0f0eff5e5317f8c66a6d2408f33dffa153c220b3c6b7246b4735944e10eeb50",
+      "inventorySha512": "2d7786884edf0fb0144f69cfea94eee269bf69a014ac69f95b1af5559270ce2be324bffc3d3978cdeb908a70e1124d4e00280592b3220e06a2599dafd47613b1",
       "follow": "latest",
       "cite": {
         "title": "Gamma",

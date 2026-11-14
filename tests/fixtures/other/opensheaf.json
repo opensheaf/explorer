@@ -15,14 +15,14 @@
       "id": "alpha-copy",
       "kind": "document",
       "head": "v1",
-      "inventorySha512": "4649a98d83cd2b8cba9aba6c94c5b99216e535c102dc53f34f41427aa1582fd7ee9bfc0703264977dd7f91fa8e7d5b88c72802047c63aba62d24e6aabaef241d",
+      "inventorySha512": "853b06664ebff06cc21abf90b69ef6d86ff5d5da7d2ce04cb6011e9d1787d2845158e939b5464e3a34054146cd1cecd36e37fed8dbd89c033b9b656ba94ebd7a",
       "status": "active"
     },
     {
       "id": "beta",
       "kind": "document",
       "head": "v2",
-      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "inventorySha512": "01c34b738e3b8a22cbaed0ffccd6fee8faef74528fc1ae40b66b6a786a7f678e660384dc40930d1ca06a718db49b722095fa7f204e876e58d0f87dd061cdd98e",
       "status": "active",
       "mirrorOf": "tag:example.org,2026:fixture"
     },
@@ -30,7 +30,7 @@
       "id": "collection-main",
       "kind": "collection",
       "head": "v2",
-      "inventorySha512": "2f15b4958b82de3e4953c974a0e8b3226d7c2d602ff0732c41becae4de25403aa2eb383b665edf4aa85718010ae5f6d9d1c0b53fb0a711afe6088b4341df52e3",
+      "inventorySha512": "7ddbe08f118ce764d6747cea2c1b1460b1877bfbde449afbd7f44c0c424ed694c2c397b10464f08de655806a5da1edb98273de714d53e39d5631973abda2f095",
       "status": "active"
     }
   ]

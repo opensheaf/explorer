@@ -130,13 +130,13 @@ export function memberListFindings(id, ver, mem, schemas) {
   const context = { object: id, ver };
   out.push(...schemaFindings(`${where}/${ver}/members.json`, mem, schemas['opensheaf-collection/0.1'], '10.2, appendix D', context));
   const kind = mem.type;
-  if (kind !== 'archive' && kind !== 'selection') {
+  if (kind !== 'catalogue' && kind !== 'selection') {
     out.push(finding('error', where, 'members.json has no valid type (archive or selection)', '10.2', context));
   }
   for (const m of Array.isArray(mem.members) ? mem.members : []) {
     const add = (message) => out.push(finding('error', where, `member ${m?.id}: ${message}`, '10.2', context));
-    if (kind === 'archive' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
-      add('a member of an archive collection needs version and inventorySha512, and no revisions');
+    if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
+      add('a member of a catalogue needs version and inventorySha512, and no revisions');
     }
     if (kind === 'selection') {
       const revs = m?.revisions;

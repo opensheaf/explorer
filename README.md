@@ -19,7 +19,7 @@ A static, client-side web application that explores and verifies
   withdrawal, relations, licences, external records (arXiv, Zenodo), and its
   files with their SHA-512 digests and links to download them; the JSON
   files as recorded.
-- **Explore collections**: archive collections and selections, members in
+- **Explore collections**: catalogues and selections, members in
   their order with their pins or revision sets and cached citations;
   members of other archives resolved as section 6.4 says (pins *verified*,
   *mismatch*, *unavailable* or *removed*), member collections opened in

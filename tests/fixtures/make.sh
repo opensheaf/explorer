@@ -54,7 +54,7 @@ $O mirror $URL/archive/ beta
 cat > src/shelf.yaml <<YAML
 title: A shelf
 description: Objects of two archives, kept whole.
-type: archive
+type: catalogue
 members:
   - {archive: $URL/archive/, id: alpha}
   - {archive: $URL/archive/, id: gamma, version: v1}

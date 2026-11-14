@@ -133,12 +133,12 @@ description.
 The pins of a member
 --------------------
 
-A member of an archive collection has one pin, its `version` with its
+A member of a catalogue has one pin, its `version` with its
 `inventorySha512`; a member of a selection has one per revision, each also
 stating the document version that the pinned object version holds
 (section 10.2). The version presented for a member is the last revision
-of a selection's member, or the current version as of the pin of an
-archive collection's member.
+of a selection's member, or the current version as of the pin of a
+catalogue's member.
 
     // in the pins of a member:
     export function memberPins(m) {

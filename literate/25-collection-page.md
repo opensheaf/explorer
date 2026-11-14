@@ -6,8 +6,8 @@ digest (section 10.2). Its page shows the member list of one of its
 versions (by default the head), in its order, which "is authoritative:
 presentations MUST present members in it". For each member it shows what
 the collection itself records: the kind, the archive (by identifier, with
-the address it had when the collection version was made), the pin of an
-archive collection's member, with `follow` if the curator follows it, or
+the address it had when the collection version was made), the pin of a
+catalogue's member, with `follow` if the curator follows it, or
 the revision set of a selection's member, and the cached citation, which
 "is not authoritative".
 
@@ -49,7 +49,7 @@ resolved on the page.
 
     // in show a collection:
     const KINDS = {
-      archive: 'An archive collection: it keeps objects whole, each member pinned with all its versions up to the pinned one (section 10.1).',
+      catalogue: 'A catalogue: it keeps objects whole, each member pinned with all its versions up to the pinned one (section 10.1).',
       selection: 'A selection: it vets particular revisions of documents; each member pins a revision set, and only those revisions belong to it (section 10.1).',
     };
 
@@ -79,7 +79,7 @@ resolved on the page.
       const list = memberList(ctx, a, members, 1, budget, mem?.type);
       append(root,
         h('header', { class: 'page-head' },
-          h('p', { class: 'kicker' }, mem?.type === 'selection' ? 'Selection' : 'Archive collection', ' · ',
+          h('p', { class: 'kicker' }, mem?.type === 'selection' ? 'Selection' : 'Catalogue', ' · ',
             h('a', { href: pages.archive() }, a.name)),
           h('h1', {}, rich(titleOf(dc) || id)),
           h('p', { class: 'creators' }, creatorsOf(dc).join('; ')),
@@ -188,7 +188,7 @@ once resolved, can be opened in place.
       return item;
     }
 
-The pins: one for a member of an archive collection, with `follow` if
+The pins: one for a member of a catalogue, with `follow` if
 the curator follows the object (a curation setting: the pin is the head
 when the collection version was made, section 10.2); a list of revisions
 for a member of a selection, the last being the one presented. Each pin
@@ -314,7 +314,7 @@ collection can be reached twice.
         const members = Array.isArray(mem?.members) ? mem.members : [];
         const sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
         sub.budget = list.budget;
-        clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'An archive collection'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
+        clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'A catalogue'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
         if (deep) await sub.checkAll(true);
         const counts = item.counts;
         item.counts = () => {

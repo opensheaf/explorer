@@ -11,7 +11,7 @@
     "989d847b3bfce9a2a21385e6d54e1ad0fcc6bb0c0ab047312797e6e3a3c8653135117d015e8d9ab94caea581991d784df9f4bfbd73d7045ff000659df668f82f": [
       "v1/content/datacite.json"
     ],
-    "8bacc0d3de87e2a7e561907eade9bddbbc8264808573625e1acb51f5c81bfe6467d5eacd4d8456dc10bc5734c01220dbe628b8cce6f4a72406547b8422ddb742": [
+    "1d241f5a07b019b78b2eafe41c10fde902255d8a9ca39806779afc6f3de2be9489f1217277e3440c2289afb0ec0e3b1a2288af8b855fd695c66918808f31fe39": [
       "v1/content/object.json"
     ],
     "ac44df80d71c50caeec6f0de9ce8b9892d86ec70d724cc553cde48cb5f1af6d9fd5994d5b20f8d531aaf56fe1262134b270e5fb9a46f86c1ea4c89080f540760": [
@@ -20,8 +20,8 @@
   },
   "versions": {
     "v1": {
-      "created": "2026-11-14T09:31:05Z",
-      "message": "Accepted from tag:example.org,2026:fixture: alpha v2 (pin 832e203706084c78...)",
+      "created": "2026-11-14T10:25:34Z",
+      "message": "Accepted from tag:example.org,2026:fixture: alpha v2 (pin 180b0acf0077d651...)",
       "user": {
         "name": "Ada Example",
         "address": "http://127.0.0.1:8765/other/"
@@ -33,7 +33,7 @@
         "989d847b3bfce9a2a21385e6d54e1ad0fcc6bb0c0ab047312797e6e3a3c8653135117d015e8d9ab94caea581991d784df9f4bfbd73d7045ff000659df668f82f": [
           "datacite.json"
         ],
-        "8bacc0d3de87e2a7e561907eade9bddbbc8264808573625e1acb51f5c81bfe6467d5eacd4d8456dc10bc5734c01220dbe628b8cce6f4a72406547b8422ddb742": [
+        "1d241f5a07b019b78b2eafe41c10fde902255d8a9ca39806779afc6f3de2be9489f1217277e3440c2289afb0ec0e3b1a2288af8b855fd695c66918808f31fe39": [
           "object.json"
         ],
         "ac44df80d71c50caeec6f0de9ce8b9892d86ec70d724cc553cde48cb5f1af6d9fd5994d5b20f8d531aaf56fe1262134b270e5fb9a46f86c1ea4c89080f540760": [
@@ -50,7 +50,7 @@
       "bca5cfc7158ed54bac44938f401ea86c": [
         "v1/content/datacite.json"
       ],
-      "1a0b2af8a174557ded3eaf1975c111a8": [
+      "dd4b7a6c7381b38300773fd1bfcda9dc": [
         "v1/content/object.json"
       ],
       "0b8a6bf484a5fdbbe95ae52cea9c0f52": [
@@ -64,7 +64,7 @@
       "4a20ad7354376a94a89bd17cb407cdacb17b293ed0b5f99cdf1208e7c2a5f2f7": [
         "v1/content/datacite.json"
       ],
-      "194348166a833b711dedc415a8b5f2b0f461204f9cb66668393a11862201d9ff": [
+      "a08ebc3330183a22856bdb83e8c9d6921e3bc7d04aadb8dde2bf3bfafa7c8430": [
         "v1/content/object.json"
       ],
       "7f527c33b0fb072ddfeed83bf6f2ded0e4ed09fc0d644ae88fd7529815c87fcc": [

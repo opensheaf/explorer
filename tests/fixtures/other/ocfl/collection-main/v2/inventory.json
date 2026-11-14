@@ -8,7 +8,7 @@
     "356b4ca569015f7e2da2bc332f2a65010e59f21325427af40f61d6b20f953c9de70a4dc529dbbccd826dcb328486740193c5978536530e8396e5113a44f2c0c1": [
       "v1/content/datacite.json"
     ],
-    "1b10cdfe516b0937f809d54ff75eccd1d137c280e1706e9d4d95708d1a9717f54f4fe5f3d638161cb8ad2eed1c472774f4594e1be5b0699756ebd1babcaea12b": [
+    "b937b8c8f74a4b7a0aabe66f310c6ccb8af392d4b76347b73a8e4b0fe7c19962e3f222cb2eb48b04660fd229fbed5709c30608f94317f4b54532a3c53e629d48": [
       "v1/content/members.json"
     ],
     "d81063e723719c2d16cb1cf888b6f8f5fc3aa5b5efe20e20acc4e4a6324db592f5b05273965af9c76741c0d02f2af152cd1034024ef9a550a31467ec6f18f16f": [
@@ -17,7 +17,7 @@
     "02f79f935ccd129f55d4ac645d1ae0108fac13a4eda459a4b220c26934c39ef5bedb6d8e90cda79fe9ab3e29d48a7af663ffcc6949fd60aff2ccd4fae43cf4e2": [
       "v2/content/datacite.json"
     ],
-    "36e713ab867c27cd724d0c6e54decfb7840be6bec1712b638a7caeb5084281f5df076c6490e2c096a41d0f97dc5e015ecfcdfbe2c504f32cda8feddf8ea630a8": [
+    "b8c65a9d14c2ede4c26ed518f037a1b6a68252b2213a6833ba8820380b9a7512253d8ad8a76a6c6877e5cd2a5bbc134ac9e6b96138f0e8e45a842d406f9347ef": [
       "v2/content/members.json"
     ],
     "e261c058991c8e81eab201b5219be7fdaf7c5216327ed8260b38e41903ec2d1b8c90bbf47c7b884b0f0f1ec50009d755d601f93213d61c8e12468b6213a6028a": [
@@ -26,7 +26,7 @@
   },
   "versions": {
     "v1": {
-      "created": "2026-11-14T09:31:05Z",
+      "created": "2026-11-14T10:25:34Z",
       "message": "Collection created (curated)",
       "user": {
         "name": "Ada Example",
@@ -36,7 +36,7 @@
         "356b4ca569015f7e2da2bc332f2a65010e59f21325427af40f61d6b20f953c9de70a4dc529dbbccd826dcb328486740193c5978536530e8396e5113a44f2c0c1": [
           "datacite.json"
         ],
-        "1b10cdfe516b0937f809d54ff75eccd1d137c280e1706e9d4d95708d1a9717f54f4fe5f3d638161cb8ad2eed1c472774f4594e1be5b0699756ebd1babcaea12b": [
+        "b937b8c8f74a4b7a0aabe66f310c6ccb8af392d4b76347b73a8e4b0fe7c19962e3f222cb2eb48b04660fd229fbed5709c30608f94317f4b54532a3c53e629d48": [
           "members.json"
         ],
         "d81063e723719c2d16cb1cf888b6f8f5fc3aa5b5efe20e20acc4e4a6324db592f5b05273965af9c76741c0d02f2af152cd1034024ef9a550a31467ec6f18f16f": [
@@ -45,7 +45,7 @@
       }
     },
     "v2": {
-      "created": "2026-11-14T09:31:05Z",
+      "created": "2026-11-14T10:25:34Z",
       "message": "Collection version 2: 4 members",
       "user": {
         "name": "Ada Example",
@@ -55,7 +55,7 @@
         "02f79f935ccd129f55d4ac645d1ae0108fac13a4eda459a4b220c26934c39ef5bedb6d8e90cda79fe9ab3e29d48a7af663ffcc6949fd60aff2ccd4fae43cf4e2": [
           "datacite.json"
         ],
-        "36e713ab867c27cd724d0c6e54decfb7840be6bec1712b638a7caeb5084281f5df076c6490e2c096a41d0f97dc5e015ecfcdfbe2c504f32cda8feddf8ea630a8": [
+        "b8c65a9d14c2ede4c26ed518f037a1b6a68252b2213a6833ba8820380b9a7512253d8ad8a76a6c6877e5cd2a5bbc134ac9e6b96138f0e8e45a842d406f9347ef": [
           "members.json"
         ],
         "e261c058991c8e81eab201b5219be7fdaf7c5216327ed8260b38e41903ec2d1b8c90bbf47c7b884b0f0f1ec50009d755d601f93213d61c8e12468b6213a6028a": [
@@ -69,7 +69,7 @@
       "32056b2a457288a5d224349274d1d3b2": [
         "v1/content/datacite.json"
       ],
-      "a874fb05c1f1888a649afa6912980197": [
+      "cada516acdecf3fd888b3b9217b135e8": [
         "v1/content/members.json"
       ],
       "e140780522b4032b46a590c165a78904": [
@@ -78,7 +78,7 @@
       "750922778f92cbc387d487b11921bb17": [
         "v2/content/datacite.json"
       ],
-      "f56fc6ef093acf332f65e6be7f353287": [
+      "d551886e7ad56f0b7f26ae856254c7af": [
         "v2/content/members.json"
       ],
       "aab7beeb5b5d26bef2c31d0eea480bde": [
@@ -89,7 +89,7 @@
       "9c3b04fe564fbb1a25b18028c2d017a7ba463f5521a207ad9db0e708ba3698d3": [
         "v1/content/datacite.json"
       ],
-      "3a04179402de15172be56a36c2941f9427e366852f419f57cef18ff6063beb3f": [
+      "6eb25de99ed98052b29d2a2e45c40a5c1f03028b0e50064a4279d28ac92c4244": [
         "v1/content/members.json"
       ],
       "452d0b07e320a196a8f9e3302b5880a039bf7fdf169c3800a693803d4e945b9d": [
@@ -98,7 +98,7 @@
       "abe19df304fe1941c77d8369fe085648d15d58693845cd697996289869dd116d": [
         "v2/content/datacite.json"
       ],
-      "db02878c6e0eb8c445bb12b74cb6de5fd9dede7f34cf6b9fa4d0a3ce16b87d8d": [
+      "252e1e218711cb6677a343d4fd66c3b7dc47089180c3e71d76c6a75c92a494a7": [
         "v2/content/members.json"
       ],
       "881659ee553c7d76af77796b3dfd237d1918bdd5921f98eaf691360556a0b666": [

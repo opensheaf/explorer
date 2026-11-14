@@ -58,12 +58,12 @@ test('object.json: kinds, notes, withdrawal, extensions', async () => {
     ['/renditions/0/path: "../x.pdf" does not match ^(?!/)(?!(?:.*/)?\\.{1,2}(?:/|$)).+$']);
 });
 
-test('members.json: archive collections and selections', async () => {
+test('members.json: catalogues and selections', async () => {
   const mem = await fixture('archive/ocfl/reading/v1/content/members.json');
   const bad = structuredClone(mem);
   bad.members[0].version = 'v1';
   assert.deepEqual(messages(collection, bad), ['/members/0: must not have version, inventorySha512, follow']);
-  bad.type = 'archive';
+  bad.type = 'catalogue';
   assert.deepEqual(messages(collection, bad).sort(), [
     '/members/0: "inventorySha512" is a required property',
     '/members/0: must not have revisions',

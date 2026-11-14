@@ -15,35 +15,35 @@
       "id": "alpha",
       "kind": "document",
       "head": "v4",
-      "inventorySha512": "5ed4bbbe29daa628750c1f6109ba40fcf94207e1471089de4e0e1a5bda0850a98e98191314449884d9f44c4b5a85aed2403ab2da23b62b9755adbb7a4a30351e",
+      "inventorySha512": "727dc11dc2b2bf4c30f204b974acb0428af543d0a56ad6474cf2b675c53391c573375d7a376093e3e6a38cbd0b824a60b89a7a43e09d998263641a4aca521f6f",
       "status": "active"
     },
     {
       "id": "beta",
       "kind": "document",
       "head": "v1",
-      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "inventorySha512": "01c34b738e3b8a22cbaed0ffccd6fee8faef74528fc1ae40b66b6a786a7f678e660384dc40930d1ca06a718db49b722095fa7f204e876e58d0f87dd061cdd98e",
       "status": "active"
     },
     {
       "id": "collection-main",
       "kind": "collection",
       "head": "v2",
-      "inventorySha512": "5e04c767b5fd258716046eb6c1b5d07daa790fcb1ab2a30b57a47afb8cf5934ad930b10e5ad0776a01dcfd5508e1d6646575f1dca5b509af143d0c958f1a9d9d",
+      "inventorySha512": "82ab5bf3b27162ef14398d088c1152cf749c21fff74afdfac8941d1975d7fd68a9c4fa453d4f04544645b21dfff8633ab53fb5fbe51fb7106143475aeb0c6ad4",
       "status": "active"
     },
     {
       "id": "gamma",
       "kind": "document",
       "head": "v2",
-      "inventorySha512": "2ed3c1f39730b517fff92ec33cc6f8fa276e71ab381250baecd77e3e6c2eb65ba0f0eff5e5317f8c66a6d2408f33dffa153c220b3c6b7246b4735944e10eeb50",
+      "inventorySha512": "2d7786884edf0fb0144f69cfea94eee269bf69a014ac69f95b1af5559270ce2be324bffc3d3978cdeb908a70e1124d4e00280592b3220e06a2599dafd47613b1",
       "status": "withdrawn"
     },
     {
       "id": "reading",
       "kind": "collection",
       "head": "v1",
-      "inventorySha512": "ba61ef92363c299f34592e8e44490da15ce89992bc0d76d3854d8c2250efcd4ce32023aafa7536dfe0911c9f1076a6da0476de0e6b9dbc2f1a7d83e2a014f199",
+      "inventorySha512": "e53093ed8027bba6a86da12d26c0a226fb90da6152ea14461e00134db315f91cb03145876118bf1d4ddc372a16de5c43bf2887b834e03f0899b5880bb35efd2b",
       "status": "active"
     }
   ]

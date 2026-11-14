@@ -102,8 +102,7 @@ withdrawn. Its title and abstract have mathematics. The selection
     $A verify
 
 The second archive accepts version 2 of `alpha` as a document of its own
-(section 10.5), mirrors `beta` (section 10.4), and keeps an archive
-collection of objects of both archives: `alpha` followed, `gamma` at an
+(section 10.5), mirrors `beta` (section 10.4), and keeps a catalogue of objects of both archives: `alpha` followed, `gamma` at an
 earlier version than its head, the first archive's selection, and its own
 accepted copy.
 
@@ -116,7 +115,7 @@ accepted copy.
     cat > src/shelf.yaml <<YAML
     title: A shelf
     description: Objects of two archives, kept whole.
-    type: archive
+    type: catalogue
     members:
       - {archive: $URL/archive/, id: alpha}
       - {archive: $URL/archive/, id: gamma, version: v1}
@@ -379,12 +378,12 @@ The tests themselves:
         ['/renditions/0/path: "../x.pdf" does not match ^(?!/)(?!(?:.*/)?\\.{1,2}(?:/|$)).+$']);
     });
 
-    test('members.json: archive collections and selections', async () => {
+    test('members.json: catalogues and selections', async () => {
       const mem = await fixture('archive/ocfl/reading/v1/content/members.json');
       const bad = structuredClone(mem);
       bad.members[0].version = 'v1';
       assert.deepEqual(messages(collection, bad), ['/members/0: must not have version, inventorySha512, follow']);
-      bad.type = 'archive';
+      bad.type = 'catalogue';
       assert.deepEqual(messages(collection, bad).sort(), [
         '/members/0: "inventorySha512" is a required property',
         '/members/0: must not have revisions',

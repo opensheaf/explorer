@@ -251,8 +251,7 @@ A member list
 
 The schema already says much of this, but section 14 names these rules,
 and opensheaf-py checks them by hand (its schema check is optional), with
-these messages: the member list has a `type`; a member of an archive
-collection has `version` and `inventorySha512` and no revisions; a member
+these messages: the member list has a `type`; a member of a catalogue has `version` and `inventorySha512` and no revisions; a member
 of a selection has a non-empty list of revisions, each with its three
 fields, of distinct document versions, and none of `version`,
 `inventorySha512` or `follow`.
@@ -264,13 +263,13 @@ fields, of distinct document versions, and none of `version`,
       const context = { object: id, ver };
       out.push(...schemaFindings(`${where}/${ver}/members.json`, mem, schemas['opensheaf-collection/0.1'], '10.2, appendix D', context));
       const kind = mem.type;
-      if (kind !== 'archive' && kind !== 'selection') {
+      if (kind !== 'catalogue' && kind !== 'selection') {
         out.push(finding('error', where, 'members.json has no valid type (archive or selection)', '10.2', context));
       }
       for (const m of Array.isArray(mem.members) ? mem.members : []) {
         const add = (message) => out.push(finding('error', where, `member ${m?.id}: ${message}`, '10.2', context));
-        if (kind === 'archive' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
-          add('a member of an archive collection needs version and inventorySha512, and no revisions');
+        if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
+          add('a member of a catalogue needs version and inventorySha512, and no revisions');
         }
         if (kind === 'selection') {
           const revs = m?.revisions;
