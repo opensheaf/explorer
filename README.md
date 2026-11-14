@@ -80,7 +80,7 @@ tests and the tools are tangled out of them and committed:
 
 ```
 sh tools/build            # tangle (checking that the tangler reproduces itself), weave into site/source/
-node --test tests/        # the tests (Node 22 or later), against the fixture archives
+node --test tests/*.test.mjs   # the tests (Node 22 or later), against the fixture archives
 node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [--all]
 ```
 

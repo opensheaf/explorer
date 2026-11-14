@@ -14,7 +14,7 @@ jobs:
       - name: the files are tangled from literate/, and the tangler reproduces itself
         run: sh tools/build && git diff --exit-code
       - name: the tests of the modules, against the fixture archives
-        run: node --test tests/
+        run: node --test tests/*.test.mjs
   weave:
     runs-on: ubuntu-latest
     steps:
