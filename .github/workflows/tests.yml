@@ -1,0 +1,30 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: the files are tangled from literate/, and the tangler reproduces itself
+        run: sh tools/build && git diff --exit-code
+      - name: the tests of the modules, against the fixture archives
+        run: node --test tests/
+  weave:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install markdown pygments
+      - run: python3 tools/weave.py --out site/source --branch "${GITHUB_REF_NAME}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: literate-site
+          path: site

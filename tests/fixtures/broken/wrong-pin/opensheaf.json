@@ -1,0 +1,50 @@
+{
+  "format": "opensheaf-archive/0.1",
+  "specification": "0.1",
+  "archiveId": "tag:example.org,2026:fixture",
+  "name": "A fixture archive",
+  "contact": "http://127.0.0.1:8765/archive/",
+  "storageRoot": "ocfl/",
+  "storageLayout": "0002-flat-direct-storage-layout",
+  "mainCollection": "collection-main",
+  "profiles": [
+    "website"
+  ],
+  "objects": [
+    {
+      "id": "alpha",
+      "kind": "document",
+      "head": "v4",
+      "inventorySha512": "5ed4bbbe29daa628750c1f6109ba40fcf94207e1471089de4e0e1a5bda0850a98e98191314449884d9f44c4b5a85aed2403ab2da23b62b9755adbb7a4a30351e",
+      "status": "active"
+    },
+    {
+      "id": "beta",
+      "kind": "document",
+      "head": "v2",
+      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "status": "active"
+    },
+    {
+      "id": "collection-main",
+      "kind": "collection",
+      "head": "v2",
+      "inventorySha512": "5e04c767b5fd258716046eb6c1b5d07daa790fcb1ab2a30b57a47afb8cf5934ad930b10e5ad0776a01dcfd5508e1d6646575f1dca5b509af143d0c958f1a9d9d",
+      "status": "active"
+    },
+    {
+      "id": "gamma",
+      "kind": "document",
+      "head": "v2",
+      "inventorySha512": "2ed3c1f39730b517fff92ec33cc6f8fa276e71ab381250baecd77e3e6c2eb65ba0f0eff5e5317f8c66a6d2408f33dffa153c220b3c6b7246b4735944e10eeb50",
+      "status": "withdrawn"
+    },
+    {
+      "id": "reading",
+      "kind": "collection",
+      "head": "v1",
+      "inventorySha512": "c2e01a321e07196a77745b2372719a68fc77d7d82ad673fc5c87dbfa23b493265e7fe4f566075e1230a1968d1a6eecd8117f15e777d1e8310f1ab1a0b9f23204",
+      "status": "active"
+    }
+  ]
+}

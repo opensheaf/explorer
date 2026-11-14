@@ -1,0 +1,25 @@
+{
+  "archiveId": "tag:example.org,2026:fixture",
+  "name": "A fixture archive",
+  "contact": "http://127.0.0.1:8765/archive/",
+  "baseUrl": "http://127.0.0.1:8765/archive/",
+  "profiles": [
+    "website"
+  ],
+  "mainCollection": "collection-main",
+  "curator": {
+    "name": "Example, Ada",
+    "givenName": "Ada",
+    "familyName": "Example",
+    "affiliation": ""
+  },
+  "depositor": {
+    "name": "Ada Example",
+    "address": "http://127.0.0.1:8765/archive/"
+  },
+  "index": {
+    "html": {
+      "templates": "templates"
+    }
+  }
+}

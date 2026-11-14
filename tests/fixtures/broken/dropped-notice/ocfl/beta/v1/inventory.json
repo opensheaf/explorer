@@ -1,0 +1,63 @@
+{
+  "id": "beta",
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "contentDirectory": "content",
+  "manifest": {
+    "5230400a69593ed3e2c29094c1c1a76a545c0c3ca26ae3ec47ba3db097e2414023794cff56d82cfd5bbb6457561cd2c97f3d57f271907b112c47974387362af4": [
+      "v1/content/datacite.json"
+    ],
+    "f0696a15b34ad9975ec87100eb798913dd98fa730d961201d1e19e5468e52e8898638609a4044f7c3db5582e62af28796bd554744b96f85c4d7004ee04522694": [
+      "v1/content/object.json"
+    ],
+    "788a434bbde84c69651762eb8a8358c8c538f1252f636f9e442805f038bd639de7df7a7e7fc2e8aace0a53f69f07600403bb186e76b0359ede9ec4d091ea4d2f": [
+      "v1/content/paper.pdf"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2026-11-14T09:31:04Z",
+      "message": "Deposit: document version 1",
+      "user": {
+        "name": "Ada Example",
+        "address": "http://127.0.0.1:8765/archive/"
+      },
+      "state": {
+        "5230400a69593ed3e2c29094c1c1a76a545c0c3ca26ae3ec47ba3db097e2414023794cff56d82cfd5bbb6457561cd2c97f3d57f271907b112c47974387362af4": [
+          "datacite.json"
+        ],
+        "f0696a15b34ad9975ec87100eb798913dd98fa730d961201d1e19e5468e52e8898638609a4044f7c3db5582e62af28796bd554744b96f85c4d7004ee04522694": [
+          "object.json"
+        ],
+        "788a434bbde84c69651762eb8a8358c8c538f1252f636f9e442805f038bd639de7df7a7e7fc2e8aace0a53f69f07600403bb186e76b0359ede9ec4d091ea4d2f": [
+          "paper.pdf"
+        ]
+      }
+    }
+  },
+  "fixity": {
+    "md5": {
+      "c9265c2a79fea7a36d142a580247813b": [
+        "v1/content/datacite.json"
+      ],
+      "528f9594ec30b42b269bed262fa86d65": [
+        "v1/content/object.json"
+      ],
+      "c9b4a9588def94e9694661bd93ed8df9": [
+        "v1/content/paper.pdf"
+      ]
+    },
+    "sha256": {
+      "e3288928682b3e717a871f64752e36ef5bb1bfe2436bc6539fcf5ddc88eace54": [
+        "v1/content/datacite.json"
+      ],
+      "3b78750560f0b1c9b7e658a05e5ae032f1a3e4323070d703a38e52d7ea5c5935": [
+        "v1/content/object.json"
+      ],
+      "f9607262207422c51c42d0048a94520bfc7f50e855b620d89082e91c00e06f54": [
+        "v1/content/paper.pdf"
+      ]
+    }
+  }
+}

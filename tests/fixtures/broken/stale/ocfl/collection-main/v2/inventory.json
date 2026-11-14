@@ -1,0 +1,109 @@
+{
+  "id": "collection-main",
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v2",
+  "contentDirectory": "content",
+  "manifest": {
+    "06f50c58cfb577ea4e5f70e869c2344a45eb6332a2ba1ea61770409c1549961baab4021ba75e11b6673b997dc9130e22b67657284329dd0993ff58be96a52117": [
+      "v1/content/datacite.json"
+    ],
+    "ac3eef6181557536d02d47f111eecb021193bd06e1e88c4f7dfb014dfedea0fa931a1d664d9037e6731a274735def2954c4d61f2c80f2462b2d270fbb190efcd": [
+      "v1/content/members.json"
+    ],
+    "be3a1c1bae07b76b93d2bfdb240ba317775e505b8a3589756fb553b781fe4ee75dcaec3d822c8638f04a24248843d3c7b9b6dd96087e6d12ad9bdf9b18323afb": [
+      "v1/content/object.json"
+    ],
+    "97b342044cef687104dfead4afbd397445049e642d7fc7686d6cc9c2335920757c75ef30ebe7a21d018bb36388ad164436e61e31b7eaf7b0a7695665005924b9": [
+      "v2/content/datacite.json"
+    ],
+    "3e5d3b476f00ec9119be55e518938e68072303216fd18e15ac84ce58187af376dd300ec7d914ff0573cbde8ef4b8f33fd4b10dc52e17478f2f3a66754d7eb68b": [
+      "v2/content/members.json"
+    ],
+    "539923729923988643fa9f7dc2639ca85efd7c142933848b512e073748147a0913ec65d4027e639c74fb6d31dfb4ff941966abe14dc3ae28f17a0aab2134d32e": [
+      "v2/content/object.json"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2026-11-14T09:31:04Z",
+      "message": "Collection version 1: 0 documents",
+      "user": {
+        "name": "Ada Example",
+        "address": "http://127.0.0.1:8765/archive/"
+      },
+      "state": {
+        "06f50c58cfb577ea4e5f70e869c2344a45eb6332a2ba1ea61770409c1549961baab4021ba75e11b6673b997dc9130e22b67657284329dd0993ff58be96a52117": [
+          "datacite.json"
+        ],
+        "ac3eef6181557536d02d47f111eecb021193bd06e1e88c4f7dfb014dfedea0fa931a1d664d9037e6731a274735def2954c4d61f2c80f2462b2d270fbb190efcd": [
+          "members.json"
+        ],
+        "be3a1c1bae07b76b93d2bfdb240ba317775e505b8a3589756fb553b781fe4ee75dcaec3d822c8638f04a24248843d3c7b9b6dd96087e6d12ad9bdf9b18323afb": [
+          "object.json"
+        ]
+      }
+    },
+    "v2": {
+      "created": "2026-11-14T09:31:05Z",
+      "message": "Collection version 2: 3 documents",
+      "user": {
+        "name": "Ada Example",
+        "address": "http://127.0.0.1:8765/archive/"
+      },
+      "state": {
+        "97b342044cef687104dfead4afbd397445049e642d7fc7686d6cc9c2335920757c75ef30ebe7a21d018bb36388ad164436e61e31b7eaf7b0a7695665005924b9": [
+          "datacite.json"
+        ],
+        "3e5d3b476f00ec9119be55e518938e68072303216fd18e15ac84ce58187af376dd300ec7d914ff0573cbde8ef4b8f33fd4b10dc52e17478f2f3a66754d7eb68b": [
+          "members.json"
+        ],
+        "539923729923988643fa9f7dc2639ca85efd7c142933848b512e073748147a0913ec65d4027e639c74fb6d31dfb4ff941966abe14dc3ae28f17a0aab2134d32e": [
+          "object.json"
+        ]
+      }
+    }
+  },
+  "fixity": {
+    "md5": {
+      "330ac7d664e48a39ff258a3b544b4f23": [
+        "v1/content/datacite.json"
+      ],
+      "d3d6e458be88da064f103f0d4be15341": [
+        "v1/content/members.json"
+      ],
+      "382ebe3851c25d9290d988b05f19e8f1": [
+        "v1/content/object.json"
+      ],
+      "7d0760bfa52f9b7dc705198969a5b6fd": [
+        "v2/content/datacite.json"
+      ],
+      "6b676a625f46157b5e2d0bc3b786f99a": [
+        "v2/content/members.json"
+      ],
+      "5e09cd1df644dcb5583ff28ebd43bc87": [
+        "v2/content/object.json"
+      ]
+    },
+    "sha256": {
+      "a7382c5a61ac868d1d254d22a800d18e1859657c0bbf12f578c8c3759c62ecb0": [
+        "v1/content/datacite.json"
+      ],
+      "01a58eb613ae5bce9ca7e2aac1995885e4683339a2d4ecfb090e23b875f6f834": [
+        "v1/content/members.json"
+      ],
+      "de4a5c7f9f966a1e0b776a2bf38ae6a568ce824ef72bd5e70ce0ee21e86254a4": [
+        "v1/content/object.json"
+      ],
+      "99d4c0f355d48ca2bbea88f1846517c88cda837ab582779bde0a18adea4ee0b2": [
+        "v2/content/datacite.json"
+      ],
+      "33ba175d188c0773061ebd5afc3d79a6cfa6fd9d06cf511c8f6472823610ba0c": [
+        "v2/content/members.json"
+      ],
+      "2ade20bc3dc17a41c955bd1fcf11e3b41f069866db5db0c42e48713683ffff3e": [
+        "v2/content/object.json"
+      ]
+    }
+  }
+}

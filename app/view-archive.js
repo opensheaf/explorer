@@ -1,0 +1,142 @@
+// Generated from literate/23-archive-page.md by tools/tangle.py: edit the document, not this file.
+import { h, append, external, plural } from './dom.js';
+import { rich, plain } from './text.js';
+import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere } from './ui.js';
+import { summary } from './summary.js';
+import { memberPins } from './versions.js';
+
+function archiveFacts(a) {
+  const d = a.disc;
+  const list = (x) => (Array.isArray(x) ? x : []);
+  const tombstones = a.tombstones();
+  return h('div', {},
+    facts([
+      ['Archive identifier', h('code', {}, String(d.archiveId ?? '?'))],
+      ['Base URL', external(a.base)],
+      ['Storage root', external(a.root)],
+      ['Contact', typeof d.contact === 'string' ? external(d.contact) : null],
+      ['Specification', `${d.specification ?? '?'} (format ${d.format ?? '?'})`],
+      ['Profiles', list(d.profiles).length ? list(d.profiles).map((p) => chip(String(p))) : 'none'],
+      ['Main collection', typeof d.mainCollection === 'string'
+        ? h('a', { href: pages.collection(d.mainCollection) }, d.mainCollection) : null],
+      ['Mirrors', list(d.mirrors).map((m) => h('div', {}, h('a', { href: elsewhere(m) }, m)))],
+      ['Feed', typeof d.feed === 'string' ? external(d.feed) : null],
+      ['Keys', list(d.keys).map((k) => h('div', {}, String(k?.type ?? '?'), ': ',
+        k?.url ? external(k.url) : h('code', {}, String(k?.fingerprint ?? '')))) ],
+      ['Extensions', list(d.extensions).map((e) => h('div', {}, external(String(e))))],
+    ]),
+    tombstones.length ? section('Tombstones',
+      h('p', { class: 'muted' }, 'Objects taken down (section 11.2). Their identifiers are never reused, and pins to them are reported as removed.'),
+      h('ul', { class: 'plain' }, tombstones.map((t) => h('li', {},
+        h('code', {}, t.id), ` (${t.kind ?? '?'}, last version ${t.lastVersion ?? '?'}, ${t.date ?? '?'}): `,
+        String(t.reason ?? ''))))) : null,
+    jsonView('opensheaf.json', d, a.base + 'opensheaf.json'));
+}
+
+function objectList(ctx) {
+  const a = ctx.archive;
+  const entries = a.objects();
+  const rows = new Map();
+  const list = h('ol', { class: 'objects' });
+  const status = h('p', { class: 'muted small' });
+  const fold = (s) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  const search = h('input', { type: 'search', placeholder: 'Search titles, authors, identifiers', 'aria-label': 'Search' });
+  const kind = h('select', { 'aria-label': 'Kind' },
+    h('option', { value: '' }, 'all kinds'), h('option', { value: 'document' }, 'documents'),
+    h('option', { value: 'collection' }, 'collections'));
+  const state = h('select', { 'aria-label': 'Status' },
+    h('option', { value: '' }, 'any status'), h('option', { value: 'active' }, 'active'),
+    h('option', { value: 'withdrawn' }, 'withdrawn'), h('option', { value: 'mirror' }, 'mirrors'));
+  const filter = () => {
+    const words = fold(search.value).split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const row of rows.values()) {
+      const e = row.entry;
+      const ok = words.every((w) => fold(row.text).includes(w)) && (!kind.value || e.kind === kind.value) &&
+        (!state.value || (state.value === 'mirror' ? Boolean(e.mirrorOf) : e.status === state.value));
+      row.el.hidden = !ok;
+      if (ok) shown++;
+    }
+    status.textContent = `${shown} of ${plural(rows.size, 'object')} shown`;
+  };
+  search.addEventListener('input', filter);
+  kind.addEventListener('change', filter);
+  state.addEventListener('change', filter);
+  const controls = h('div', { class: 'controls' }, search, kind, state);
+  for (const entry of entries) {
+    const row = objectRow(entry);
+    rows.set(entry.id, row);
+    list.append(row.el);
+  }
+  const main = a.disc.mainCollection;
+  filter();
+  if (typeof main === 'string' && rows.has(main)) {
+    summary(ctx, main).then(async (s) => {
+      const mem = await a.json(main, s.inv, s.inv.head, 'members.json', { signal: ctx.signal });
+      const members = (Array.isArray(mem?.members) ? mem.members : []).filter((m) => m?.archive === a.archiveId);
+      for (const m of [...members].reverse()) {
+        const row = rows.get(m.id);
+        if (!row) continue;
+        list.prepend(row.el);
+        if (!row.loaded && m.cite) {
+          row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, head: memberPins(m)[0]?.version });
+        }
+      }
+      filter();
+    }).catch(() => {});
+  }
+  let loaded = 0;
+  for (const row of rows.values()) {
+    summary(ctx, row.entry.id).then((s) => {
+      row.loaded = true;
+      row.set({ title: s.title, creators: s.creators, documentVersion: s.kind === 'document' ? s.documentVersion : null,
+                head: s.inv.head, year: s.issued?.slice(0, 4) });
+    }, (error) => {
+      if (error?.kind === 'aborted') return;
+      row.el.classList.add('unreadable');
+      row.el.title = `cannot be read: ${error?.detail || error?.message || error}`;
+    }).finally(() => {
+      loaded++;
+      status.dataset.loaded = loaded < rows.size ? `; descriptions read: ${loaded} of ${rows.size}` : '';
+      filter();
+      if (status.dataset.loaded) status.textContent += status.dataset.loaded;
+    });
+  }
+  return section('Objects', controls, status, list);
+}
+
+function objectRow(entry) {
+  const isCollection = entry.kind === 'collection';
+  const href = isCollection ? pages.collection(entry.id) : pages.object(entry.id);
+  const title = h('a', { class: 'title', href }, entry.id);
+  const creators = h('span', { class: 'creators' });
+  const meta = h('span', { class: 'meta' });
+  const el = h('li', { class: 'object' },
+    h('div', { class: 'main' }, title, creators),
+    h('div', { class: 'side' },
+      h('code', { class: 'id' }, entry.id), ' ',
+      chip(entry.kind ?? '?'), ' ', statusChip(entry.status),
+      entry.mirrorOf ? [' ', chip('mirror', 'warn')] : null, ' ', meta));
+  const row = { el, entry, text: entry.id, set(s) {
+    title.replaceChildren(...rich(s.title || entry.id));
+    creators.textContent = s.creators?.length ? s.creators.join('; ') : '';
+    meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null, `head ${s.head ?? entry.head}`,
+                        s.year ? String(s.year) : null].filter(Boolean).join(' · ');
+    row.text = [entry.id, plain(s.title || ''), ...(s.creators || [])].join(' ');
+  } };
+  row.set({ head: entry.head });
+  return row;
+}
+
+export function showArchive(ctx, root) {
+  const a = ctx.archive;
+  append(root,
+    h('header', { class: 'page-head' },
+      h('p', { class: 'kicker' }, 'OpenSheaf archive'),
+      h('h1', {}, a.name),
+      h('p', { class: 'lead' }, 'The discovery document lists ', plural(a.objects().length, 'object'),
+        '. What it states is checked against the storage root by the ',
+        h('a', { href: pages.verify() }, 'verification'), ' (section 14).')),
+    archiveFacts(a),
+    objectList(ctx));
+}

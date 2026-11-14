@@ -1,0 +1,17 @@
+{
+  "format": "opensheaf-object/0.1",
+  "specification": "0.1",
+  "kind": "document",
+  "archiveId": "tag:example.org,2026:fixture",
+  "objectId": "beta",
+  "documentVersion": 1,
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "mainSource": "beta-1.tex",
+  "sourceFormat": "application/x-tex"
+}

@@ -1,0 +1,37 @@
+{
+  "format": "opensheaf-archive/0.1",
+  "specification": "0.1",
+  "archiveId": "tag:example.org,2026:other",
+  "name": "Another fixture archive",
+  "contact": "http://127.0.0.1:8765/other/",
+  "storageRoot": "ocfl/",
+  "storageLayout": "0002-flat-direct-storage-layout",
+  "mainCollection": "collection-main",
+  "profiles": [
+    "website"
+  ],
+  "objects": [
+    {
+      "id": "alpha-copy",
+      "kind": "document",
+      "head": "v1",
+      "inventorySha512": "4649a98d83cd2b8cba9aba6c94c5b99216e535c102dc53f34f41427aa1582fd7ee9bfc0703264977dd7f91fa8e7d5b88c72802047c63aba62d24e6aabaef241d",
+      "status": "active"
+    },
+    {
+      "id": "beta",
+      "kind": "document",
+      "head": "v2",
+      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "status": "active",
+      "mirrorOf": "tag:example.org,2026:fixture"
+    },
+    {
+      "id": "collection-main",
+      "kind": "collection",
+      "head": "v2",
+      "inventorySha512": "2f15b4958b82de3e4953c974a0e8b3226d7c2d602ff0732c41becae4de25403aa2eb383b665edf4aa85718010ae5f6d9d1c0b53fb0a711afe6088b4341df52e3",
+      "status": "active"
+    }
+  ]
+}

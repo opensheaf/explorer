@@ -1,0 +1,38 @@
+{
+  "format": "opensheaf-object/0.1",
+  "specification": "0.1",
+  "kind": "document",
+  "archiveId": "tag:example.org,2026:other",
+  "objectId": "alpha-copy",
+  "documentVersion": 1,
+  "mainSource": "alpha-2.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "changes": {
+    "text": "Accepted: version 2 of alpha in A fixture archive"
+  },
+  "stage": {
+    "scheme": "NISO-JAV",
+    "value": "VoR"
+  },
+  "external": [
+    {
+      "role": "source",
+      "service": "OpenSheaf",
+      "record": "http://127.0.0.1:8765/archive/ocfl/alpha/v2/",
+      "label": "alpha v2",
+      "files": [
+        {
+          "name": "inventory.json",
+          "sha512": "832e203706084c784f1cf9c9dd84437c58c6a5b2619b0c5fa4af270daa66901a0d253b8f7e2d9b4eef01da1637fcf7b6891ddfce65e75454427d1f52ee61047b"
+        }
+      ]
+    }
+  ],
+  "status": "active"
+}

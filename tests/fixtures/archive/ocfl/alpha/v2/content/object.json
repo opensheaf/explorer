@@ -1,0 +1,24 @@
+{
+  "format": "opensheaf-object/0.1",
+  "specification": "0.1",
+  "kind": "document",
+  "archiveId": "tag:example.org,2026:fixture",
+  "objectId": "alpha",
+  "documentVersion": 2,
+  "mainSource": "alpha-2.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "changes": {
+    "text": "Second version."
+  },
+  "stage": {
+    "scheme": "NISO-JAV",
+    "value": "AM"
+  }
+}

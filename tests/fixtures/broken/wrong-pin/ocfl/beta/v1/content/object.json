@@ -1,0 +1,18 @@
+{
+  "format": "opensheaf-object/0.1",
+  "specification": "0.1",
+  "kind": "document",
+  "archiveId": "tag:example.org,2026:fixture",
+  "objectId": "beta",
+  "documentVersion": 1,
+  "sourcesMissing": {
+    "text": "Only the PDF was kept."
+  },
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active"
+}

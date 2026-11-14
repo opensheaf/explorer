@@ -1,0 +1,58 @@
+{
+  "format": "opensheaf-collection/0.1",
+  "type": "archive",
+  "order": "issued-desc",
+  "members": [
+    {
+      "kind": "document",
+      "archive": "tag:example.org,2026:fixture",
+      "archiveUrl": "http://127.0.0.1:8765/archive/",
+      "id": "alpha",
+      "version": "v4",
+      "inventorySha512": "5ed4bbbe29daa628750c1f6109ba40fcf94207e1471089de4e0e1a5bda0850a98e98191314449884d9f44c4b5a85aed2403ab2da23b62b9755adbb7a4a30351e",
+      "follow": "latest",
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10"
+      }
+    },
+    {
+      "kind": "document",
+      "archive": "tag:example.org,2026:fixture",
+      "archiveUrl": "http://127.0.0.1:8765/archive/",
+      "id": "beta",
+      "version": "v2",
+      "inventorySha512": "d18f1bb9ef06fd784e1d31a83ab28a7b2b91d2990fe123b8315b997689e5d2e6f72947477848157686fd9565d7cbedbfc408ced3b5bad09c901bd13fc34f0cbe",
+      "follow": "latest",
+      "cite": {
+        "title": "Beta",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2023,
+        "issued": "2023-05-05"
+      }
+    },
+    {
+      "kind": "document",
+      "archive": "tag:example.org,2026:fixture",
+      "archiveUrl": "http://127.0.0.1:8765/archive/",
+      "id": "gamma",
+      "version": "v2",
+      "inventorySha512": "2ed3c1f39730b517fff92ec33cc6f8fa276e71ab381250baecd77e3e6c2eb65ba0f0eff5e5317f8c66a6d2408f33dffa153c220b3c6b7246b4735944e10eeb50",
+      "follow": "latest",
+      "cite": {
+        "title": "Gamma",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2022,
+        "issued": "2022-02-02"
+      }
+    }
+  ]
+}
