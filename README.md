@@ -1,6 +1,7 @@
 # OpenSheaf Explorer
 
 [![tests](https://github.com/opensheaf/explorer/actions/workflows/tests.yml/badge.svg)](https://github.com/opensheaf/explorer/actions/workflows/tests.yml)
+[![pages](https://github.com/opensheaf/explorer/actions/workflows/pages.yml/badge.svg)](https://github.com/opensheaf/explorer/actions/workflows/pages.yml)
 [![licence: GPL v3+](https://img.shields.io/badge/licence-GPL--3.0--or--later-blue)](LICENSE)
 
 > [!WARNING]
