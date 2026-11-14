@@ -56,7 +56,7 @@ and never inserted as HTML.
    `data-collection`, `data-verify`, `data-label`, `data-target` (an element
    id), `data-unstyled` (style the class `opensheaf-explore` yourself).
 3. **A copy in the archive (self-hosting).** Copy `index.html`, `app/`,
-   `style.css`, `embed.js`, `schemas/` and `opensheaf-symbol.svg` into the
+   `style.css`, `fonts/`, `embed.js`, `schemas/` and `opensheaf-symbol.svg` into the
    archive's site, for instance as `explorer/` next to `opensheaf.json`.
    Opened without `?url=`, it explores the archive one folder up (`../`).
    Every request is then same-origin.

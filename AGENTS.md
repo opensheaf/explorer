@@ -30,7 +30,7 @@ To make a change:
 4. test: `node --test tests/*.test.mjs` (tests are in
    `literate/70-tests.md`).
 
-Plain files, edited directly: `schemas/` and `opensheaf-symbol.svg`
+Plain files, edited directly: `fonts/` (copies of the site's faces), `schemas/` and `opensheaf-symbol.svg`
 (copies of the specification's files), `literate.json`,
 `requirements-literate.txt`, `README.md`, `AGENTS.md`,
 `.github/workflows/*`.

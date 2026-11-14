@@ -27,7 +27,7 @@ jobs:
       - name: the application
         run: |
           mkdir -p site
-          cp -R index.html app style.css embed.js schemas opensheaf-symbol.svg LICENSE site/
+          cp -R index.html app style.css fonts embed.js schemas opensheaf-symbol.svg LICENSE site/
       - name: the literate program
         run: literate weave --branch main
       - uses: actions/upload-pages-artifact@v3
