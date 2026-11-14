@@ -1,5 +1,5 @@
 #!/bin/sh
-# Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
+# Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 # Build the fixture archives of the tests with osheaf (opensheaf-py):
 #   sh tests/fixtures/make.sh
 set -e

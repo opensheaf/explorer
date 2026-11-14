@@ -40,12 +40,20 @@ specification are checked by a validator of its own. Everything it reads
 is untrusted, and it never puts anything it reads into the page as HTML.
 
 The files of the application (`index.html`, `app/*.js`, `style.css`,
-`embed.js`) and its tests are *tangled* out of these documents (see
-[tangling](90-tangle.md)) and kept in the repository, so that the
-application is served as it stands; the documents are also *woven* into
-this website (see [weaving](91-weave.md)). One edits the documents, never
-the files. The JSON Schemas in `schemas/` and the symbol
-`opensheaf-symbol.svg` are copies of the specification's own files.
+`embed.js`) and its tests are *tangled* out of these documents and kept in
+the repository, so that the application is served as it stands; the
+documents are also *woven* into this website. One edits the documents,
+never the files. The tangler and the weaver are a package of their own,
+[opensheaf-literate](https://opensheaf.org/literate/) (the `literate`
+command), written for OpenSheaf and itself a literate program: its chapters
+explain the syntax of these documents and
+[tangling](https://opensheaf.org/literate/10-tangle.html), and
+[weaving](https://opensheaf.org/literate/20-weave.html). This project pins
+a version of it in `requirements-literate.txt` and describes itself to it
+in `literate.json`; `literate tangle --where FILE:LINE` tells which line of
+which chapter a line of a tangled file comes from. The JSON Schemas in
+`schemas/` and the symbol `opensheaf-symbol.svg` are copies of the
+specification's own files.
 
 Reading the code
 ----------------
@@ -98,10 +106,11 @@ The pages
     the pages, embedding and self-hosting.
 17. [The stylesheet](31-style.md).
 
-The tests and the literate tools
---------------------------------
+The tests
+---------
 
 18. [The tests](70-tests.md): fixture archives made with `osheaf`, broken
     copies, and the comparison with `osheaf verify`.
-19. [Tangling: from the documents to the program](90-tangle.md).
-20. [Weaving: from the documents to the website](91-weave.md).
+
+The literate tools, tangling and weaving, are described in their own
+literate program, [opensheaf-literate](https://opensheaf.org/literate/).

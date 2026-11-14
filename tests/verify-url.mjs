@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { readFile } from 'node:fs/promises';
 import { Http, explain } from '../app/http.js';
 import { Archive } from '../app/archive.js';

@@ -1,4 +1,4 @@
-// Generated from literate/12-schema.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/12-schema.md by opensheaf-literate: edit the document, not this file.
 export function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') {

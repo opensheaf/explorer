@@ -1,4 +1,4 @@
-// Generated from literate/11-paths.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/11-paths.md by opensheaf-literate: edit the document, not this file.
 import { FetchError } from './http.js';
 
 export const ID_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;

@@ -1,4 +1,4 @@
-// Generated from literate/16-rules.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/16-rules.md by opensheaf-literate: edit the document, not this file.
 import { validate } from './schema.js';
 import { isObjectId, isVersion, versionNumber, logicalPathProblem, contentPathProblem } from './paths.js';
 import { versionsOf, filesOf, dateOf } from './versions.js';

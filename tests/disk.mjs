@@ -1,4 +1,4 @@
-// Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { readFile } from 'node:fs/promises';
 
 export const ORIGIN = 'http://127.0.0.1:8765/';

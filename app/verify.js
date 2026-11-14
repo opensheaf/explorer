@@ -1,4 +1,4 @@
-// Generated from literate/17-verify.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/17-verify.md by opensheaf-literate: edit the document, not this file.
 import { Http, sha512, pool, LIMITS } from './http.js';
 import { Archive } from './archive.js';
 import { versionsOf, filesOf, documentVersionErrors, memberPins } from './versions.js';

@@ -1,4 +1,4 @@
-// Generated from literate/13-versions.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/13-versions.md by opensheaf-literate: edit the document, not this file.
 import { isVersion, versionNumber } from './paths.js';
 import { same } from './schema.js';
 

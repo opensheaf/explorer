@@ -1,0 +1,9 @@
+{
+  "name": "OpenSheaf Explorer",
+  "tagline": "an explorer of <a href=\"https://opensheaf.org\">OpenSheaf</a> archives, a literate program",
+  "repository": "https://github.com/opensheaf/explorer",
+  "site": "site/source",
+  "logo": "opensheaf-symbol.svg",
+  "logoDark": "invert",
+  "links": {"the explorer": "../"}
+}

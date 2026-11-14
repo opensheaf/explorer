@@ -1,4 +1,4 @@
-// Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';

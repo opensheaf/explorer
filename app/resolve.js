@@ -1,4 +1,4 @@
-// Generated from literate/15-resolve.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/15-resolve.md by opensheaf-literate: edit the document, not this file.
 import { Archive, baseOf } from './archive.js';
 import { LIMITS } from './http.js';
 import { isVersion } from './paths.js';

@@ -21,15 +21,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install markdown pygments
+      - run: pip install -r requirements-literate.txt
       - name: the files are tangled from literate/
-        run: python3 tools/tangle.py --check
+        run: literate tangle --check
       - name: the application
         run: |
           mkdir -p site
           cp -R index.html app style.css embed.js schemas opensheaf-symbol.svg LICENSE site/
       - name: the literate program
-        run: python3 tools/weave.py --out site/source --branch main
+        run: literate weave --branch main
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

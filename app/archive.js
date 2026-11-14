@@ -1,4 +1,4 @@
-// Generated from literate/14-archive.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/14-archive.md by opensheaf-literate: edit the document, not this file.
 import { FetchError, parseJson, sha512, LIMITS } from './http.js';
 import { isObjectId, isVersion, under, underPath, contentPathProblem } from './paths.js';
 import { contentPath, historyOf, currentVersion, versionsOf } from './versions.js';

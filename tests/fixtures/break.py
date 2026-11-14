@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
+# Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 """Make broken copies of the fixture archive, for the tests:
 
     python3 tests/fixtures/break.py

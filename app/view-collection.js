@@ -1,4 +1,4 @@
-// Generated from literate/25-collection-page.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/25-collection-page.md by opensheaf-literate: edit the document, not this file.
 import { h, append, clear, external, doiLink, digest, plural } from './dom.js';
 import { rich } from './text.js';
 import { facts, chip, statusChip, section, jsonView, errorBox, loading, pages, elsewhere } from './ui.js';

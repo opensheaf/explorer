@@ -1,4 +1,4 @@
-// Generated from literate/21-text.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/21-text.md by opensheaf-literate: edit the document, not this file.
 import { h } from './dom.js';
 
 export function splitMath(s) {

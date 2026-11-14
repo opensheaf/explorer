@@ -1,4 +1,4 @@
-// Generated from literate/30-app.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/30-app.md by opensheaf-literate: edit the document, not this file.
 import { Http } from './http.js';
 import { Archive, withScheme } from './archive.js';
 import { Resolver } from './resolve.js';

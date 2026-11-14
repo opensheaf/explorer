@@ -1,4 +1,4 @@
-// Generated from literate/26-verify-page.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/26-verify-page.md by opensheaf-literate: edit the document, not this file.
 import { h, append, clear, bytes, plural } from './dom.js';
 import { chip, section, sectionRef, pages, errorBox } from './ui.js';
 import { verify, estimateContent, NOT_CHECKED } from './verify.js';

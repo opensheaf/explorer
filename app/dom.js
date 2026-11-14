@@ -1,4 +1,4 @@
-// Generated from literate/20-dom.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/20-dom.md by opensheaf-literate: edit the document, not this file.
 export function h(tag, attributes = {}, ...children) {
   const el = document.createElement(tag);
   for (const [name, value] of Object.entries(attributes || {})) {

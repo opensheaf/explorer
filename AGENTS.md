@@ -2,7 +2,10 @@
 
 This repository is a literate program. The sources are the chapters in
 `literate/` (4-space indented code chunks headed `// in NAME:`, with
-whole-line `<<NAME>>` references; prose between the chunks).
+whole-line `<<NAME>>` references; prose between the chunks). Tangling and
+weaving are done by [opensheaf-literate](https://opensheaf.org/literate/)
+(the `literate` command), pinned in `requirements-literate.txt` and
+configured by `literate.json`.
 
 **Never edit the tangled files directly.** They are generated from the
 chapters and overwritten by the next tangle:
@@ -11,22 +14,23 @@ chapters and overwritten by the next tangle:
 - `tests/disk.mjs`, `tests/*.test.mjs`, `tests/verify-url.mjs`
 - `tests/fixtures/make.sh`, `tests/fixtures/break.py` (the fixture
   archives under `tests/fixtures/` are made by them, with `osheaf`)
-- `tools/tangle.py`, `tools/build`, `tools/weave.py`, `tools/weave.html`,
-  `tools/weave.css`
 
-`python3 tools/tangle.py --list` gives the current list, with the chapter
-of each file. `python3 tools/tangle.py --where FILE:LINE` gives the line of
-the chapter a line of a tangled file comes from.
+`literate tangle --list` gives the current list, with the chapter of each
+file. `literate tangle --where FILE:LINE` gives the line of the chapter a
+line of a tangled file comes from.
 
 To make a change:
 
 1. edit the chapter in `literate/`, its code and the prose explaining it;
-2. tangle: `sh tools/build` (also weaves the website; needs python3 with
-   `markdown` and `pygments`), or `python3 tools/tangle.py`;
-3. check: `python3 tools/tangle.py --check` (CI fails if a file differs
-   from its chapter);
+2. tangle: `literate tangle` (once: `pip install -r
+   requirements-literate.txt`); `literate weave` weaves the website into
+   `site/source/`;
+3. check: `literate tangle --check` (CI fails if a file differs from its
+   chapter);
 4. test: `node --test tests/*.test.mjs` (tests are in
    `literate/70-tests.md`).
 
-`schemas/` and `opensheaf-symbol.svg` are copies of the specification's
-files, not tangled.
+Plain files, edited directly: `schemas/` and `opensheaf-symbol.svg`
+(copies of the specification's files), `literate.json`,
+`requirements-literate.txt`, `README.md`, `AGENTS.md`,
+`.github/workflows/*`.

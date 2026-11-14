@@ -1,4 +1,4 @@
-// Generated from literate/10-http.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/10-http.md by opensheaf-literate: edit the document, not this file.
 export const LIMITS = {
   json: 16 * 2 ** 20,      // a JSON file: discovery document, inventory, object.json, members.json
   page: 16 * 2 ** 20,      // the index page, read for the check of the presentation

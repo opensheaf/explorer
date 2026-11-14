@@ -104,28 +104,36 @@ reports them *unavailable*, with the reason.
 ## Building and testing
 
 The sources are the Markdown documents in [`literate/`](literate/index.md),
-woven at <https://opensheaf.org/explorer/source/>. The application, the
-tests and the tools are tangled out of them and committed:
+woven at <https://opensheaf.org/explorer/source/>. The application and
+the tests are tangled out of them and committed (never edit them directly:
+see [AGENTS.md](AGENTS.md)). Tangling and weaving are done by
+[opensheaf-literate](https://github.com/opensheaf/literate) (the `literate`
+command; its own literate program is at
+[opensheaf.org/literate](https://opensheaf.org/literate/)), pinned in
+`requirements-literate.txt` and configured by `literate.json`:
 
 ```
-sh tools/build            # tangle (checking that the tangler reproduces itself), weave into site/source/
+pip install -r requirements-literate.txt   # once
+literate tangle                # write the files out of literate/
+literate tangle --check        # nothing differs (what the continuous integration checks)
+literate weave                 # the website, in site/source/
 node --test tests/*.test.mjs   # the tests (Node 22 or later), against the fixture archives
 node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [--all]
 ```
 
-Weaving needs `pip install markdown pygments`. To try the application
+`literate tangle --where FILE:LINE` tells which line of which document a
+line of a tangled file comes from. To try the application
 locally, serve the repository (`python3 -m http.server`) and open
 `http://localhost:8000/?url=…`. The fixture archives in `tests/fixtures/`
 are made with [opensheaf-py](https://github.com/opensheaf/opensheaf-py)
 by `sh tests/fixtures/make.sh`, with broken copies whose problems the tests
-expect in the words of `osheaf verify`. The literate tools (`tools/`) are
-shared with opensheaf-py.
+expect in the words of `osheaf verify`.
 
 ## Licence
 
 GNU General Public License, version 3 or later. The JSON Schemas in
 `schemas/` are those of the specification, dedicated to the public domain
-under CC0 1.0. The OpenSheaf symbol (`opensheaf-symbol.svg`, and its copy in
-`tools/` used by the woven website) is licensed under CC BY 4.0, and its use
-as a mark follows the OpenSheaf
+under CC0 1.0. The OpenSheaf symbol (`opensheaf-symbol.svg`, also used by
+the woven website) is licensed under CC BY 4.0, and its use as a mark
+follows the OpenSheaf
 [trademark policy](https://github.com/opensheaf/opensheaf.github.io/blob/main/TRADEMARKS.md).

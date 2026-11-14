@@ -1,4 +1,4 @@
-// Generated from literate/22-pieces.md by tools/tangle.py: edit the document, not this file.
+// Generated from literate/22-pieces.md by opensheaf-literate: edit the document, not this file.
 import { titleOf, creatorsOf, dateOf, rolesOf } from './versions.js';
 
 export function summary(ctx, id) {
