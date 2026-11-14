@@ -46,6 +46,7 @@ export async function locate(http, input) {
 }
 
 const EXAMPLE = 'https://mgubi.org/papers/';
+const EXAMPLE_NAME = 'Papers of Massimiliano Gubinelli';
 
 function showStart(main, error = null, given = '') {
   const url = h('input', { type: 'text', inputmode: 'url', name: 'url', required: true, value: given || null,
@@ -63,7 +64,9 @@ function showStart(main, error = null, given = '') {
     h('form', { class: 'open', method: 'get', action: '' },
       h('label', {}, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
       collection, h('button', { type: 'submit', class: 'primary' }, 'Explore')),
-    h('p', {}, 'For example: ', h('a', { href: elsewhere(EXAMPLE) }, EXAMPLE), '.'),
+    h('p', { class: 'example' }, 'For example, the first OpenSheaf archive: ',
+      h('a', { href: elsewhere(EXAMPLE) }, h('strong', {}, EXAMPLE_NAME)),
+      ' (', h('code', {}, EXAMPLE.replace(/^https:\/\//, '')), ').'),
     h('section', { class: 'block' }, h('h2', {}, 'Three ways to use it'),
       h('ol', {},
         h('li', {}, h('strong', {}, 'A link. '), 'Give the archive in the address: ',

@@ -168,12 +168,14 @@ The start page
 --------------
 
 Without an archive, the explorer shows a form for its address, an
-example, the three ways of using the explorer, and, if an address was
+example (the first OpenSheaf archive, the papers of the editor of the
+specification), the three ways of using the explorer, and, if an address was
 given and could not be read, why, with the explanation of cross-origin
 requests and the advice to self-host.
 
     // in the start page:
     const EXAMPLE = 'https://mgubi.org/papers/';
+    const EXAMPLE_NAME = 'Papers of Massimiliano Gubinelli';
 
     function showStart(main, error = null, given = '') {
       const url = h('input', { type: 'text', inputmode: 'url', name: 'url', required: true, value: given || null,
@@ -191,7 +193,9 @@ requests and the advice to self-host.
         h('form', { class: 'open', method: 'get', action: '' },
           h('label', {}, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
           collection, h('button', { type: 'submit', class: 'primary' }, 'Explore')),
-        h('p', {}, 'For example: ', h('a', { href: elsewhere(EXAMPLE) }, EXAMPLE), '.'),
+        h('p', { class: 'example' }, 'For example, the first OpenSheaf archive: ',
+          h('a', { href: elsewhere(EXAMPLE) }, h('strong', {}, EXAMPLE_NAME)),
+          ' (', h('code', {}, EXAMPLE.replace(/^https:\/\//, '')), ').'),
         h('section', { class: 'block' }, h('h2', {}, 'Three ways to use it'),
           h('ol', {},
             h('li', {}, h('strong', {}, 'A link. '), 'Give the archive in the address: ',
