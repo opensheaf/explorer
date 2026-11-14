@@ -12,12 +12,12 @@ export async function showObject(ctx, root, id, ver) {
   let s, shown, descs;
   try {
     s = await summary(ctx, id);
-    if (ver && !(ver in s.inv.versions)) throw new Error(`${id} has no object version ${ver}`);
+    if (ver && !Object.hasOwn(s.inv.versions, ver)) throw new Error(`${id} has no object version ${ver}`);
     shown = ver || s.shown;
     descs = new Map(await Promise.all([...new Set([shown, ...s.hist])].map(async (v) =>
       [v, await a.descriptions(id, s.inv, v, options).catch(() => ({ obj: s.objOf(v), dc: null }))])));
   } catch (error) {
-    if (error?.kind !== 'aborted') wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
+    if (!options.signal?.aborted) wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
     return;
   }
   wait.remove();

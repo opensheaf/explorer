@@ -32,7 +32,7 @@ The module is `app/resolve.js`.
 
     <<the archives met while resolving>>
 
-    <<the version presented for a member>>
+    <<the pin presented for a member>>
 
     <<a budget for walking collections>>
 
@@ -45,21 +45,27 @@ archive being explored, if any, is known from the start: a member of it
 is resolved there, whatever address the member recorded, since it is the
 same archive and the explorer has just read its discovery document.
 
+Only archives opened are kept, not openings in progress: an opening is
+made with the signal of its caller, and a caller arriving while another's
+opening is aborted must not inherit the abort. Two callers opening the
+same archive at once still make one request, since the
+[HTTP client](10-http.md) shares a request in progress among its callers;
+an archive that fails to open is not kept, and is tried again.
+
     // in the archives met while resolving:
     export class Resolver {
       constructor(http, home = null) {
         this.http = http;
         this.home = home;
         this.archives = new Map();
-        if (home) this.archives.set(home.base, Promise.resolve(home));
+        if (home) this.archives.set(home.base, home);
       }
 
-      open(url, options = {}) {
+      async open(url, options = {}) {
         const base = baseOf(url);
         if (!this.archives.has(base)) {
-          const opening = Archive.open(this.http, base, options);
-          this.archives.set(base, opening);
-          opening.catch(() => this.archives.delete(base));
+          const archive = await Archive.open(this.http, base, options);
+          if (!this.archives.has(base)) this.archives.set(base, archive);
         }
         return this.archives.get(base);
       }
@@ -90,6 +96,11 @@ Four cases need care, as there:
   not the member wrong: only bytes found and different from the pin are a
   mismatch.
 
+A hostile member, or a hostile discovery document, may list hundreds of
+mirrors, each costing requests and perhaps a time limit; after the
+member's archive, at most `LIMITS.mirrors` mirrors are tried (section 15),
+and the problems say how many were left untried.
+
 The answer gives the status, the source that settled it (and whether it
 was a mirror, which a curator wants to know: the member's archive may be
 gone), the archive read there, and what went wrong at each source tried.
@@ -106,7 +117,8 @@ gone), the archive read there, and what went wrong at each source tried.
       add(own ? this.home.base : m.archiveUrl);
       (Array.isArray(m.mirrors) ? m.mirrors : []).forEach(add);
       let mismatch = false;
-      for (let k = 0; k < sources.length; k++) {
+      const tried = () => Math.min(sources.length, 1 + LIMITS.mirrors);
+      for (let k = 0; k < tried(); k++) {
         const src = sources[k];
         try {
           const r = await this.open(src, options);
@@ -141,6 +153,9 @@ gone), the archive read there, and what went wrong at each source tried.
           problems.push(`${src}: unavailable: ${error.detail || error.message}`);
         }
       }
+      if (sources.length > tried()) {
+        problems.push(`${sources.length - tried()} more mirror(s) not tried (at most ${LIMITS.mirrors} are tried)`);
+      }
       return { status: mismatch ? 'mismatch' : 'unavailable', problems, errors };
     }
 
@@ -156,9 +171,9 @@ withdrawal in the member's archive is shown, saying where it comes from.
 
     // in describe a resolved member:
     async describe(m, archive, options = {}) {
-      const ver = presentedVersion(m);
+      const ver = presentedPin(m);
       let shown = ver;
-      if (!('revisions' in m)) shown = (await archive.history(m.id, ver, options)).current;
+      if (!Object.hasOwn(m, 'revisions')) shown = (await archive.history(m.id, ver, options)).current;
       const inv = await archive.inventory(m.id, null, options);
       const [{ dc, obj }, head] = await Promise.all([
         archive.descriptions(m.id, inv, shown, options),
@@ -171,17 +186,22 @@ withdrawal in the member's archive is shown, saying where it comes from.
       };
     }
 
-The version presented
----------------------
+The pin presented
+-----------------
 
-The version presented for a member is the last revision of a selection's
-member (the revision "presented as the selection's", section 10.2) or the
-pinned version of a catalogue's member, whose current version
-is then read from its history.
+What is presented of a member is read at one of its pins: the last
+revision of a selection's member (the revision "presented as the
+selection's", section 10.2), or the single pin of a catalogue's member.
+For a selection, the version shown is that revision itself; for a
+catalogue, it is the current version of the member read from the history
+of the pinned version ("presentations show the current version of each
+member, read from the history of the pinned version", section 10.2),
+which `describe` above finds once the member is resolved. A member
+collection's own members are read at the pin presented.
 
-    // in the version presented for a member:
-    export function presentedVersion(m) {
-      if (m && 'revisions' in m) {
+    // in the pin presented for a member:
+    export function presentedPin(m) {
+      if (m && Object.hasOwn(m, 'revisions')) {
         const revs = Array.isArray(m.revisions) ? m.revisions : [];
         return revs.length ? revs[revs.length - 1]?.version : null;
       }
@@ -196,34 +216,36 @@ archive. Pins cannot form cycles (a pin fixes an inventory, which cannot
 contain its own digest), but a hostile archive can make a collection very
 deep or very wide. Section 14 asks verifiers to limit the depth and size
 of the collections they follow, and to report when they stop. A budget
-counts the members resolved in one walk and refuses to go deeper than the
-depth limit; the pages say when it stopped, and why. The pairs (archive,
+counts the pins resolved in one walk and refuses to go deeper than the
+depth limit. It counts pins rather than members, since each pin costs
+requests (a member of a selection may pin many revisions). The pages say
+when it stopped, and why. The pairs (archive,
 object, version) already walked are remembered, so that the same
 collection reached twice is not walked twice.
 
     // in a budget for walking collections:
     export class Budget {
-      constructor({ depth = LIMITS.depth, members = LIMITS.members } = {}) {
+      constructor({ depth = LIMITS.depth, pins = LIMITS.pins } = {}) {
         this.depth = depth;
-        this.members = members;
+        this.pins = pins;
         this.used = 0;
         this.walked = new Set();
         this.stopped = [];
       }
 
       allows(depth) {
-        return depth <= this.depth && this.used < this.members;
+        return depth <= this.depth && this.used < this.pins;
       }
 
       take(count) {
-        const granted = Math.max(0, Math.min(count, this.members - this.used));
+        const granted = Math.max(0, Math.min(count, this.pins - this.used));
         this.used += granted;
         return granted;
       }
 
       reason(depth) {
         if (depth > this.depth) return `the depth limit (${this.depth} levels of member collections) is reached`;
-        return `the limit of ${this.members} members resolved in one walk is reached`;
+        return `the limit of ${this.pins} pins resolved in one walk is reached`;
       }
 
       first(archiveId, id, ver) {

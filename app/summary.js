@@ -2,12 +2,15 @@
 import { titleOf, creatorsOf, dateOf, rolesOf } from './versions.js';
 
 export function summary(ctx, id) {
-  if (!ctx.summaries.has(id)) {
-    const loading = load(ctx.archive, id, { signal: ctx.signal });
-    ctx.summaries.set(id, loading);
-    loading.catch(() => ctx.summaries.delete(id));
-  }
-  return ctx.summaries.get(id);
+  const known = ctx.summaries.get(id);
+  if (known && (known.done || known.signal === ctx.signal)) return known.loading;
+  const entry = { signal: ctx.signal, done: false };
+  entry.loading = load(ctx.archive, id, { signal: ctx.signal });
+  ctx.summaries.set(id, entry);
+  entry.loading.then(() => { entry.done = true; }, () => {
+    if (ctx.summaries.get(id) === entry) ctx.summaries.delete(id);
+  });
+  return entry.loading;
 }
 
 async function load(archive, id, options) {

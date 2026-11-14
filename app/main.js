@@ -1,6 +1,6 @@
 // Generated from literate/30-app.md by tools/tangle.py: edit the document, not this file.
 import { Http } from './http.js';
-import { Archive } from './archive.js';
+import { Archive, withScheme } from './archive.js';
 import { Resolver } from './resolve.js';
 import { fetchSchemas } from './schema.js';
 import { h, append, clear } from './dom.js';
@@ -49,8 +49,8 @@ const EXAMPLE = 'https://mgubi.org/papers/';
 const EXAMPLE_NAME = 'Papers of Massimiliano Gubinelli';
 
 function showStart(main, error = null, given = '') {
-  const url = h('input', { type: 'text', inputmode: 'url', name: 'url', required: true, value: given || null,
-                           placeholder: 'https://example.org/papers/', 'aria-label': 'Address of an archive' });
+  const url = h('input', { type: 'text', inputmode: 'url', name: 'url', id: 'start-url', required: true, value: given || null,
+                           placeholder: 'https://example.org/papers/' });
   const collection = h('input', { type: 'text', name: 'collection', pattern: '[a-z0-9]+(-[a-z0-9]+)*',
                                   placeholder: 'collection identifier (optional)', 'aria-label': 'Collection' });
   const here = location.origin + location.pathname;
@@ -62,7 +62,7 @@ function showStart(main, error = null, given = '') {
         'collections across archives, and the checks of the specification, from the files any reader can fetch.')),
     error ? errorBox(`Cannot open ${given}:`, error) : null,
     h('form', { class: 'open', method: 'get', action: '' },
-      h('label', {}, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
+      h('label', { for: 'start-url' }, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
       collection, h('button', { type: 'submit', class: 'primary' }, 'Explore')),
     h('p', { class: 'example' }, 'For example, the first OpenSheaf archive: ',
       h('a', { href: elsewhere(EXAMPLE) }, h('strong', {}, EXAMPLE_NAME)),
@@ -110,7 +110,7 @@ async function start() {
   const main = document.getElementById('main');
   const params = new URLSearchParams(location.search);
   let given = params.get('url');
-  if (given && !/^[a-z][a-z0-9+.-]*:/i.test(given) && /^[^/]+\.[^/]+/.test(given)) given = 'https://' + given;
+  if (given) given = withScheme(given);
   if (params.has('open')) return showStart(main);
   clear(main, loading('Reading the archive…'));
   let found;

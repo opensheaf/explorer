@@ -9,15 +9,14 @@ export class Resolver {
     this.http = http;
     this.home = home;
     this.archives = new Map();
-    if (home) this.archives.set(home.base, Promise.resolve(home));
+    if (home) this.archives.set(home.base, home);
   }
 
-  open(url, options = {}) {
+  async open(url, options = {}) {
     const base = baseOf(url);
     if (!this.archives.has(base)) {
-      const opening = Archive.open(this.http, base, options);
-      this.archives.set(base, opening);
-      opening.catch(() => this.archives.delete(base));
+      const archive = await Archive.open(this.http, base, options);
+      if (!this.archives.has(base)) this.archives.set(base, archive);
     }
     return this.archives.get(base);
   }
@@ -33,7 +32,8 @@ export class Resolver {
     add(own ? this.home.base : m.archiveUrl);
     (Array.isArray(m.mirrors) ? m.mirrors : []).forEach(add);
     let mismatch = false;
-    for (let k = 0; k < sources.length; k++) {
+    const tried = () => Math.min(sources.length, 1 + LIMITS.mirrors);
+    for (let k = 0; k < tried(); k++) {
       const src = sources[k];
       try {
         const r = await this.open(src, options);
@@ -68,13 +68,16 @@ export class Resolver {
         problems.push(`${src}: unavailable: ${error.detail || error.message}`);
       }
     }
+    if (sources.length > tried()) {
+      problems.push(`${sources.length - tried()} more mirror(s) not tried (at most ${LIMITS.mirrors} are tried)`);
+    }
     return { status: mismatch ? 'mismatch' : 'unavailable', problems, errors };
   }
 
   async describe(m, archive, options = {}) {
-    const ver = presentedVersion(m);
+    const ver = presentedPin(m);
     let shown = ver;
-    if (!('revisions' in m)) shown = (await archive.history(m.id, ver, options)).current;
+    if (!Object.hasOwn(m, 'revisions')) shown = (await archive.history(m.id, ver, options)).current;
     const inv = await archive.inventory(m.id, null, options);
     const [{ dc, obj }, head] = await Promise.all([
       archive.descriptions(m.id, inv, shown, options),
@@ -88,8 +91,8 @@ export class Resolver {
   }
 }
 
-export function presentedVersion(m) {
-  if (m && 'revisions' in m) {
+export function presentedPin(m) {
+  if (m && Object.hasOwn(m, 'revisions')) {
     const revs = Array.isArray(m.revisions) ? m.revisions : [];
     return revs.length ? revs[revs.length - 1]?.version : null;
   }
@@ -97,27 +100,27 @@ export function presentedVersion(m) {
 }
 
 export class Budget {
-  constructor({ depth = LIMITS.depth, members = LIMITS.members } = {}) {
+  constructor({ depth = LIMITS.depth, pins = LIMITS.pins } = {}) {
     this.depth = depth;
-    this.members = members;
+    this.pins = pins;
     this.used = 0;
     this.walked = new Set();
     this.stopped = [];
   }
 
   allows(depth) {
-    return depth <= this.depth && this.used < this.members;
+    return depth <= this.depth && this.used < this.pins;
   }
 
   take(count) {
-    const granted = Math.max(0, Math.min(count, this.members - this.used));
+    const granted = Math.max(0, Math.min(count, this.pins - this.used));
     this.used += granted;
     return granted;
   }
 
   reason(depth) {
     if (depth > this.depth) return `the depth limit (${this.depth} levels of member collections) is reached`;
-    return `the limit of ${this.members} members resolved in one walk is reached`;
+    return `the limit of ${this.pins} pins resolved in one walk is reached`;
   }
 
   first(archiveId, id, ver) {

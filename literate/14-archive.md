@@ -35,9 +35,14 @@ The base URL
 ------------
 
 A reader may give the base URL with or without its final slash, or the
-address of `opensheaf.json` itself; both mean the folder. A relative
-address is resolved against the page (so that `../` names the folder
-above the explorer, see [the application](30-app.md)).
+address of a file in that folder: `opensheaf.json` itself, or a page of
+the archive's website such as `index.html`. All mean the folder. A last
+segment with an extension (a dot followed by a few letters or digits) is
+taken as a file and dropped; one without is taken as a folder whose
+final slash was left out. (A folder whose name has such an extension must
+be given with its final slash.) A relative address is resolved against
+the page (so that `../` names the folder above the explorer, see
+[the application](30-app.md)).
 
     // in the base URL of an archive:
     export function baseOf(url, relativeTo = globalThis.location?.href) {
@@ -45,17 +50,37 @@ above the explorer, see [the application](30-app.md)).
       u.hash = '';
       u.search = '';
       let s = u.href;
-      if (s.endsWith('/opensheaf.json')) s = s.slice(0, -'opensheaf.json'.length);
+      if (/\/[^/]*\.[A-Za-z0-9]{1,8}$/.test(u.pathname)) s = s.slice(0, s.lastIndexOf('/') + 1);
       return s.endsWith('/') ? s : s + '/';
+    }
+
+An address typed by a reader often lacks its scheme: `mgubi.org/papers/`,
+or `localhost:8000/papers/` for an archive served on the reader's own
+computer. Such an address is completed with `http:` for the reader's own
+computer (`localhost`, `127.0.0.1`, `[::1]`), where archives are served
+without TLS, and with `https:` otherwise. A host with a port
+(`localhost:8000`) looks like a scheme to the URL parser, which would
+read `localhost:8000/x` as the scheme `localhost:`; it is recognised
+first. An address with a scheme (`https://`, or any `name://`) is left as it is, and so is one that does not start
+with a host (a relative address such as `../`).
+
+    // in the base URL of an archive:
+    export function withScheme(given) {
+      const s = String(given).trim();
+      if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) return s;
+      const host = /^(\[[0-9a-f:.]+\]|[a-z0-9][a-z0-9.-]*)(:\d+)?(\/|$)/i.exec(s);
+      if (!host || !(host[2] || host[1].includes('.') || host[1].toLowerCase() === 'localhost')) return s;
+      const local = /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(host[1]);
+      return (local ? 'http://' : 'https://') + s;
     }
 
 The archive
 -----------
 
-Opening an archive reads its discovery document. The document is kept
-both parsed and as bytes (the verification checks it against its schema;
-nothing else needs the bytes, but they cost nothing). A document that is
-not a JSON object cannot be read further. The storage root defaults to
+Opening an archive reads its discovery document, which is kept parsed
+(the verification checks it against its schema in that form; the bytes
+stay in the answers kept by the HTTP client, while they are kept). A
+document that is not a JSON object cannot be read further. The storage root defaults to
 `ocfl/`, the convention of section 5, when the document does not name
 one, so that a damaged discovery document can still be explored and its
 problems reported.
@@ -155,7 +180,9 @@ the file's name, so that it is built by the same checked function.
 An inventory is read at the root of the object (the head) or in a
 version's folder. A file that is not an object with `versions` and
 `manifest` is not an inventory, and is refused here, so that the code
-reading inventories can rely on their shape.
+reading inventories can rely on their shape; so is an inventory with more
+than `LIMITS.versions` object versions, since reading its history would
+mean as many requests (section 15).
 
 The *pin* of an object version is the SHA-512 of the bytes of its
 inventory (section 10.2). As opensheaf-py does, the pin is compared with
@@ -179,6 +206,9 @@ about it.
       if (!inv || typeof inv !== 'object' || typeof inv.versions !== 'object' || !inv.versions ||
           typeof inv.manifest !== 'object' || !inv.manifest) {
         throw new FetchError('json', where, 'is not an OCFL inventory');
+      }
+      if (Object.keys(inv.versions).length > LIMITS.versions) {
+        throw new FetchError('too-large', where, `has more than ${LIMITS.versions} object versions`);
       }
       return inv;
     }

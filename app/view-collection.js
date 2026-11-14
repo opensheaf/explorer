@@ -4,7 +4,7 @@ import { rich } from './text.js';
 import { facts, chip, statusChip, section, jsonView, errorBox, loading, pages, elsewhere } from './ui.js';
 import { summary } from './summary.js';
 import { versionsOf, titleOf, creatorsOf, memberPins } from './versions.js';
-import { Budget, presentedVersion } from './resolve.js';
+import { Budget, presentedPin } from './resolve.js';
 import { explain, LIMITS } from './http.js';
 
 const KINDS = {
@@ -19,7 +19,7 @@ export async function showCollection(ctx, root, id, ver) {
   let s, shown, obj, dc, mem;
   try {
     s = await summary(ctx, id);
-    if (ver && !(ver in s.inv.versions)) throw new Error(`${id} has no object version ${ver}`);
+    if (ver && !Object.hasOwn(s.inv.versions, ver)) throw new Error(`${id} has no object version ${ver}`);
     shown = ver || s.inv.head;
     ({ obj, dc } = await a.descriptions(id, s.inv, shown, options));
     if (obj?.kind !== 'collection') {
@@ -28,7 +28,7 @@ export async function showCollection(ctx, root, id, ver) {
     }
     mem = await a.json(id, s.inv, shown, 'members.json', options);
   } catch (error) {
-    if (error?.kind !== 'aborted') wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
+    if (!options.signal?.aborted) wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
     return;
   }
   wait.remove();
@@ -43,9 +43,9 @@ export async function showCollection(ctx, root, id, ver) {
     budget = new Budget({ depth: Number(depth.value) });
     list.budget = budget;
     report.textContent = 'Resolving…';
-    await list.checkAll(true);
+    await list.checkAll(true, true);
     const counts = list.counts();
-    report.textContent = `${plural(budget.used, 'member')} resolved; their pins: ` +
+    report.textContent = `${plural(budget.used, 'pin')} resolved: ` +
       Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(', ') +
       (budget.stopped.length ? `. Stopped: ${[...new Set(budget.stopped)].join('; ')}.` : '.');
     run.disabled = false;
@@ -62,7 +62,7 @@ export async function showCollection(ctx, root, id, ver) {
         shown === s.inv.head ? [' ', chip('head', 'ok')] : null, ' ', chip(plural(members.length, 'member')))),
     description ? h('p', { class: 'abstract' }, rich(description)) : null,
     facts([
-      ['Kind', KINDS[mem?.type] || h('span', { class: 'bad' }, `no valid type (${String(mem?.type)})`)],
+      ['Kind', (Object.hasOwn(KINDS, String(mem?.type)) && KINDS[mem.type]) || h('span', { class: 'bad' }, `no valid type (${String(mem?.type)})`)],
       ['Order', mem?.order ? `${mem.order} (the rule by which tools place members; the list below is the order)` : null],
       ['Versions', versionsOf(s.inv).reverse().map((v) => [h('a', { href: pages.collection(id, v), class: v === shown ? 'current' : '' }, v), ' '])],
       ['Object', h('a', { href: pages.object(id, shown) }, 'descriptions, files and history of this collection')],
@@ -75,8 +75,8 @@ function memberList(ctx, home, members, level, budget, type) {
   const list = { budget, items: [], el: h('ol', { class: 'members' }) };
   list.items = members.map((m, k) => memberItem(ctx, home, m, k, level, list, type));
   list.el.append(...list.items.map((item) => item.el));
-  list.checkAll = async (deep) => {
-    await Promise.all(list.items.map((item) => item.check(deep)));
+  list.checkAll = async (deep, again = false) => {
+    await Promise.all(list.items.map((item) => item.check(deep, again)));
   };
   list.counts = () => {
     const counts = {};
@@ -91,16 +91,18 @@ function memberList(ctx, home, members, level, budget, type) {
 function memberItem(ctx, home, m, k, level, list, type) {
   const own = m?.archive === home.archiveId;
   const isCollection = m?.kind === 'collection';
-  const ver = presentedVersion(m);
+  const ver = presentedPin(m);
   const hash = (isCollection ? pages.collection : pages.object)(m?.id, ver);
   const href = own && home === ctx.archive ? hash : (typeof m?.archiveUrl === 'string' ? elsewhere(m.archiveUrl, hash) : null);
   const cite = m?.cite && typeof m.cite === 'object' ? m.cite : {};
   const results = h('div', { class: 'results' });
   const nested = h('div', { class: 'nested' });
   const statuses = [];
+  let sub = null;
   const item = { el: null, check: null, counts: () => {
     const c = {};
     for (const st of statuses) c[st] = (c[st] || 0) + 1;
+    for (const [k2, n] of Object.entries(sub?.counts() || {})) c[k2] = (c[k2] || 0) + n;
     return c;
   } };
   const pinList = memberPins(m || {});
@@ -113,15 +115,22 @@ function memberItem(ctx, home, m, k, level, list, type) {
         m?.follow === 'latest' ? [' ', chip('follows latest', ''), h('span', { class: 'muted small' }, ' (pinned at the head when the collection version was made)')] : null));
   const TONES = { verified: 'ok', mismatch: 'bad', unavailable: 'warn', removed: 'warn', invalid: 'bad' };
   let checking = null, resolved = false;
+  const reset = () => {
+    checking = null;
+    resolved = false;
+    statuses.length = 0;
+    sub = null;
+    marks.forEach((mark) => clear(mark));
+    clear(results);
+    clear(nested);
+    delete nested.dataset.open;
+  };
   const checkButton = h('button', { type: 'button', class: 'small', onclick: () => {
-    if (resolved) {
-      checking = null;
-      resolved = false;
-      statuses.length = 0;
-    }
+    if (resolved) reset();
     item.check(false);
   } }, 'Resolve');
-  item.check = (deep) => {
+  item.check = (deep, again = false) => {
+    if (again && resolved) reset();
     if (!checking) checking = resolveMember(deep);
     else if (deep) checking = checking.then(() => openNested(true));
     return checking;
@@ -130,7 +139,8 @@ function memberItem(ctx, home, m, k, level, list, type) {
   async function resolveMember(deep) {
     checkButton.disabled = true;
     verifiedAt = null;
-    if (!list.budget.allows(level) || !list.budget.take(1)) {
+    const granted = list.budget.allows(level) ? list.budget.take(pinList.length) : 0;
+    if (!granted) {
       list.budget.stopped.push(list.budget.reason(level));
       clear(results, h('p', { class: 'small muted' }, `Not resolved: ${list.budget.reason(level)}.`));
       checking = null;
@@ -140,11 +150,16 @@ function memberItem(ctx, home, m, k, level, list, type) {
     clear(results, loading('Resolving…'));
     const problems = [];
     for (const [i, p] of pinList.entries()) {
+      if (i >= granted) {
+        list.budget.stopped.push(list.budget.reason(level));
+        clear(marks[i], chip('not resolved', ''), h('span', { class: 'small muted' }, ` (${list.budget.reason(level)})`));
+        continue;
+      }
       let r;
       try {
         r = await ctx.resolver.confirm(m, p.version, p.pin, p.documentVersion, { signal: ctx.signal });
       } catch (error) {
-        if (error?.kind === 'aborted') return;
+        if (ctx.signal?.aborted) return;
         r = { status: 'unavailable', problems: [String(error?.message || error)], errors: [error] };
       }
       statuses.push(r.status);
@@ -167,9 +182,12 @@ function memberItem(ctx, home, m, k, level, list, type) {
             rich(d.withdrawal?.reason?.text || ''), type === 'selection' ? ' The revisions stay vetted by this selection (section 10.2).' : ''));
         }
       } catch (error) {
-        if (error?.kind !== 'aborted') results.append(h('p', { class: 'small muted' }, `Its description cannot be read: ${error?.detail || error?.message}`));
+        if (!ctx.signal?.aborted) results.append(h('p', { class: 'small muted' }, `Its description cannot be read: ${error?.detail || error?.message}`));
       }
-      if (isCollection) {
+      if (isCollection && level + 1 > list.budget.depth) {
+        if (deep) list.budget.stopped.push(list.budget.reason(level + 1));
+        results.append(h('p', { class: 'small muted' }, `Its members are not shown: ${list.budget.reason(level + 1)}.`));
+      } else if (isCollection) {
         const open = h('button', { type: 'button', class: 'small', onclick: () => { open.remove(); openNested(false); } }, 'Show its members');
         results.append(open);
         if (deep) {
@@ -197,21 +215,14 @@ function memberItem(ctx, home, m, k, level, list, type) {
     nested.dataset.open = 'yes';
     clear(nested, loading());
     try {
-      const inv = await verifiedAt.inventory(m.id, null, { signal: ctx.signal });
+      const inv = await verifiedAt.inventory(m.id, ver, { signal: ctx.signal });
       const mem = await verifiedAt.json(m.id, inv, ver, 'members.json', { signal: ctx.signal });
       const members = Array.isArray(mem?.members) ? mem.members : [];
-      const sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
-      sub.budget = list.budget;
+      sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
       clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'A catalogue'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
       if (deep) await sub.checkAll(true);
-      const counts = item.counts;
-      item.counts = () => {
-        const c = counts();
-        for (const [k2, n] of Object.entries(sub.counts())) c[k2] = (c[k2] || 0) + n;
-        return c;
-      };
     } catch (error) {
-      if (error?.kind !== 'aborted') clear(nested, errorBox('Its members cannot be read.', error));
+      if (!ctx.signal?.aborted) clear(nested, errorBox('Its members cannot be read.', error));
     }
   }
   item.el = h('li', { class: 'member' },

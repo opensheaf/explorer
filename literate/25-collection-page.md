@@ -28,7 +28,7 @@ The module is `app/view-collection.js`.
     import { facts, chip, statusChip, section, jsonView, errorBox, loading, pages, elsewhere } from './ui.js';
     import { summary } from './summary.js';
     import { versionsOf, titleOf, creatorsOf, memberPins } from './versions.js';
-    import { Budget, presentedVersion } from './resolve.js';
+    import { Budget, presentedPin } from './resolve.js';
     import { explain, LIMITS } from './http.js';
 
     <<show a collection>>
@@ -43,7 +43,10 @@ Showing a collection
 The collection's summary gives its versions; the version shown has its
 descriptions and its member list read. The two kinds of collection are
 explained in a sentence each, since they differ in what a pin means
-(section 10.1). The controls resolve every member, and follow member
+(section 10.1); the type is the archive's, and is looked up only among
+the two known (`Object.hasOwn`), so that a type `constructor` is not
+explained by a JavaScript function. A failure to read is shown unless the
+page itself was left, as on [the page of an object](24-object-page.md). The controls resolve every member, and follow member
 collections to the depth chosen; one budget is shared by everything
 resolved on the page.
 
@@ -60,7 +63,7 @@ resolved on the page.
       let s, shown, obj, dc, mem;
       try {
         s = await summary(ctx, id);
-        if (ver && !(ver in s.inv.versions)) throw new Error(`${id} has no object version ${ver}`);
+        if (ver && !Object.hasOwn(s.inv.versions, ver)) throw new Error(`${id} has no object version ${ver}`);
         shown = ver || s.inv.head;
         ({ obj, dc } = await a.descriptions(id, s.inv, shown, options));
         if (obj?.kind !== 'collection') {
@@ -69,7 +72,7 @@ resolved on the page.
         }
         mem = await a.json(id, s.inv, shown, 'members.json', options);
       } catch (error) {
-        if (error?.kind !== 'aborted') wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
+        if (!options.signal?.aborted) wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
         return;
       }
       wait.remove();
@@ -87,7 +90,7 @@ resolved on the page.
             shown === s.inv.head ? [' ', chip('head', 'ok')] : null, ' ', chip(plural(members.length, 'member')))),
         description ? h('p', { class: 'abstract' }, rich(description)) : null,
         facts([
-          ['Kind', KINDS[mem?.type] || h('span', { class: 'bad' }, `no valid type (${String(mem?.type)})`)],
+          ['Kind', (Object.hasOwn(KINDS, String(mem?.type)) && KINDS[mem.type]) || h('span', { class: 'bad' }, `no valid type (${String(mem?.type)})`)],
           ['Order', mem?.order ? `${mem.order} (the rule by which tools place members; the list below is the order)` : null],
           ['Versions', versionsOf(s.inv).reverse().map((v) => [h('a', { href: pages.collection(id, v), class: v === shown ? 'current' : '' }, v), ' '])],
           ['Object', h('a', { href: pages.object(id, shown) }, 'descriptions, files and history of this collection')],
@@ -99,7 +102,10 @@ resolved on the page.
 Resolving every member resolves them in the order of the list, a few at a
 time (the HTTP client limits the requests), and, with a depth above 1,
 opens the member collections and resolves their members too. A new
-budget is made for each run; when it stops the walk, the page says why.
+budget is made for each run, and each run resolves every member again,
+also those resolved before (by hand, or by an earlier run), so that its
+counts are those of the run; when the budget stops the walk, the page
+says why.
 
     // in the controls of resolution:
     let budget = new Budget();
@@ -111,9 +117,9 @@ budget is made for each run; when it stops the walk, the page says why.
       budget = new Budget({ depth: Number(depth.value) });
       list.budget = budget;
       report.textContent = 'Resolving…';
-      await list.checkAll(true);
+      await list.checkAll(true, true);
       const counts = list.counts();
-      report.textContent = `${plural(budget.used, 'member')} resolved; their pins: ` +
+      report.textContent = `${plural(budget.used, 'pin')} resolved: ` +
         Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(', ') +
         (budget.stopped.length ? `. Stopped: ${[...new Set(budget.stopped)].join('; ')}.` : '.');
       run.disabled = false;
@@ -132,8 +138,8 @@ its members' views, can check them all, and counts their pins by status.
       const list = { budget, items: [], el: h('ol', { class: 'members' }) };
       list.items = members.map((m, k) => memberItem(ctx, home, m, k, level, list, type));
       list.el.append(...list.items.map((item) => item.el));
-      list.checkAll = async (deep) => {
-        await Promise.all(list.items.map((item) => item.check(deep)));
+      list.checkAll = async (deep, again = false) => {
+        await Promise.all(list.items.map((item) => item.check(deep, again)));
       };
       list.counts = () => {
         const counts = {};
@@ -158,16 +164,18 @@ once resolved, can be opened in place.
     function memberItem(ctx, home, m, k, level, list, type) {
       const own = m?.archive === home.archiveId;
       const isCollection = m?.kind === 'collection';
-      const ver = presentedVersion(m);
+      const ver = presentedPin(m);
       const hash = (isCollection ? pages.collection : pages.object)(m?.id, ver);
       const href = own && home === ctx.archive ? hash : (typeof m?.archiveUrl === 'string' ? elsewhere(m.archiveUrl, hash) : null);
       const cite = m?.cite && typeof m.cite === 'object' ? m.cite : {};
       const results = h('div', { class: 'results' });
       const nested = h('div', { class: 'nested' });
       const statuses = [];
+      let sub = null;
       const item = { el: null, check: null, counts: () => {
         const c = {};
         for (const st of statuses) c[st] = (c[st] || 0) + 1;
+        for (const [k2, n] of Object.entries(sub?.counts() || {})) c[k2] = (c[k2] || 0) + n;
         return c;
       } };
       <<the pins of a member, as recorded>>
@@ -207,26 +215,40 @@ has a place for its status.
 Resolving the member confirms each pin with the resolver, and marks it:
 verified (and where: a mirror, when the archive failed), mismatch,
 unavailable or removed, with the reasons at each source tried and, for a
-failure to read, the explanation of [the HTTP client](10-http.md). Then
-the member is described from the archive where its pin was verified: its
-title, its document version and, from its head, its status; a withdrawal
-is shown with its date and reason, as coming from the member's archive.
-A collection member gets a button to open its members, unless the depth
-limit is reached. With `deep`, the members of a member collection are
-opened and resolved at once.
+failure to read, the explanation of [the HTTP client](10-http.md). Each
+pin is taken from the budget, which counts pins, not members: a member
+of a selection may pin many revisions, each costing requests. Pins the
+budget does not grant are marked as not resolved. Then the member is
+described from the archive where its pin was verified: its title, its
+document version and, from its head, its status; a withdrawal is shown
+with its date and reason, as coming from the member's archive. A
+collection member gets a button to open its members, unless the depth
+limit is reached, in which case the page says so instead. With `deep`,
+the members of a member collection are opened and resolved at once.
+
+A member resolved before is resolved again by the button "Resolve again",
+and by a run of "Resolve and check all pins" (`again`): its marks, its
+counts and its members opened are reset first.
 
     // in resolve a member:
     const TONES = { verified: 'ok', mismatch: 'bad', unavailable: 'warn', removed: 'warn', invalid: 'bad' };
     let checking = null, resolved = false;
+    const reset = () => {
+      checking = null;
+      resolved = false;
+      statuses.length = 0;
+      sub = null;
+      marks.forEach((mark) => clear(mark));
+      clear(results);
+      clear(nested);
+      delete nested.dataset.open;
+    };
     const checkButton = h('button', { type: 'button', class: 'small', onclick: () => {
-      if (resolved) {
-        checking = null;
-        resolved = false;
-        statuses.length = 0;
-      }
+      if (resolved) reset();
       item.check(false);
     } }, 'Resolve');
-    item.check = (deep) => {
+    item.check = (deep, again = false) => {
+      if (again && resolved) reset();
       if (!checking) checking = resolveMember(deep);
       else if (deep) checking = checking.then(() => openNested(true));
       return checking;
@@ -235,7 +257,8 @@ opened and resolved at once.
     async function resolveMember(deep) {
       checkButton.disabled = true;
       verifiedAt = null;
-      if (!list.budget.allows(level) || !list.budget.take(1)) {
+      const granted = list.budget.allows(level) ? list.budget.take(pinList.length) : 0;
+      if (!granted) {
         list.budget.stopped.push(list.budget.reason(level));
         clear(results, h('p', { class: 'small muted' }, `Not resolved: ${list.budget.reason(level)}.`));
         checking = null;
@@ -245,11 +268,16 @@ opened and resolved at once.
       clear(results, loading('Resolving…'));
       const problems = [];
       for (const [i, p] of pinList.entries()) {
+        if (i >= granted) {
+          list.budget.stopped.push(list.budget.reason(level));
+          clear(marks[i], chip('not resolved', ''), h('span', { class: 'small muted' }, ` (${list.budget.reason(level)})`));
+          continue;
+        }
         let r;
         try {
           r = await ctx.resolver.confirm(m, p.version, p.pin, p.documentVersion, { signal: ctx.signal });
         } catch (error) {
-          if (error?.kind === 'aborted') return;
+          if (ctx.signal?.aborted) return;
           r = { status: 'unavailable', problems: [String(error?.message || error)], errors: [error] };
         }
         statuses.push(r.status);
@@ -272,9 +300,12 @@ opened and resolved at once.
               rich(d.withdrawal?.reason?.text || ''), type === 'selection' ? ' The revisions stay vetted by this selection (section 10.2).' : ''));
           }
         } catch (error) {
-          if (error?.kind !== 'aborted') results.append(h('p', { class: 'small muted' }, `Its description cannot be read: ${error?.detail || error?.message}`));
+          if (!ctx.signal?.aborted) results.append(h('p', { class: 'small muted' }, `Its description cannot be read: ${error?.detail || error?.message}`));
         }
-        if (isCollection) {
+        if (isCollection && level + 1 > list.budget.depth) {
+          if (deep) list.budget.stopped.push(list.budget.reason(level + 1));
+          results.append(h('p', { class: 'small muted' }, `Its members are not shown: ${list.budget.reason(level + 1)}.`));
+        } else if (isCollection) {
           const open = h('button', { type: 'button', class: 'small', onclick: () => { open.remove(); openNested(false); } }, 'Show its members');
           results.append(open);
           if (deep) {
@@ -288,9 +319,11 @@ opened and resolved at once.
       resolved = true;
     }
 
-The members of a member collection are read at the version presented,
-from the archive where its pin was verified, and listed like the
-collection's own, one level deeper. A collection already walked on this
+The members of a member collection are read at the pin presented, from
+the archive where that pin was verified, through the inventory copy of
+the pinned version, whose digest is the pin just checked (not through the
+member's root inventory, which the pin does not fix and which may have
+changed since), and listed like the collection's own, one level deeper. A collection already walked on this
 page is not walked again: pins cannot form cycles, but the same
 collection can be reached twice.
 
@@ -309,20 +342,13 @@ collection can be reached twice.
       nested.dataset.open = 'yes';
       clear(nested, loading());
       try {
-        const inv = await verifiedAt.inventory(m.id, null, { signal: ctx.signal });
+        const inv = await verifiedAt.inventory(m.id, ver, { signal: ctx.signal });
         const mem = await verifiedAt.json(m.id, inv, ver, 'members.json', { signal: ctx.signal });
         const members = Array.isArray(mem?.members) ? mem.members : [];
-        const sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
-        sub.budget = list.budget;
+        sub = memberList(ctx, verifiedAt, members, level + 1, list.budget, mem?.type);
         clear(nested, h('p', { class: 'small muted' }, `${mem?.type === 'selection' ? 'A selection' : 'A catalogue'} of ${plural(members.length, 'member')}, at ${ver}:`), sub.el);
         if (deep) await sub.checkAll(true);
-        const counts = item.counts;
-        item.counts = () => {
-          const c = counts();
-          for (const [k2, n] of Object.entries(sub.counts())) c[k2] = (c[k2] || 0) + n;
-          return c;
-        };
       } catch (error) {
-        if (error?.kind !== 'aborted') clear(nested, errorBox('Its members cannot be read.', error));
+        if (!ctx.signal?.aborted) clear(nested, errorBox('Its members cannot be read.', error));
       }
     }

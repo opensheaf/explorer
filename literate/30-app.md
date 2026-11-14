@@ -86,7 +86,7 @@ The module
 
     // in app/main.js:
     import { Http } from './http.js';
-    import { Archive } from './archive.js';
+    import { Archive, withScheme } from './archive.js';
     import { Resolver } from './resolve.js';
     import { fetchSchemas } from './schema.js';
     import { h, append, clear } from './dom.js';
@@ -171,15 +171,17 @@ Without an archive, the explorer shows a form for its address, an
 example (the first OpenSheaf archive, the papers of the editor of the
 specification), the three ways of using the explorer, and, if an address was
 given and could not be read, why, with the explanation of cross-origin
-requests and the advice to self-host.
+requests and the advice to self-host. The visible label of the address is
+the label of its field (`for`), so that a screen reader announces it and
+a click on it focuses the field.
 
     // in the start page:
     const EXAMPLE = 'https://mgubi.org/papers/';
     const EXAMPLE_NAME = 'Papers of Massimiliano Gubinelli';
 
     function showStart(main, error = null, given = '') {
-      const url = h('input', { type: 'text', inputmode: 'url', name: 'url', required: true, value: given || null,
-                               placeholder: 'https://example.org/papers/', 'aria-label': 'Address of an archive' });
+      const url = h('input', { type: 'text', inputmode: 'url', name: 'url', id: 'start-url', required: true, value: given || null,
+                               placeholder: 'https://example.org/papers/' });
       const collection = h('input', { type: 'text', name: 'collection', pattern: '[a-z0-9]+(-[a-z0-9]+)*',
                                       placeholder: 'collection identifier (optional)', 'aria-label': 'Collection' });
       const here = location.origin + location.pathname;
@@ -191,7 +193,7 @@ requests and the advice to self-host.
             'collections across archives, and the checks of the specification, from the files any reader can fetch.')),
         error ? errorBox(`Cannot open ${given}:`, error) : null,
         h('form', { class: 'open', method: 'get', action: '' },
-          h('label', {}, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
+          h('label', { for: 'start-url' }, 'The address of an archive (its base URL, where opensheaf.json is), or of an object version'), url,
           collection, h('button', { type: 'submit', class: 'primary' }, 'Explore')),
         h('p', { class: 'example' }, 'For example, the first OpenSheaf archive: ',
           h('a', { href: elsewhere(EXAMPLE) }, h('strong', {}, EXAMPLE_NAME)),
@@ -214,9 +216,14 @@ The pages and the fragment
 
 The fragment names the page; the identifiers and versions it names are
 checked before anything is fetched. Each new page aborts the requests of
-the one before, and gets a fresh signal. Summaries are kept across pages;
-those whose loading was aborted are forgotten (see
-[the summaries](22-pieces.md)), and read again when needed.
+the one before, and gets a fresh signal; the new page starts at once,
+while the old one's requests are still being aborted. Requests and
+summaries that the old page had started are therefore never handed to
+the new one: a request shared with the new page goes on, one used only by
+the old page is aborted and forgotten (see [the HTTP client](10-http.md)),
+and a summary being loaded for the old page is replaced by one for the
+new page (see [the summaries](22-pieces.md)). Summaries loaded are kept
+across pages.
 
     // in the pages and the fragment:
     let controller = null;
@@ -255,14 +262,16 @@ collection or object version named by the query becomes the fragment, if
 the fragment names no page yet. Without it, the archive one folder up is
 tried, which is how a self-hosted copy finds its archive; failing that,
 the start page is shown. An address typed without its scheme
-(`mgubi.org/papers/`) is taken as `https:`.
+(`mgubi.org/papers/`, `localhost:8000/papers/`) is completed as
+[the base URL](14-archive.md) explains: `http:` for the reader's own
+computer, `https:` otherwise.
 
     // in starting the explorer:
     async function start() {
       const main = document.getElementById('main');
       const params = new URLSearchParams(location.search);
       let given = params.get('url');
-      if (given && !/^[a-z][a-z0-9+.-]*:/i.test(given) && /^[^/]+\.[^/]+/.test(given)) given = 'https://' + given;
+      if (given) given = withScheme(given);
       if (params.has('open')) return showStart(main);
       clear(main, loading('Reading the archive…'));
       let found;

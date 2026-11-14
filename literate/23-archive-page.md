@@ -15,6 +15,7 @@ The module is `app/view-archive.js`.
     import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere } from './ui.js';
     import { summary } from './summary.js';
     import { memberPins } from './versions.js';
+    import { LIMITS } from './http.js';
 
     <<the facts of the discovery document>>
 
@@ -83,12 +84,15 @@ section 10.2) and their cached citations (`cite`), so that the list is
 readable before anything else is fetched. Then the summary of every
 object is read, a few at a time, and each row is completed with the
 title, creators and current version as the object's own descriptions
-state them; the citations of the collection are not authoritative.
+state them; the citations of the collection are not authoritative. A
+discovery document listing more than `LIMITS.objects` objects has only
+the first of them listed, and the page says so (section 15).
 
     // in the list of objects:
     function objectList(ctx) {
       const a = ctx.archive;
-      const entries = a.objects();
+      const all = a.objects();
+      const entries = all.slice(0, LIMITS.objects);
       const rows = new Map();
       const list = h('ol', { class: 'objects' });
       const status = h('p', { class: 'muted small' });
@@ -100,12 +104,17 @@ state them; the citations of the collection are not authoritative.
       }
       <<order the list by the main collection>>
       <<complete the rows with the summaries>>
-      return section('Objects', controls, status, list);
+      const cut = all.length > entries.length
+        ? h('p', { class: 'alert warn' }, `The discovery document lists ${all.length} objects; only the first ${entries.length} are shown.`) : null;
+      return section('Objects', controls, cut, status, list);
     }
 
 A row shows the title and creators (once known), the identifier, the
 kind, the status, the head, the current document version, and the date
-of first appearance. Its text, for the search, is kept up to date with
+of first appearance. Until the object's own summary is read, a member of
+the main collection shows its cached citation and the version the
+collection pins, labelled as such ("pinned"), which may be earlier than
+the head. Its text, for the search, is kept up to date with
 what it shows.
 
     // in the list of objects:
@@ -124,7 +133,8 @@ what it shows.
       const row = { el, entry, text: entry.id, set(s) {
         title.replaceChildren(...rich(s.title || entry.id));
         creators.textContent = s.creators?.length ? s.creators.join('; ') : '';
-        meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null, `head ${s.head ?? entry.head}`,
+        meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null,
+                            s.pinned ? `pinned ${s.pinned}` : `head ${s.head ?? entry.head}`,
                             s.year ? String(s.year) : null].filter(Boolean).join(' · ');
         row.text = [entry.id, plain(s.title || ''), ...(s.creators || [])].join(' ');
       } };
@@ -181,7 +191,8 @@ document.
           if (!row) continue;
           list.prepend(row.el);
           if (!row.loaded && m.cite) {
-            row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, head: memberPins(m)[0]?.version });
+            const pins = memberPins(m);
+            row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, pinned: pins[pins.length - 1]?.version });
           }
         }
         filter();

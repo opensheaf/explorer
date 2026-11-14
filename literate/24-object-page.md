@@ -40,7 +40,10 @@ The summary of the object gives its inventory, the `object.json` of every
 version, its history and its current version. The two descriptions of the
 version shown, and those of the entries of the history (for the table of
 document versions), are read next. Notes name files of the same object
-version, so their addresses are made from the version they belong to.
+version, so their addresses are made from the version they belong to. A failure is shown, unless the page itself was
+left (its own signal aborted): then nothing is drawn, since the page is
+gone. Whether the page was left is asked of its signal, not read from
+the kind of the error, so that a page is never left saying "Loading…".
 
     // in show an object:
     export async function showObject(ctx, root, id, ver) {
@@ -50,12 +53,12 @@ version, so their addresses are made from the version they belong to.
       let s, shown, descs;
       try {
         s = await summary(ctx, id);
-        if (ver && !(ver in s.inv.versions)) throw new Error(`${id} has no object version ${ver}`);
+        if (ver && !Object.hasOwn(s.inv.versions, ver)) throw new Error(`${id} has no object version ${ver}`);
         shown = ver || s.shown;
         descs = new Map(await Promise.all([...new Set([shown, ...s.hist])].map(async (v) =>
           [v, await a.descriptions(id, s.inv, v, options).catch(() => ({ obj: s.objOf(v), dc: null }))])));
       } catch (error) {
-        if (error?.kind !== 'aborted') wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
+        if (!options.signal?.aborted) wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
         return;
       }
       wait.remove();

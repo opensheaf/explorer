@@ -4,6 +4,7 @@ import { rich, plain } from './text.js';
 import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere } from './ui.js';
 import { summary } from './summary.js';
 import { memberPins } from './versions.js';
+import { LIMITS } from './http.js';
 
 function archiveFacts(a) {
   const d = a.disc;
@@ -35,7 +36,8 @@ function archiveFacts(a) {
 
 function objectList(ctx) {
   const a = ctx.archive;
-  const entries = a.objects();
+  const all = a.objects();
+  const entries = all.slice(0, LIMITS.objects);
   const rows = new Map();
   const list = h('ol', { class: 'objects' });
   const status = h('p', { class: 'muted small' });
@@ -79,7 +81,8 @@ function objectList(ctx) {
         if (!row) continue;
         list.prepend(row.el);
         if (!row.loaded && m.cite) {
-          row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, head: memberPins(m)[0]?.version });
+          const pins = memberPins(m);
+          row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, pinned: pins[pins.length - 1]?.version });
         }
       }
       filter();
@@ -102,7 +105,9 @@ function objectList(ctx) {
       if (status.dataset.loaded) status.textContent += status.dataset.loaded;
     });
   }
-  return section('Objects', controls, status, list);
+  const cut = all.length > entries.length
+    ? h('p', { class: 'alert warn' }, `The discovery document lists ${all.length} objects; only the first ${entries.length} are shown.`) : null;
+  return section('Objects', controls, cut, status, list);
 }
 
 function objectRow(entry) {
@@ -120,7 +125,8 @@ function objectRow(entry) {
   const row = { el, entry, text: entry.id, set(s) {
     title.replaceChildren(...rich(s.title || entry.id));
     creators.textContent = s.creators?.length ? s.creators.join('; ') : '';
-    meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null, `head ${s.head ?? entry.head}`,
+    meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null,
+                        s.pinned ? `pinned ${s.pinned}` : `head ${s.head ?? entry.head}`,
                         s.year ? String(s.year) : null].filter(Boolean).join(' · ');
     row.text = [entry.id, plain(s.title || ''), ...(s.creators || [])].join(' ');
   } };

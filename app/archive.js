@@ -8,8 +8,17 @@ export function baseOf(url, relativeTo = globalThis.location?.href) {
   u.hash = '';
   u.search = '';
   let s = u.href;
-  if (s.endsWith('/opensheaf.json')) s = s.slice(0, -'opensheaf.json'.length);
+  if (/\/[^/]*\.[A-Za-z0-9]{1,8}$/.test(u.pathname)) s = s.slice(0, s.lastIndexOf('/') + 1);
   return s.endsWith('/') ? s : s + '/';
+}
+
+export function withScheme(given) {
+  const s = String(given).trim();
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) return s;
+  const host = /^(\[[0-9a-f:.]+\]|[a-z0-9][a-z0-9.-]*)(:\d+)?(\/|$)/i.exec(s);
+  if (!host || !(host[2] || host[1].includes('.') || host[1].toLowerCase() === 'localhost')) return s;
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(host[1]);
+  return (local ? 'http://' : 'https://') + s;
 }
 
 export class Archive {
@@ -92,6 +101,9 @@ export class Archive {
     if (!inv || typeof inv !== 'object' || typeof inv.versions !== 'object' || !inv.versions ||
         typeof inv.manifest !== 'object' || !inv.manifest) {
       throw new FetchError('json', where, 'is not an OCFL inventory');
+    }
+    if (Object.keys(inv.versions).length > LIMITS.versions) {
+      throw new FetchError('too-large', where, `has more than ${LIMITS.versions} object versions`);
     }
     return inv;
   }

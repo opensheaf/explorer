@@ -130,19 +130,32 @@ of the version presented: the current version of a document, the head of
 a collection (section 7.3: "landing pages, indexes and citations use the
 current version, not the head"). This is its *summary*, read once per
 object and kept by the explorer's context (`ctx`, see
-[the application](30-app.md)). A summary that fails to load is forgotten,
-so that it is tried again on the next visit.
+[the application](30-app.md)).
+
+A summary is loaded with the signal of the page that asks for it, so that
+leaving the page stops it. A summary being loaded is therefore shared only
+with callers of the same page (the same signal): when the reader moves to
+another page, the old page's signal is aborted and the new page starts at
+once, before the old loading has even failed; it must not be handed that
+doomed loading, and starts its own. The requests are not made twice: the
+[HTTP client](10-http.md) shares those in progress, and aborts one only
+when all its callers have left. A summary loaded is kept for the session;
+one that fails, or is aborted, is forgotten, so that it is tried again on
+the next visit.
 
     // in app/summary.js:
     import { titleOf, creatorsOf, dateOf, rolesOf } from './versions.js';
 
     export function summary(ctx, id) {
-      if (!ctx.summaries.has(id)) {
-        const loading = load(ctx.archive, id, { signal: ctx.signal });
-        ctx.summaries.set(id, loading);
-        loading.catch(() => ctx.summaries.delete(id));
-      }
-      return ctx.summaries.get(id);
+      const known = ctx.summaries.get(id);
+      if (known && (known.done || known.signal === ctx.signal)) return known.loading;
+      const entry = { signal: ctx.signal, done: false };
+      entry.loading = load(ctx.archive, id, { signal: ctx.signal });
+      ctx.summaries.set(id, entry);
+      entry.loading.then(() => { entry.done = true; }, () => {
+        if (ctx.summaries.get(id) === entry) ctx.summaries.delete(id);
+      });
+      return entry.loading;
     }
 
     async function load(archive, id, options) {
