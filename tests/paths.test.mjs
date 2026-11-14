@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { logicalPathProblem, contentPathProblem, under, isObjectId, isVersion } from '../app/paths.js';
+import { baseOf, withScheme } from '../app/archive.js';
 
 test('logical paths (sections 7.1 and 15)', () => {
   assert.equal(logicalPathProblem('figures/walk.pdf'), null);
@@ -28,6 +29,20 @@ test('addresses are built under the root, encoded', () => {
   assert.throws(() => under(root, ['..', 'x']), /segment/);
   assert.throws(() => under(root, ['a/b']), /has a \//);
   assert.throws(() => under(root, ['a\\b']), /backslash/);
+});
+
+test('addresses typed by a reader', () => {
+  assert.equal(withScheme('mgubi.org/papers/'), 'https://mgubi.org/papers/');
+  assert.equal(withScheme('localhost:8000/x'), 'http://localhost:8000/x');
+  assert.equal(withScheme('127.0.0.1:8000/'), 'http://127.0.0.1:8000/');
+  assert.equal(withScheme('example.org:8443/a/'), 'https://example.org:8443/a/');
+  assert.equal(withScheme('https://example.org/a/'), 'https://example.org/a/');
+  assert.equal(withScheme('../'), '../');
+  const page = 'https://opensheaf.org/explorer/';
+  assert.equal(baseOf('https://example.org/papers/index.html', page), 'https://example.org/papers/');
+  assert.equal(baseOf('https://example.org/papers/opensheaf.json', page), 'https://example.org/papers/');
+  assert.equal(baseOf('https://example.org/papers', page), 'https://example.org/papers/');
+  assert.equal(baseOf('../', page), 'https://opensheaf.org/');
 });
 
 test('identifiers and versions', () => {

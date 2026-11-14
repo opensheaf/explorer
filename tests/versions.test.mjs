@@ -1,7 +1,7 @@
 // Generated from literate/70-tests.md by tools/tangle.py: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins } from '../app/versions.js';
+import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins, filesOf } from '../app/versions.js';
 
 function make(versions) {
   const inv = { head: `v${versions.length}`, manifest: {}, versions: {} };
@@ -57,6 +57,27 @@ test('the rules of section 7.3', () => {
     'v3 history does not list each document version once',
     'v4 lacks the history of earlier versions',
   ]);
+});
+
+test('a description-only version may add the file of the licence terms (sections 7.3 and 9)', () => {
+  const { inv, objOf } = make([
+    { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+    { obj: { documentVersion: 1, licence: { path: 'LICENCE.txt', mediaType: 'text/plain' } }, files: { 'a.tex': 'a1', 'LICENCE.txt': 'l1' } },
+  ]);
+  assert.deepEqual(documentVersionErrors(inv, objOf), []);
+  assert.equal(rolesOf(inv, objOf).v2, 'description');
+});
+
+test('logical paths named like inherited properties', () => {
+  let { inv, objOf } = make([
+    { obj: { documentVersion: 1, sourcesMissing: { text: 'lost' } }, files: { 'p.pdf': 'p1' } },
+    { obj: { documentVersion: 1, mainSource: 'a.tex' }, files: { 'p.pdf': 'p1', 'a.tex': 'a1', constructor: 'c1' } },
+  ]);
+  assert.deepEqual(documentVersionErrors(inv, objOf), []);
+  ({ inv } = make([{ obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } }]));
+  inv.versions.v1.state = JSON.parse('{"x1": ["__proto__"], "a1": ["a.tex"]}');
+  assert.deepEqual(Object.keys(filesOf(inv, 'v1')).sort(), ['__proto__', 'a.tex']);
+  assert.equal(filesOf(inv, 'v1').toString, undefined);
 });
 
 test('the pins of members', () => {

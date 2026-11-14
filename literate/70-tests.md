@@ -398,6 +398,195 @@ The tests themselves:
       assert.ok(!same([1, 2], [2, 1]));
     });
 
+Requests
+--------
+
+The HTTP client is tested with a `fetch` that answers after a delay and
+honours aborts, as a slow server would, and with a real server in Node
+for the time limits, which concern the body of an answer as it arrives.
+
+    // in tests/http.test.mjs:
+    import { test } from 'node:test';
+    import assert from 'node:assert/strict';
+    import { createServer } from 'node:http';
+    import { Http, LIMITS } from '../app/http.js';
+    import { Archive } from '../app/archive.js';
+    import { summary } from '../app/summary.js';
+    import { diskFetch, ORIGIN } from './disk.mjs';
+
+    function slowFetch(ms, { log = [] } = {}) {
+      const disk = diskFetch({ log });
+      return (url, init = {}) => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => disk(url, init).then(resolve, reject), ms);
+        init.signal?.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(new DOMException('aborted', 'AbortError'));
+        });
+      });
+    }
+
+    function serve(handler) {
+      return new Promise((resolve) => {
+        const server = createServer(handler).listen(0, '127.0.0.1', () => {
+          resolve({ url: `http://127.0.0.1:${server.address().port}/`,
+                    close: () => { server.closeAllConnections(); server.close(); } });
+        });
+      });
+    }
+
+    <<tests of requests>>
+
+A request kept by the client is shared by its callers, and does not
+depend on the first one's signal: when the first caller leaves, the
+others still get the answer; when every caller has left, the request is
+aborted and forgotten, and a caller arriving just after (the next page,
+which starts while the old one is aborted) gets a request of its own.
+The same holds for summaries, which the pages load with their signals.
+
+    // in tests of requests:
+    test('a kept request outlives the caller that started it', async () => {
+      const log = [];
+      const http = new Http({ fetch: slowFetch(30, { log }) });
+      const url = ORIGIN + 'archive/opensheaf.json';
+      const first = new AbortController(), second = new AbortController();
+      const a = http.cached(url, { signal: first.signal });
+      const b = http.cached(url, { signal: second.signal });
+      first.abort();
+      await assert.rejects(a, { kind: 'aborted' });
+      assert.ok((await b).length > 0);
+      assert.equal(log.length, 1);
+    });
+
+    test('a request whose callers have all left is not handed to the next', async () => {
+      const http = new Http({ fetch: slowFetch(30) });
+      const url = ORIGIN + 'archive/opensheaf.json';
+      const old = new AbortController();
+      const a = http.cached(url, { signal: old.signal });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      old.abort();
+      const b = http.cached(url, { signal: new AbortController().signal });
+      await assert.rejects(a, { kind: 'aborted' });
+      assert.ok((await b).length > 0);
+    });
+
+    test('a summary loading for a page left is not handed to the next page', async () => {
+      const http = new Http({ fetch: slowFetch(20) });
+      const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map() };
+      const page1 = new AbortController();
+      ctx.signal = page1.signal;
+      const a = summary(ctx, 'alpha');
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      page1.abort();
+      ctx.signal = new AbortController().signal;
+      const s = await summary(ctx, 'alpha');
+      assert.equal(s.id, 'alpha');
+      await assert.rejects(a, { kind: 'aborted' });
+      assert.equal(await summary(ctx, 'alpha'), s);
+    });
+
+The answers kept are bounded: past the limit, the least recently used
+are forgotten.
+
+    // in tests of requests:
+    test('the answers kept are bounded', async () => {
+      const http = new Http({ fetch: diskFetch(), cacheLimit: 10_000 });   // the inventories are 4 to 10 kB
+      const url = (id) => `${ORIGIN}archive/ocfl/${id}/inventory.json`;
+      for (const id of ['alpha', 'beta', 'gamma']) await http.cached(url(id));
+      assert.ok(http.cacheBytes <= 10_000);
+      assert.ok(!http.cache.has(url('alpha')));
+      assert.ok(http.cache.has(url('beta')) && http.cache.has(url('gamma')));
+    });
+
+The time limits: a server that sends a body slowly but steadily, for
+longer than the time limit, is read whole, since the limit is on the
+headers and then on silence; one that stops sending is stopped by the
+limit on silence.
+
+    // in tests of requests:
+    test('a slow, steady body is read; a stalled one times out', async () => {
+      const server = await serve((req, res) => {
+        res.writeHead(200, { 'content-length': String(20 * 1024) });
+        let n = 0;
+        const timer = setInterval(() => {
+          if (req.url === '/stall' && n === 2) return clearInterval(timer);
+          res.write(Buffer.alloc(1024));
+          if (++n === 20) {
+            clearInterval(timer);
+            res.end();
+          }
+        }, 40);
+        res.on('close', () => clearInterval(timer));
+      });
+      try {
+        const http = new Http({ timeout: 300, stall: 300 });
+        const bytes = await http.request(server.url + 'steady', { limit: LIMITS.file });
+        assert.equal(bytes.length, 20 * 1024);
+        await assert.rejects(http.request(server.url + 'stall', { limit: LIMITS.file }),
+          { kind: 'timeout', detail: /stalled/ });
+      } finally {
+        server.close();
+      }
+    });
+
+A busy server (503) is tried again after a pause, which holds no place in
+the pool: another request goes through meanwhile; a request cancelled
+during its pause stops at once.
+
+    // in tests of requests:
+    test('a pause before trying again holds no place, and is cancelled at once', async () => {
+      const fetch = async (url) => new Response(url.endsWith('busy') ? 'busy' : 'ok', { status: url.endsWith('busy') ? 503 : 200 });
+      const http = new Http({ fetch, concurrency: 1 });
+      const controller = new AbortController();
+      const busy = http.request('http://example.org/busy', { signal: controller.signal });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const started = Date.now();
+      assert.equal(new TextDecoder().decode(await http.request('http://example.org/ok')), 'ok');
+      controller.abort();
+      await assert.rejects(busy, { kind: 'aborted' });
+      assert.ok(Date.now() - started < 500);
+    });
+
+A body is read whole when its declared size is wrong or missing, and
+bodies larger than `LIMITS.large` are read one at a time: here bodies of
+four pieces, with the limit passed at the second piece, and the pieces
+after it are never being read for two bodies at once.
+
+    // in tests of requests:
+    test('bodies are read whole, and large ones one at a time', async () => {
+      const declared = new Http({ fetch: async () => new Response(new Uint8Array(10), { headers: { 'content-length': '3' } }) });
+      assert.equal((await declared.request('http://example.org/x')).length, 10);
+      const saved = LIMITS.large;
+      LIMITS.large = 1000;
+      let late = 0, most = 0;
+      const fetch = async () => {
+        let k = 0, counted = false;
+        const body = new ReadableStream({
+          async pull(controller) {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            if (k === 4) {
+              if (counted) late--;
+              return controller.close();
+            }
+            if (k >= 2 && !counted) {
+              counted = true;
+              most = Math.max(most, ++late);
+            }
+            k++;
+            controller.enqueue(new Uint8Array(600));
+          },
+        }, { highWaterMark: 0 });
+        return new Response(body);
+      };
+      try {
+        const http = new Http({ fetch });
+        const sizes = await Promise.all([1, 2, 3].map((n) => http.request(`http://example.org/${n}`, { limit: LIMITS.file })));
+        assert.deepEqual(sizes.map((b) => b.length), [2400, 2400, 2400]);
+        assert.equal(most, 1);
+      } finally {
+        LIMITS.large = saved;
+      }
+    });
+
 Untrusted names
 ---------------
 
@@ -405,6 +594,7 @@ Untrusted names
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
     import { logicalPathProblem, contentPathProblem, under, isObjectId, isVersion } from '../app/paths.js';
+    import { baseOf, withScheme } from '../app/archive.js';
 
     test('logical paths (sections 7.1 and 15)', () => {
       assert.equal(logicalPathProblem('figures/walk.pdf'), null);
@@ -433,6 +623,20 @@ Untrusted names
       assert.throws(() => under(root, ['a\\b']), /backslash/);
     });
 
+    test('addresses typed by a reader', () => {
+      assert.equal(withScheme('mgubi.org/papers/'), 'https://mgubi.org/papers/');
+      assert.equal(withScheme('localhost:8000/x'), 'http://localhost:8000/x');
+      assert.equal(withScheme('127.0.0.1:8000/'), 'http://127.0.0.1:8000/');
+      assert.equal(withScheme('example.org:8443/a/'), 'https://example.org:8443/a/');
+      assert.equal(withScheme('https://example.org/a/'), 'https://example.org/a/');
+      assert.equal(withScheme('../'), '../');
+      const page = 'https://opensheaf.org/explorer/';
+      assert.equal(baseOf('https://example.org/papers/index.html', page), 'https://example.org/papers/');
+      assert.equal(baseOf('https://example.org/papers/opensheaf.json', page), 'https://example.org/papers/');
+      assert.equal(baseOf('https://example.org/papers', page), 'https://example.org/papers/');
+      assert.equal(baseOf('../', page), 'https://opensheaf.org/');
+    });
+
     test('identifiers and versions', () => {
       assert.ok(isObjectId('kpz-reloaded'));
       assert.ok(!isObjectId('KPZ'));
@@ -451,7 +655,7 @@ is given by its document version and its own files.
     // in tests/versions.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins } from '../app/versions.js';
+    import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins, filesOf } from '../app/versions.js';
 
     function make(versions) {
       const inv = { head: `v${versions.length}`, manifest: {}, versions: {} };
@@ -516,10 +720,81 @@ number of the version it completes; each rule broken gives its message.
       ]);
     });
 
+    test('a description-only version may add the file of the licence terms (sections 7.3 and 9)', () => {
+      const { inv, objOf } = make([
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, licence: { path: 'LICENCE.txt', mediaType: 'text/plain' } }, files: { 'a.tex': 'a1', 'LICENCE.txt': 'l1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf), []);
+      assert.equal(rolesOf(inv, objOf).v2, 'description');
+    });
+
+Logical paths are the archive's names, and may be those of the
+properties every JavaScript object inherits.
+
+    // in tests of document versions:
+    test('logical paths named like inherited properties', () => {
+      let { inv, objOf } = make([
+        { obj: { documentVersion: 1, sourcesMissing: { text: 'lost' } }, files: { 'p.pdf': 'p1' } },
+        { obj: { documentVersion: 1, mainSource: 'a.tex' }, files: { 'p.pdf': 'p1', 'a.tex': 'a1', constructor: 'c1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf), []);
+      ({ inv } = make([{ obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } }]));
+      inv.versions.v1.state = JSON.parse('{"x1": ["__proto__"], "a1": ["a.tex"]}');
+      assert.deepEqual(Object.keys(filesOf(inv, 'v1')).sort(), ['__proto__', 'a.tex']);
+      assert.equal(filesOf(inv, 'v1').toString, undefined);
+    });
+
     test('the pins of members', () => {
       assert.deepEqual(memberPins({ version: 'v2', inventorySha512: 'x' }), [{ version: 'v2', pin: 'x', documentVersion: null }]);
       assert.deepEqual(memberPins({ revisions: [{ documentVersion: 2, version: 'v3', inventorySha512: 'y' }] }),
         [{ version: 'v3', pin: 'y', documentVersion: 2 }]);
+    });
+
+Names chosen by archives
+-----------------------
+
+Everything an archive names (digests, logical paths, types, LaTeX
+commands, properties) may be the name of a property every JavaScript
+object inherits; none of them may be mistaken for one. The inventories
+are made in the test; the gaps in the numbering of versions give one
+message, naming the last version.
+
+    // in tests/names.test.mjs:
+    import { test } from 'node:test';
+    import assert from 'node:assert/strict';
+    import { inventoryFindings } from '../app/rules.js';
+    import { readableMath } from '../app/text.js';
+    import { validate } from '../app/schema.js';
+    import { readSchemas } from './disk.mjs';
+
+    const inventory = (versions, manifest = {}) => ({ id: 'x', digestAlgorithm: 'sha512', manifest,
+      head: versions[versions.length - 1], versions: Object.fromEntries(versions.map((v) => [v, { state: {} }])) });
+
+    test('a digest of the state named like an inherited property', () => {
+      const inv = inventory(['v1']);
+      inv.versions.v1.state = { toString: ['a.tex'] };
+      assert.deepEqual(inventoryFindings('x', inv).map((f) => f.message), ['a digest of the state is not in the manifest']);
+    });
+
+    test('a gap in the versions is one problem', () => {
+      const inv = inventory(['v1', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10']);
+      assert.deepEqual(inventoryFindings('x', inv).map((f) => f.message), ['the versions are not v1 to v10 without gaps']);
+    });
+
+    test('LaTeX commands named like inherited properties are left as they are', () => {
+      assert.equal(readableMath('\\constructor x'), '\\constructor x');
+      assert.equal(readableMath('\\hasOwnProperty'), '\\hasOwnProperty');
+      assert.equal(readableMath('\\alpha^2'), 'α²');
+    });
+
+    test('properties named like inherited ones are checked by the schema', async () => {
+      const schema = { type: 'object', required: ['toString'], properties: { a: { type: 'string' } },
+                       additionalProperties: { type: 'string' } };
+      assert.deepEqual(validate(schema, JSON.parse('{"constructor": 1}')).map((e) => `${e.path}: ${e.message}`),
+        [': "toString" is a required property', '/constructor: 1 is not of type string']);
+      const schemas = await readSchemas();
+      assert.ok(validate(schemas['opensheaf-collection/0.1'], { format: 'opensheaf-collection/0.1', type: 'constructor', members: [] }).length);
     });
 
 Verification
@@ -529,27 +804,52 @@ The verification of the fixtures: the two archives verify, with the
 digests of every file, the members of other archives resolved and the
 accepted copy compared with its source; nothing is fetched outside the
 storage roots, the discovery documents and the index pages; the broken
-copies give the problems that `osheaf verify` gives; and an archive that
+copies give the problems that `osheaf verify` gives; an archive that
 has disappeared makes the members that pin it unavailable, and leaves
-its accepted copy unchecked, with a note.
+its accepted copy unchecked, with a note; a second verification reads
+the archive again; and the checks that go beyond opensheaf-py's, or
+follow the specification where it does not (the inventory copies, the
+index page of the profile `website`), find what they should.
 
     // in tests/verify.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
+    import { readFile } from 'node:fs/promises';
+    import { createHash } from 'node:crypto';
     import { Http } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { verify } from '../app/verify.js';
+    import { Resolver } from '../app/resolve.js';
     import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
 
     const schemas = await readSchemas();
 
-    async function run(path, { digests = false, remote = true, log = [], down = [] } = {}) {
-      const http = new Http({ fetch: diskFetch({ log, down }) });
+    async function run(path, { digests = false, remote = true, log = [], down = [], patch = {} } = {}) {
+      const http = new Http({ fetch: patched(diskFetch({ log, down }), patch) });
       const archive = await Archive.open(http, ORIGIN + path);
       return verify(archive, { schemas, digests, remote });
     }
 
     const errors = (report) => report.findings.filter((f) => f.level === 'error').map((f) => f.text).sort();
+
+Some tests change a file or two of a fixture on the way, rather than
+keeping another broken copy: `patch` maps addresses to new contents (a
+string, or a function of the old one), or to `null` for a file that is
+missing.
+
+    // in tests/verify.test.mjs:
+    function patched(fetch, patch) {
+      return async (url, init = {}) => {
+        if (!Object.hasOwn(patch, url)) return fetch(url, init);
+        const change = patch[url];
+        if (change === null) return new Response('not found', { status: 404 });
+        const text = typeof change === 'function' ? change(await (await fetch(url, init)).text()) : change;
+        return new Response(init.method === 'HEAD' ? null : text, { status: 200 });
+      };
+    }
+
+    const inventoryOf = async (path) => JSON.parse(await readFile(new URL(`./fixtures/${path}`, import.meta.url), 'utf-8'));
+    const digestOf = (text) => createHash('sha512').update(text).digest('hex');
 
     <<tests of the verification>>
 
@@ -590,11 +890,90 @@ The tests themselves:
     test('an archive that disappeared', async () => {
       const report = await run('other/', { down: [ORIGIN + 'archive/'] });
       assert.deepEqual(errors(report).map((e) => e.replace(/: unavailable: .*/, ': unavailable')), [
-        'ocfl/collection-main: v2 member alpha v4: unavailable',
-        'ocfl/collection-main: v2 member gamma v1: unavailable',
-        'ocfl/collection-main: v2 member reading v1: unavailable',
+        `collection-main: member alpha v4: ${ORIGIN}archive/: unavailable`,
+        `collection-main: member gamma v1: ${ORIGIN}archive/: unavailable`,
+        `collection-main: member reading v1: ${ORIGIN}archive/: unavailable`,
       ]);
       assert.ok(report.findings.some((f) => f.level === 'info' && /source of the accepted copy is unavailable/.test(f.message)));
+    });
+
+    test('a verification reads the archive afresh, and counts its own requests', async () => {
+      const log = [];
+      const http = new Http({ fetch: diskFetch({ log }) });
+      const archive = await Archive.open(http, ORIGIN + 'archive/');
+      const before = log.length;
+      const first = await verify(archive, { schemas });
+      const between = log.length;
+      const second = await verify(archive, { schemas });
+      assert.equal(first.requests, between - before);
+      assert.equal(second.requests, log.length - between);
+      assert.equal(first.requests, second.requests);
+      assert.ok(first.bytesRead > 0);
+    });
+
+The copy of the inventory in a version folder must be the inventory as of
+that version: here the copy of `v2` of `alpha` is given the head `v1`, and
+then made to forget `v2`, its checksum file following.
+
+    // in tests of the verification:
+    test('an inventory copy with another head, or fewer versions', async () => {
+      const url = `${ORIGIN}archive/ocfl/alpha/v2/inventory.json`;
+      const copy = await inventoryOf('archive/ocfl/alpha/v2/inventory.json');
+      copy.head = 'v1';
+      let text = JSON.stringify(copy);
+      assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })),
+        ['ocfl/alpha: v2 the inventory copy has the head v1']);
+      delete copy.versions.v2;
+      text = JSON.stringify(copy);
+      assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })), [
+        'ocfl/alpha: v2 the inventory copy does not record exactly the versions v1 to v2',
+        'ocfl/alpha: v2 the inventory copy has the head v1',
+      ]);
+    });
+
+When the `object.json` of a mirror's head cannot be read, the problem is
+that file, not the listing of the mirror.
+
+    // in tests of the verification:
+    test('a mirror whose head cannot be read', async () => {
+      const report = await run('other/', { remote: false, patch: { [`${ORIGIN}other/ocfl/beta/v2/content/object.json`]: null } });
+      assert.deepEqual(errors(report), ['ocfl/beta: v2 cannot read object.json: HTTP 404']);
+    });
+
+The index page is required, and checked, for the profile `website`
+(appendix C); for an archive without it, a pin missing from the index is
+a note. The storage root, missing or with another layout, is one problem.
+
+    // in tests of the verification:
+    test('the index page and the profile website; the storage root', async () => {
+      const index = { [`${ORIGIN}archive/index.html`]: '<html></html>' };
+      assert.deepEqual(errors(await run('archive/', { patch: index })), [
+        'index.html does not show the pin of alpha',
+        'index.html does not show the pin of beta',
+        'index.html does not show the pin of gamma',
+      ]);
+      const noWebsite = (text) => JSON.stringify({ ...JSON.parse(text), profiles: [] });
+      const report = await run('archive/', { patch: { ...index, [`${ORIGIN}archive/opensheaf.json`]: noWebsite } });
+      assert.deepEqual(errors(report), []);
+      assert.equal(report.findings.filter((f) => f.where === 'index.html' && f.level === 'info').length, 3);
+      const layout = (text) => JSON.stringify({ ...JSON.parse(text), storageLayout: 'another' });
+      assert.deepEqual(errors(await run('archive/', { patch: {
+        [`${ORIGIN}archive/opensheaf.json`]: layout, [`${ORIGIN}archive/ocfl/0=ocfl_1.1`]: null } })).filter((e) => /storage root/.test(e)),
+        ['opensheaf.json: storage root missing or with another layout']);
+    });
+
+A member listing many mirrors has only a few of them tried.
+
+    // in tests of the verification:
+    test('at most five mirrors are tried for a pin', async () => {
+      const log = [];
+      const http = new Http({ fetch: diskFetch({ log }) });
+      const mirrors = Array.from({ length: 20 }, (_, k) => `https://mirror${k}.example.org/`);
+      const m = { archive: 'tag:example.org,2026:gone', archiveUrl: 'https://gone.example.org/', id: 'alpha', mirrors };
+      const result = await new Resolver(http).confirm(m, 'v1', '0'.repeat(128));
+      assert.equal(result.status, 'unavailable');
+      assert.equal(log.length, 6);
+      assert.match(result.problems[result.problems.length - 1], /15 more mirror\(s\) not tried/);
     });
 
     test('cancelling keeps what was found', async () => {
@@ -650,5 +1029,6 @@ node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [-
     const n = report.counts().error;
     console.log(n ? `${n} problem(s)` : 'OK');
     console.error(`${report.stats.objects} objects, ${report.stats.versions} object versions, ` +
-                  `${report.stats.pins} pins, ${report.stats.files} files; ${http.requests} requests`);
+                  `${report.stats.pins} pins, ${report.stats.files} files; ${report.requests} requests, ` +
+                  `${report.bytesRead} bytes`);
     process.exit(n ? 1 : 0);

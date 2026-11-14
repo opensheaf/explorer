@@ -28,5 +28,6 @@ for (const f of report.findings) {
 const n = report.counts().error;
 console.log(n ? `${n} problem(s)` : 'OK');
 console.error(`${report.stats.objects} objects, ${report.stats.versions} object versions, ` +
-              `${report.stats.pins} pins, ${report.stats.files} files; ${http.requests} requests`);
+              `${report.stats.pins} pins, ${report.stats.files} files; ${report.requests} requests, ` +
+              `${report.bytesRead} bytes`);
 process.exit(n ? 1 : 0);
