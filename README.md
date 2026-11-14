@@ -60,6 +60,35 @@ and never inserted as HTML.
    Opened without `?url=`, it explores the archive one folder up (`../`).
    Every request is then same-origin.
 
+## Security notes for embedding and self-hosting
+
+`embed.js` runs in the pages that load it. A page loading it from
+`opensheaf.org` trusts that site with its own content; to trust only a
+known version, load it with Subresource Integrity, or self-host a copy.
+The hash of the current file is computed with
+
+```
+openssl dgst -sha384 -binary embed.js | openssl base64 -A
+```
+
+and given as
+
+```html
+<script src="https://opensheaf.org/explorer/embed.js" data-archive="./"
+        integrity="sha384-<the hash>" crossorigin="anonymous"></script>
+```
+
+(the browser then refuses any other content, so the hash must be updated
+when the explorer's `embed.js` changes; a self-hosted copy avoids that).
+
+The explorer's content security policy is set by a `<meta>` element, since
+GitHub Pages sets no headers. A `<meta>` policy cannot set
+`frame-ancestors`, so other sites may show the explorer in a frame. The
+explorer performs no sensitive action (it only reads public files, with no
+credentials), so this is acceptable; a self-hosted copy can forbid framing
+with the header `Content-Security-Policy: frame-ancestors 'self'` if its
+server sends headers.
+
 ## Cross-origin requests (CORS)
 
 A page served from one site may read files of another only if that site
