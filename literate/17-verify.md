@@ -313,17 +313,15 @@ and status.
     if (head && entry.status !== head.status) listed(`lists ${id} as ${entry.status}, and its head says ${head.status}`, '6.1, 11.1');
 
 Each version must have its own copy of the inventory, with its checksum
-file, so that it can be pinned and fetched on its own (section 7.1);
-opensheaf-py checks that both files exist. The explorer also checks that
-the checksum file matches the copy, since the copy's digest is the pin of
-that version, and that the copy is the inventory as of its version: its
-head is that version, it records exactly the versions of the root up to
-it, `v1` to `vN`, and records each as the root does. The copy of the
-head is moreover the same file as the root's (OCFL 1.1, section 3.1). A
-copy listing fewer versions than its name, or with another head, would
-otherwise pass, and a pin of it would fix a history other than the
-object's. opensheaf-py checks only that the copy and its checksum file
-exist.
+file, so that it can be pinned and fetched on its own (section 7.1), and
+the copy is the inventory as of its version: its head is that version, it
+records exactly the versions of the root up to it, `v1` to `vN`, and
+records each as the root does. A copy listing fewer versions than its
+name, or with another head, would otherwise pass, and a pin of it would
+fix a history other than the object's. opensheaf-py checks these, in the
+same words. The explorer also checks that the checksum file matches the
+copy, since the copy's digest is the pin of that version, and that the
+copy of the head is the same file as the root's (OCFL 1.1, section 3.1).
 
     // in check the inventory copy of an object version:
     try {
@@ -431,8 +429,7 @@ profile `website` (appendix C: "the website has an index page generated
 from the head version of the main collection"); other archives may serve
 any page there, or a page made by other tools. So a pin missing from the
 index is an error only for an archive declaring `website`; for the
-others, it is a note. Here the explorer departs from opensheaf-py, which
-makes it an error whatever the profiles.
+others, it is a note, as opensheaf-py prints it.
 
     // in check that the index shows the pins of the main collection:
     const main = seen.get(archive.disc.mainCollection);

@@ -244,11 +244,9 @@ to the description of the object, like `rightsList` in `datacite.json`:
 a description-only version may add or replace the file of the licence
 terms. The note of missing sources stays with the document version (a
 completion "changes or removes no file of the version", section 7.3).
-Here the explorer departs from opensheaf-py, which leaves the file of the
-licence terms among the own files, and so reports a description-only
-version adding one as having "other files" than its document version. It stops at the first object version
-that is not a document (a collection has no document versions) or whose
-`object.json` could not be read, as opensheaf-py does.
+The check stops at the first object version that is not a document (a
+collection has no document versions) or whose `object.json` could not be
+read, as opensheaf-py does.
 
     // in the rules of document versions:
     export function documentVersionErrors(inv, objOf) {
