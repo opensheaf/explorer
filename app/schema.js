@@ -84,12 +84,12 @@ function check(s, v, path, root, errors) {
   }
   if (v && typeof v === 'object' && !Array.isArray(v)) {
     for (const name of s.required || []) {
-      if (!(name in v)) fail(`${JSON.stringify(name)} is a required property`);
+      if (!Object.hasOwn(v, name)) fail(`${JSON.stringify(name)} is a required property`);
     }
     const props = s.properties || {};
     for (const [name, value] of Object.entries(v)) {
       const where = `${path}/${name.replace(/~/g, '~0').replace(/\//g, '~1')}`;
-      if (name in props) check(props[name], value, where, root, errors);
+      if (Object.hasOwn(props, name)) check(props[name], value, where, root, errors);
       else if (s.additionalProperties !== undefined) check(s.additionalProperties, value, where, root, errors);
       if (s.propertyNames !== undefined) {
         for (const e of collect(s.propertyNames, name, root)) {
@@ -98,9 +98,9 @@ function check(s, v, path, root, errors) {
       }
     }
     for (const [name, needed] of Object.entries(s.dependentRequired || {})) {
-      if (name in v) {
+      if (Object.hasOwn(v, name)) {
         for (const other of needed) {
-          if (!(other in v)) fail(`${JSON.stringify(other)} is required with ${JSON.stringify(name)}`);
+          if (!Object.hasOwn(v, other)) fail(`${JSON.stringify(other)} is required with ${JSON.stringify(name)}`);
         }
       }
     }

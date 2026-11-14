@@ -94,7 +94,8 @@ Making it readable
 
 A few rewritings, in order: fonts (`\mathbb{R}`, `\mathrm{d}`), spacing
 commands and `\left`/`\right`, which have nothing to show; the known
-commands; then superscripts and subscripts, as characters when every
+commands (looked up with `Object.hasOwn`: a title writing `$\constructor$`
+must not get the text of a JavaScript function); then superscripts and subscripts, as characters when every
 character has a superscript or subscript form, and otherwise as `^(...)`
 and `_(...)`; finally the braces left over, which only grouped.
 
@@ -102,17 +103,17 @@ and `_(...)`; finally the braces left over, which only grouped.
     const script = (table, mark) => (_, braced, single) => {
       const body = braced ?? single;
       const chars = [...body];
-      if (chars.every((c) => c in table)) return chars.map((c) => table[c]).join('');
+      if (chars.every((c) => Object.hasOwn(table, c))) return chars.map((c) => table[c]).join('');
       return chars.length === 1 ? mark + body : `${mark}(${body})`;
     };
 
     export function readableMath(tex) {
       return tex
-        .replace(/\\mathbb\s*\{?\s*([A-Z])\s*\}?/g, (m, c) => BLACKBOARD[c] || c)
+        .replace(/\\mathbb\s*\{?\s*([A-Z])\s*\}?/g, (m, c) => (Object.hasOwn(BLACKBOARD, c) ? BLACKBOARD[c] : c))
         .replace(/\\(mathrm|mathbf|mathit|mathsf|mathcal|mathscr|mathfrak|text|textrm|operatorname|boldsymbol)\s*\{([^{}]*)\}/g, '$2')
         .replace(/\\(left|right|big|Big|bigg|Bigg)\b\s*/g, '')
         .replace(/\\[,;:! ]|\\q?quad\b/g, ' ')
-        .replace(/\\([A-Za-z]+)\s?/g, (m, name) => (name in SYMBOLS ? SYMBOLS[name] : m))
+        .replace(/\\([A-Za-z]+)\s?/g, (m, name) => (Object.hasOwn(SYMBOLS, name) ? SYMBOLS[name] : m))
         .replace(/\\([{}%&_#])/g, '$1')
         .replace(/\^(?:\{([^{}]*)\}|([^\s{}\\]))/g, script(SUPERSCRIPT, '^'))
         .replace(/_(?:\{([^{}]*)\}|([^\s{}\\]))/g, script(SUBSCRIPT, '_'))

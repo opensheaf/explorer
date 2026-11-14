@@ -50,7 +50,7 @@ async function startVerification(ctx, options) {
   try {
     const schemas = await ctx.schemas();
     run.report = await verify(ctx.archive, {
-      schemas, remote: options.remote.checked, digests: options.digests.checked, resolver: ctx.resolver,
+      schemas, remote: options.remote.checked, digests: options.digests.checked,
       signal: run.controller.signal,
       progress: (p) => { run.progress = p; changed(); },
       onFinding: (f) => { run.findings.push(f); changed(); },
@@ -111,7 +111,7 @@ function summaryView(run, counts) {
       counts.error ? `${plural(counts.error, 'error')} found.` : (r.cancelled ? 'No errors in what was checked.' : 'No errors found.'))),
     h('p', { class: 'small' }, `${plural(r.stats.objects, 'object')}, ${plural(r.stats.versions, 'object version')}, ` +
       `${plural(r.stats.pins, 'pin')}` + (r.options.digests ? `, ${plural(r.stats.files, 'file')} (${bytes(r.stats.filesBytes)})` : '') +
-      ` checked; ${plural(r.requests, 'request')} in ${seconds}.` +
+      ` checked; ${plural(r.requests, 'request')}, ${bytes(r.bytesRead)} read, in ${seconds}.` +
       (r.options.remote ? '' : ' Members of other archives were not resolved.') +
       (r.options.digests ? '' : ' The digests of the files were not checked.')));
 }

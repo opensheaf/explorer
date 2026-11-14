@@ -7,9 +7,11 @@ export function versionsOf(inv) {
   return versions.filter(isVersion).sort((a, b) => versionNumber(a) - versionNumber(b));
 }
 
+const own = (o, k) => o !== null && typeof o === 'object' && Object.hasOwn(o, k);
+
 export function filesOf(inv, ver) {
-  const files = {};
-  const state = inv?.versions?.[ver]?.state || {};
+  const files = Object.create(null);
+  const state = (own(inv?.versions, ver) && inv.versions[ver]?.state) || {};
   for (const [digest, paths] of Object.entries(state)) {
     for (const p of Array.isArray(paths) ? paths : []) files[p] = digest;
   }
@@ -18,7 +20,7 @@ export function filesOf(inv, ver) {
 
 export function contentPath(inv, ver, logical) {
   const digest = filesOf(inv, ver)[logical];
-  const paths = digest && inv.manifest?.[digest];
+  const paths = digest && own(inv.manifest, digest) ? inv.manifest[digest] : null;
   return Array.isArray(paths) && typeof paths[0] === 'string' ? paths[0] : null;
 }
 
@@ -63,7 +65,7 @@ export function rolesOf(inv, objOf) {
 }
 
 export function memberPins(m) {
-  if (m && 'revisions' in m) {
+  if (own(m, 'revisions')) {
     return (Array.isArray(m.revisions) ? m.revisions : []).map((r) => ({
       version: r?.version, pin: r?.inventorySha512, documentVersion: r?.documentVersion,
     }));
@@ -101,14 +103,13 @@ export function pdfOf(obj) {
 }
 
 export function ownFiles(inv, ver, obj) {
-  const notes = new Set(list(obj?.notices).map((x) => x?.path).filter(text));
-  const withdrawal = obj?.withdrawal?.reason?.path;
-  if (text(withdrawal)) notes.add(withdrawal);
-  const own = {};
+  const notes = new Set([...list(obj?.notices), obj?.withdrawal?.reason, obj?.licence]
+    .map((x) => x?.path).filter(text));
+  const files = Object.create(null);
   for (const [p, digest] of Object.entries(filesOf(inv, ver))) {
-    if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) own[p] = digest;
+    if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) files[p] = digest;
   }
-  return own;
+  return files;
 }
 
 export function documentVersionErrors(inv, objOf) {
@@ -126,8 +127,8 @@ export function documentVersionErrors(inv, objOf) {
     if (seen.has(n)) {
       const before = filesOfDoc.get(n);
       if (missingOf.get(n)) {
-        const changed = Object.entries(own).some(([p, d]) => p in before && before[p] !== d);
-        const removed = Object.keys(before).some((p) => !(p in own));
+        const changed = Object.entries(own).some(([p, d]) => Object.hasOwn(before, p) && before[p] !== d);
+        const removed = Object.keys(before).some((p) => !Object.hasOwn(own, p));
         if (changed || removed) add(ver, `changes files of document version ${n} (only additions allowed)`);
       } else if (!same(own, before) || change !== seen.get(n)) {
         add(ver, `has other files than document version ${n}`);

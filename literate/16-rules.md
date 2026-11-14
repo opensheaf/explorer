@@ -44,11 +44,20 @@ something a reader should know and that is not an error (a SHOULD); an
 source that was unavailable). It names the place (`opensheaf.json`, or
 `ocfl/<id>` for an object, as opensheaf-py does), the object and the
 object version it concerns, if any, the section of the specification,
-and a message; its `text` is the line opensheaf-py would print.
+and a message; its `text` is the finding as one line, in the form of the
+lines `osheaf verify` prints: `<place>: <version> <message>`. For a check
+that opensheaf-py also makes, the line is the one it prints, word for
+word, except where this chapter or the next says otherwise; the lines of
+checks it does not make (and the messages of the schema validator, which
+differ from those of the Python `jsonschema`) only follow its form. A
+few checks of opensheaf-py print lines of another form (the members of
+other archives and the accepted copies are reported as `<id>: ...`,
+without `ocfl/` and without the version); for those, the finding is
+given its `text` explicitly, so that the line is still opensheaf-py's.
 
     // in findings:
-    export function finding(level, where, message, section, { object = null, ver = null } = {}) {
-      const text = `${where}: ${ver ? ver + ' ' : ''}${message}`;
+    export function finding(level, where, message, section, { object = null, ver = null, text = null } = {}) {
+      text = text ?? `${where}: ${ver ? ver + ' ' : ''}${message}`;
       return { level, where, object, ver, message, section, text };
     }
 
@@ -73,23 +82,26 @@ finding, with the place in the file.
 The discovery document
 ----------------------
 
-The discovery document is checked against its schema; it must state the
-required layout (section 5); its objects must have distinct identifiers,
+The discovery document is checked against its schema; its objects must
+have distinct identifiers,
 none of them that of a tombstone (sections 6.3 and 14). These checks need
-nothing but the document. The rest (that the storage root exists, that
-each listed object is as its head states it) is in the next chapter.
+nothing but the document. The rest (that the storage root exists with the
+required layout, which opensheaf-py reports in one line whether the
+layout or the storage root is wrong, and that each listed object is as
+its head states it) is in the next chapter.
 
 A verifier "SHOULD check [...] the requirements of the profiles the
 archive declares, and those of the extensions it knows; it SHOULD report
 the extensions it does not know". The explorer knows no profile
-requirement and no extension: it reports both as notes.
+requirement and no extension: it reports both as notes. The one
+exception is the index page of the profile `website`, checked in the next
+chapter.
 
     // in the rules of the discovery document:
     export function discoveryFindings(disc, schemas) {
       const out = [];
       const where = 'opensheaf.json';
       out.push(...schemaFindings(where, disc, schemas['opensheaf-archive/0.1'], '6.1, appendix D'));
-      if (disc.storageLayout !== LAYOUT) out.push(finding('error', where, 'storage root missing or with another layout', '5'));
       const objects = Array.isArray(disc.objects) ? disc.objects : [];
       const ids = objects.map((o) => o?.id);
       for (const id of new Set(ids.filter((id, k) => ids.indexOf(id) !== k))) {
@@ -102,7 +114,9 @@ requirement and no extension: it reports both as notes.
         if (!isObjectId(o?.id)) out.push(finding('error', where, `an object without a valid identifier: ${JSON.stringify(o?.id ?? o)}`, '6.3'));
       }
       for (const p of Array.isArray(disc.profiles) ? disc.profiles : []) {
-        out.push(finding('info', where, `declares the profile ${p}, whose requirements are not checked`, '4, 14'));
+        out.push(finding('info', where, p === 'website'
+          ? 'declares the profile website, whose requirements are not checked, except that the index page shows the pins of the main collection'
+          : `declares the profile ${p}, whose requirements are not checked`, '4, 14'));
       }
       for (const e of Array.isArray(disc.extensions) ? disc.extensions : []) {
         out.push(finding('info', where, `lists the extension ${e}, which the explorer does not know`, '4, 14'));
@@ -138,11 +152,12 @@ that the storage root is not validated against OCFL 1.1 as a whole.
       const names = Object.keys(inv.versions);
       const versions = versionsOf(inv);
       if (names.length !== versions.length) add(`versions with names other than v1, v2, ...: ${names.filter((v) => !isVersion(v)).join(', ')}`, '7.1');
-      versions.forEach((v, k) => { if (versionNumber(v) !== k + 1) add(`the versions are not v1 to v${versions.length} without gaps`, '7.1'); });
+      const last = versions.length ? versionNumber(versions[versions.length - 1]) : 0;
+      if (versions.some((v, k) => versionNumber(v) !== k + 1)) add(`the versions are not v1 to v${last} without gaps`, '7.1');
       if (!versions.length || inv.head !== versions[versions.length - 1]) add(`the head ${inv.head} is not the last version`, 'OCFL 3.5.1');
       for (const v of versions) {
         for (const digest of Object.keys(inv.versions[v]?.state || {})) {
-          if (!(digest in inv.manifest)) add(`a digest of the state is not in the manifest`, 'OCFL 3.5.3', v);
+          if (!Object.hasOwn(inv.manifest, digest)) add(`a digest of the state is not in the manifest`, 'OCFL 3.5.3', v);
         }
       }
       for (const paths of Object.values(inv.manifest)) {
@@ -209,7 +224,7 @@ and section 14 asks verifiers to report the extensions they do not know.
       if (String(obj.documentVersion) !== dc.version) add('datacite.json and object.json disagree on the version', '8, 9');
       if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== obj.withdrawal?.date) add('withdrawal dates disagree', '11.1');
       for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
-        if (!(k in dc)) add(`datacite.json lacks ${k}`, '8');
+        if (!Object.hasOwn(dc, k)) add(`datacite.json lacks ${k}`, '8');
       }
       for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
         const rights = typeof r?.rights === 'string' ? r.rights.toLowerCase() : '';
@@ -268,12 +283,12 @@ fields, of distinct document versions, and none of `version`,
       }
       for (const m of Array.isArray(mem.members) ? mem.members : []) {
         const add = (message) => out.push(finding('error', where, `member ${m?.id}: ${message}`, '10.2', context));
-        if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
+        if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || Object.hasOwn(m, 'revisions'))) {
           add('a member of a catalogue needs version and inventorySha512, and no revisions');
         }
         if (kind === 'selection') {
           const revs = m?.revisions;
-          if (['version', 'inventorySha512', 'follow'].some((k) => k in m)) {
+          if (['version', 'inventorySha512', 'follow'].some((k) => m != null && Object.hasOwn(m, k))) {
             add('a member of a selection has no version, inventorySha512 or follow');
           }
           if (!Array.isArray(revs) || !revs.length ||

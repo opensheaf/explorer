@@ -1,7 +1,9 @@
 // Generated from literate/17-verify.md by tools/tangle.py: edit the document, not this file.
-import { sha512, pool, LIMITS } from './http.js';
+import { Http, sha512, pool, LIMITS } from './http.js';
+import { Archive } from './archive.js';
 import { versionsOf, filesOf, documentVersionErrors, memberPins } from './versions.js';
-import { finding, discoveryFindings, inventoryFindings, versionBasics, descriptionFindings,
+import { versionNumber } from './paths.js';
+import { finding, LAYOUT, discoveryFindings, inventoryFindings, versionBasics, descriptionFindings,
          memberListFindings } from './rules.js';
 import { Resolver } from './resolve.js';
 import { same } from './schema.js';
@@ -15,7 +17,7 @@ export const NOT_CHECKED = [
   { section: '14', text: 'The pins of members of other archives in earlier versions of a collection (optional; neither does osheaf verify). Members of this archive are checked in every version.' },
   { section: '6.4', text: 'External copies (DOI records, software archive snapshots), which a client may use to resolve a member; neither does osheaf verify.' },
   { section: '13.2', text: 'Witnesses (signatures and timestamps): a server does not list their folders, and checking them needs OpenPGP, SSH or OpenTimestamps.' },
-  { section: '4, 14', text: 'The requirements of the profiles (zenodo, texmacs, website) and of extensions: reported as notes.' },
+  { section: '4, 14', text: 'The requirements of the profiles (zenodo, texmacs, website) and of extensions, reported as notes; of the profile website, only that the index page shows the pins of the main collection.' },
 ];
 
 export class Report {
@@ -27,6 +29,8 @@ export class Report {
     this.started = new Date();
     this.finished = null;
     this.cancelled = false;
+    this.requests = 0;
+    this.bytesRead = 0;
     this.listeners = new Set();
   }
 
@@ -50,13 +54,14 @@ export class Report {
 }
 
 export async function verify(archive, { schemas, remote = true, digests = false, signal,
-                                        progress = () => {}, onFinding, resolver } = {}) {
+                                        progress = () => {}, onFinding } = {}) {
   const report = new Report(archive, { remote, digests });
   if (onFinding) report.listeners.add(onFinding);
-  const http = archive.http;
+  const given = archive.http;
+  const http = new Http({ fetch: given.fetchImpl, timeout: given.timeout, stall: given.stall, run: given.run });
   const options = { signal };
   const seen = new Map();
-  resolver = resolver || new Resolver(http, archive);
+  let resolver;
   const aborted = (e) => e?.kind === 'aborted' || signal?.aborted;
   async function checkObject(entry) {
     const id = entry.id, where = `ocfl/${id}`;
@@ -104,9 +109,10 @@ export async function verify(archive, { schemas, remote = true, digests = false,
     };
     await Promise.all(versions.flatMap((ver) => [read(ver, 'object.json', objs), read(ver, 'datacite.json', dcs)]));
     const head = objs.get(inv.head);
-    const mirrorOf = head && head.archiveId !== archive.archiveId ? head.archiveId : null;
+    const mirrorOf = !head ? (typeof entry.mirrorOf === 'string' ? entry.mirrorOf : null)
+      : head.archiveId !== archive.archiveId ? head.archiveId : null;
     const listed = (message, section) => report.add(finding('error', 'opensheaf.json', message, section, { object: id }));
-    if ((entry.mirrorOf ?? null) !== mirrorOf) {
+    if (head && (entry.mirrorOf ?? null) !== mirrorOf) {
       listed(`${id} ` + (mirrorOf ? `is a mirror of ${mirrorOf}, without mirrorOf` : 'is listed as a mirror, and is not one'), '6.1, 10.4');
     }
     if (head && entry.kind !== head.kind) listed(`lists ${id} as a ${entry.kind}, and its head says ${head.kind}`, '6.1, 14');
@@ -120,7 +126,11 @@ export async function verify(archive, { schemas, remote = true, digests = false,
         if (copySide !== copyDigest) add('error', 'the checksum file of the inventory copy does not match', '7.1', ver);
         if (ver === inv.head && copyDigest !== digest) add('error', 'the inventory copy of the head differs from the inventory', 'OCFL 3.1', ver);
         const copy = await archive.inventory(id, ver, options);
-        if (versionsOf(copy).some((v) => !same(copy.versions[v], inv.versions[v]))) {
+        const upTo = versions.filter((v) => versionNumber(v) <= versionNumber(ver));
+        if (copy.head !== ver) add('error', `the inventory copy has the head ${copy.head}`, '7.1', ver);
+        if (!same(Object.keys(copy.versions).sort(), [...upTo].sort())) {
+          add('error', `the inventory copy does not record exactly the versions v1 to ${ver}`, '7.1', ver);
+        } else if (upTo.some((v) => !same(copy.versions[v], inv.versions[v]))) {
           add('error', 'the inventory copy disagrees with the inventory about the versions it records', 'OCFL 3.5.3', ver);
         }
       } catch (error) {
@@ -146,9 +156,12 @@ export async function verify(archive, { schemas, remote = true, digests = false,
 
   async function checkOwnPins(id, ver, mem, add) {
     const tombstoned = new Set(archive.tombstones().map((t) => t.id));
+    let budget = LIMITS.pins;
     for (const m of Array.isArray(mem.members) ? mem.members : []) {
       if (!m || m.archive !== archive.archiveId) continue;
       for (const { version: pv, pin, documentVersion: n } of memberPins(m)) {
+        if (budget-- === 0) add('warning', `has more than ${LIMITS.pins} pins: the others are not checked`, '15', ver);
+        if (budget < 0) continue;
         report.stats.pins++;
         if (tombstoned.has(m.id)) {
           add('warning', `member ${m.id} ${pv}: removed (a tombstone in this archive)`, '11.3, 14', ver);
@@ -199,17 +212,24 @@ export async function verify(archive, { schemas, remote = true, digests = false,
     return files;
   }
   try {
+    archive = await Archive.open(http, archive.base, options);
+    report.archive = archive;
+    resolver = new Resolver(http, archive);
     report.add(...discoveryFindings(archive.disc, schemas));
     report.add(finding('info', 'opensheaf.json', 'only the listed objects are checked: a server does not list folders, so completeness is not checked', '14'));
+    let rootProblem = archive.disc.storageLayout === LAYOUT ? null : 'storage root missing or with another layout';
     try {
       await http.request(archive.root + '0=ocfl_1.1', { limit: 4096, signal });
     } catch (error) {
       if (aborted(error)) throw error;
-      report.add(finding('error', 'opensheaf.json', error.kind === 'not-found'
-        ? 'storage root missing or with another layout'
-        : `the storage root cannot be read (${error.detail})`, '5'));
+      if (error.kind === 'not-found') rootProblem = 'storage root missing or with another layout';
+      else rootProblem = rootProblem || `the storage root cannot be read (${error.detail})`;
     }
-    const entries = archive.objects();
+    if (rootProblem) report.add(finding('error', 'opensheaf.json', rootProblem, '5'));
+    const entries = archive.objects().slice(0, LIMITS.objects);
+    if (archive.objects().length > entries.length) {
+      report.add(finding('warning', 'opensheaf.json', `lists more than ${LIMITS.objects} objects: only the first ${LIMITS.objects} are checked`, '15'));
+    }
     let done = 0;
     const objectsAtOnce = pool(4);
     progress({ phase: 'objects', done, total: entries.length });
@@ -230,12 +250,15 @@ export async function verify(archive, { schemas, remote = true, digests = false,
         if (aborted(error)) throw error;
         if (error.kind !== 'not-found') report.add(finding('info', 'index.html', `cannot be read (${error.detail}); not checked`, 'appendix C'));
       }
+      const website = Array.isArray(archive.disc.profiles) && archive.disc.profiles.includes('website');
       if (html !== null) {
         for (const m of mainMembers.members) {
           const pins = memberPins(m);
           const pin = pins[pins.length - 1]?.pin;
           if (!(typeof pin === 'string' && html.includes(pin.slice(0, 32)))) {
-            report.add(finding('error', 'index.html', `does not show the pin of ${m?.id}`, 'appendix C, 15'));
+            report.add(finding(website ? 'error' : 'info', 'index.html',
+              `does not show the pin of ${m?.id}` + (website ? '' : ' (the archive does not declare the profile website)'),
+              'appendix C, 15', { text: `index.html does not show the pin of ${m?.id}` }));
           }
         }
       }
@@ -250,21 +273,29 @@ export async function verify(archive, { schemas, remote = true, digests = false,
           for (const p of memberPins(m)) pins.push({ id, ver: s.inv.head, m, ...p });
         }
       }
+      if (pins.length > LIMITS.pins) {
+        report.add(finding('warning', 'opensheaf.json', `the collections pin more than ${LIMITS.pins} members of other archives: only the first ${LIMITS.pins} are resolved`, '14, 15'));
+        pins.length = LIMITS.pins;
+      }
       let resolved = 0;
       progress({ phase: 'members', done: 0, total: pins.length });
       await Promise.all(pins.map(async ({ id, ver, m, version, pin, documentVersion }) => {
         const result = await resolver.confirm(m, version, pin, documentVersion, options);
         report.stats.pins++;
-        const where = `ocfl/${id}`, context = { object: id, ver };
+        const where = `ocfl/${id}`;
         const about = `member ${m.id} ${version}`;
+        const context = (problem) => ({ object: id, ver, text: `${id}: ${about}: ${problem}` });
         if (result.status === 'removed') {
-          report.add(finding('warning', where, `${about}: removed (a tombstone in its archive)`, '11.3, 14', context));
+          const problem = 'removed (a tombstone in its archive)';
+          report.add(finding('warning', where, `${about}: ${problem}`, '11.3, 14', context(problem)));
         } else if (result.status !== 'verified') {
-          const f = finding('error', where, `${about}: ${result.status}: ${result.problems.join('; ')}`, '6.4, 10.2, 14', context);
+          const problem = result.problems.join('; ');
+          const f = finding('error', where, `${about}: ${result.status}: ${problem}`, '6.4, 10.2, 14', context(problem));
           f.errors = result.errors;
           report.add(f);
         } else if (result.viaMirror) {
-          report.add(finding('info', where, `${about}: its archive failed; checked on the mirror ${result.source}`, '6.4', context));
+          report.add(finding('info', where, `${about}: its archive failed; checked on the mirror ${result.source}`, '6.4',
+            { object: id, ver, text: `${m.id} ${version}: its archive failed; checked on the mirror ${result.source}` }));
         }
         progress({ phase: 'members', done: ++resolved, total: pins.length, current: m.id });
       }));
@@ -283,15 +314,17 @@ export async function verify(archive, { schemas, remote = true, digests = false,
           bytes = await http.cached(record + '/inventory.json', options);
         } catch (error) {
           if (aborted(error)) throw error;
-          report.add(finding('info', where, `the source of the accepted copy is unavailable (${error.detail}); not checked`, '10.5, 14', { object: id }));
+          const message = `the source of the accepted copy is unavailable (${error.detail}); not checked`;
+          report.add(finding('info', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
           continue;
         }
         if ((await sha512(bytes)) !== pin) {
-          report.add(finding('error', where, `accepted copy: the source ${src.label} does not match its pin`, '10.5, 14', { object: id }));
+          const message = `accepted copy: the source ${src.label} does not match its pin`;
+          report.add(finding('error', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
           continue;
         }
         const files = (state) => {
-          const out = {};
+          const out = Object.create(null);
           for (const [d, paths] of Object.entries(state || {})) {
             for (const p of Array.isArray(paths) ? paths : []) if (p !== 'datacite.json' && p !== 'object.json') out[p] = d;
           }
@@ -303,8 +336,11 @@ export async function verify(archive, { schemas, remote = true, digests = false,
         } catch {
           source = null;
         }
-        if (!same(files(source?.versions?.[ver]?.state), files(s.inv.versions[first]?.state))) {
-          report.add(finding('error', where, `accepted copy: its first version does not hold exactly the files of ${src.label}`, '10.5, 14', { object: id }));
+        const recorded = source?.versions && typeof source.versions === 'object' && Object.hasOwn(source.versions, ver)
+          ? source.versions[ver]?.state : null;
+        if (!same(files(recorded), files(s.inv.versions[first]?.state))) {
+          const message = `accepted copy: its first version does not hold exactly the files of ${src.label}`;
+          report.add(finding('error', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
         }
       }
     }
@@ -334,6 +370,7 @@ export async function verify(archive, { schemas, remote = true, digests = false,
   }
   report.finished = new Date();
   report.requests = http.requests;
+  report.bytesRead = http.bytesRead;
   return report;
 }
 

@@ -18,9 +18,11 @@ verification keeps what it found), and collects its findings in a
 The module is `app/verify.js`.
 
     // in app/verify.js:
-    import { sha512, pool, LIMITS } from './http.js';
+    import { Http, sha512, pool, LIMITS } from './http.js';
+    import { Archive } from './archive.js';
     import { versionsOf, filesOf, documentVersionErrors, memberPins } from './versions.js';
-    import { finding, discoveryFindings, inventoryFindings, versionBasics, descriptionFindings,
+    import { versionNumber } from './paths.js';
+    import { finding, LAYOUT, discoveryFindings, inventoryFindings, versionBasics, descriptionFindings,
              memberListFindings } from './rules.js';
     import { Resolver } from './resolve.js';
     import { same } from './schema.js';
@@ -51,7 +53,7 @@ than it is.
       { section: '14', text: 'The pins of members of other archives in earlier versions of a collection (optional; neither does osheaf verify). Members of this archive are checked in every version.' },
       { section: '6.4', text: 'External copies (DOI records, software archive snapshots), which a client may use to resolve a member; neither does osheaf verify.' },
       { section: '13.2', text: 'Witnesses (signatures and timestamps): a server does not list their folders, and checking them needs OpenPGP, SSH or OpenTimestamps.' },
-      { section: '4, 14', text: 'The requirements of the profiles (zenodo, texmacs, website) and of extensions: reported as notes.' },
+      { section: '4, 14', text: 'The requirements of the profiles (zenodo, texmacs, website) and of extensions, reported as notes; of the profile website, only that the index page shows the pins of the main collection.' },
     ];
 
 The report
@@ -59,7 +61,8 @@ The report
 
 A report gathers the findings, counts them by level, and keeps the
 numbers that say how much was checked: objects, object versions, pins,
-files, requests and bytes. It tells its listeners about every new
+files, and the requests made and bytes read by this run (not by the
+explorer since it was opened). It tells its listeners about every new
 finding, so that the page can show them as they come.
 
     // in a report of findings:
@@ -72,6 +75,8 @@ finding, so that the page can show them as they come.
         this.started = new Date();
         this.finished = null;
         this.cancelled = false;
+        this.requests = 0;
+        this.bytesRead = 0;
         this.listeners = new Set();
       }
 
@@ -107,6 +112,17 @@ of other archives and the sources of accepted copies, as
 `progress` function called with the phase, the work done and the work to
 do, and an `onFinding` function called with each finding as it is made.
 
+A verification reads the archive afresh. The explorer keeps the answers
+it has read while the reader browses, and a verification run after a
+change of the archive (the curator fixing what the last run found) must
+not check the old inventories and discovery document. So each run makes
+an [HTTP client](10-http.md) of its own, with an empty cache and its own
+counts, sharing only the pool of the explorer's client, so that the
+pages and the verification together stay within the limit of requests in
+flight; it reopens the archive, reading its discovery document again, and
+resolves members with a resolver of its own. Its answers are dropped with
+it when the run ends, which also bounds the memory a verification keeps.
+
 A few objects are checked at once (each with its own requests, which the
 HTTP client also limits), so that a slow object does not hold up the
 others. What the checks across objects need of each object (its
@@ -116,16 +132,20 @@ they see the archive, the options and the report.
 
     // in verify an archive:
     export async function verify(archive, { schemas, remote = true, digests = false, signal,
-                                            progress = () => {}, onFinding, resolver } = {}) {
+                                            progress = () => {}, onFinding } = {}) {
       const report = new Report(archive, { remote, digests });
       if (onFinding) report.listeners.add(onFinding);
-      const http = archive.http;
+      const given = archive.http;
+      const http = new Http({ fetch: given.fetchImpl, timeout: given.timeout, stall: given.stall, run: given.run });
       const options = { signal };
       const seen = new Map();
-      resolver = resolver || new Resolver(http, archive);
+      let resolver;
       const aborted = (e) => e?.kind === 'aborted' || signal?.aborted;
       <<checking one object>>
       try {
+        archive = await Archive.open(http, archive.base, options);
+        report.archive = archive;
+        resolver = new Resolver(http, archive);
         <<check the discovery document and the storage root>>
         <<check every listed object>>
         <<check that the index shows the pins of the main collection>>
@@ -142,6 +162,7 @@ they see the archive, the options and the report.
       }
       report.finished = new Date();
       report.requests = http.requests;
+      report.bytesRead = http.bytesRead;
       return report;
     }
 
@@ -149,28 +170,35 @@ they see the archive, the options and the report.
 
 The discovery document is checked by the rules. The storage root must be
 an OCFL storage root, which declares itself by the file `0=ocfl_1.1`
-(OCFL 1.1, section 4.2); opensheaf-py checks that the file exists, and so
-does the explorer. A verifier reading over HTTP cannot list the storage
-root, so it says that completeness was not checked (section 14).
+(OCFL 1.1, section 4.2), with the layout the discovery document must
+state (section 5); opensheaf-py checks both, and reports either failure
+in one line, and so does the explorer. A verifier reading over HTTP
+cannot list the storage root, so it says that completeness was not
+checked (section 14).
 
     // in check the discovery document and the storage root:
     report.add(...discoveryFindings(archive.disc, schemas));
     report.add(finding('info', 'opensheaf.json', 'only the listed objects are checked: a server does not list folders, so completeness is not checked', '14'));
+    let rootProblem = archive.disc.storageLayout === LAYOUT ? null : 'storage root missing or with another layout';
     try {
       await http.request(archive.root + '0=ocfl_1.1', { limit: 4096, signal });
     } catch (error) {
       if (aborted(error)) throw error;
-      report.add(finding('error', 'opensheaf.json', error.kind === 'not-found'
-        ? 'storage root missing or with another layout'
-        : `the storage root cannot be read (${error.detail})`, '5'));
+      if (error.kind === 'not-found') rootProblem = 'storage root missing or with another layout';
+      else rootProblem = rootProblem || `the storage root cannot be read (${error.detail})`;
     }
+    if (rootProblem) report.add(finding('error', 'opensheaf.json', rootProblem, '5'));
 
 ### Each object
 
-Every object listed is checked; four at a time.
+Every object listed is checked, four at a time, up to `LIMITS.objects`
+(section 15); a discovery document listing more is told so.
 
     // in check every listed object:
-    const entries = archive.objects();
+    const entries = archive.objects().slice(0, LIMITS.objects);
+    if (archive.objects().length > entries.length) {
+      report.add(finding('warning', 'opensheaf.json', `lists more than ${LIMITS.objects} objects: only the first ${LIMITS.objects} are checked`, '15'));
+    }
     let done = 0;
     const objectsAtOnce = pool(4);
     progress({ phase: 'objects', done, total: entries.length });
@@ -264,16 +292,21 @@ be read is reported once, here.
 Whether the object is a mirror is read from its head, as everywhere in
 opensheaf-py: a mirror's `object.json` names another archive. The entry
 must then have `mirrorOf`, naming that archive, and only then (sections
-6.1 and 10.4). Section 14 also asks that the discovery document list the
+6.1 and 10.4). When the `object.json` of the head cannot be read (which
+is reported above, with the reason), whether the object is a mirror
+cannot be known: the entry is then taken at its word, so that a true
+mirror is not reported as "listed as a mirror, and is not one", nor each
+of its versions as naming another archive. Section 14 also asks that the discovery document list the
 objects "with their kinds [...] and status as their head versions state
 them"; opensheaf-py checks heads and digests, and the explorer also kinds
 and status.
 
     // in check whether an object is a mirror, and its kind and status:
     const head = objs.get(inv.head);
-    const mirrorOf = head && head.archiveId !== archive.archiveId ? head.archiveId : null;
+    const mirrorOf = !head ? (typeof entry.mirrorOf === 'string' ? entry.mirrorOf : null)
+      : head.archiveId !== archive.archiveId ? head.archiveId : null;
     const listed = (message, section) => report.add(finding('error', 'opensheaf.json', message, section, { object: id }));
-    if ((entry.mirrorOf ?? null) !== mirrorOf) {
+    if (head && (entry.mirrorOf ?? null) !== mirrorOf) {
       listed(`${id} ` + (mirrorOf ? `is a mirror of ${mirrorOf}, without mirrorOf` : 'is listed as a mirror, and is not one'), '6.1, 10.4');
     }
     if (head && entry.kind !== head.kind) listed(`lists ${id} as a ${entry.kind}, and its head says ${head.kind}`, '6.1, 14');
@@ -283,9 +316,14 @@ Each version must have its own copy of the inventory, with its checksum
 file, so that it can be pinned and fetched on its own (section 7.1);
 opensheaf-py checks that both files exist. The explorer also checks that
 the checksum file matches the copy, since the copy's digest is the pin of
-that version, and that the copy agrees with the inventory at the root:
-the copy of the head is the same file (OCFL 1.1, section 3.1), and an
-earlier copy records the same versions as the root up to its own.
+that version, and that the copy is the inventory as of its version: its
+head is that version, it records exactly the versions of the root up to
+it, `v1` to `vN`, and records each as the root does. The copy of the
+head is moreover the same file as the root's (OCFL 1.1, section 3.1). A
+copy listing fewer versions than its name, or with another head, would
+otherwise pass, and a pin of it would fix a history other than the
+object's. opensheaf-py checks only that the copy and its checksum file
+exist.
 
     // in check the inventory copy of an object version:
     try {
@@ -295,7 +333,11 @@ earlier copy records the same versions as the root up to its own.
       if (copySide !== copyDigest) add('error', 'the checksum file of the inventory copy does not match', '7.1', ver);
       if (ver === inv.head && copyDigest !== digest) add('error', 'the inventory copy of the head differs from the inventory', 'OCFL 3.1', ver);
       const copy = await archive.inventory(id, ver, options);
-      if (versionsOf(copy).some((v) => !same(copy.versions[v], inv.versions[v]))) {
+      const upTo = versions.filter((v) => versionNumber(v) <= versionNumber(ver));
+      if (copy.head !== ver) add('error', `the inventory copy has the head ${copy.head}`, '7.1', ver);
+      if (!same(Object.keys(copy.versions).sort(), [...upTo].sort())) {
+        add('error', `the inventory copy does not record exactly the versions v1 to ${ver}`, '7.1', ver);
+      } else if (upTo.some((v) => !same(copy.versions[v], inv.versions[v]))) {
         add('error', 'the inventory copy disagrees with the inventory about the versions it records', 'OCFL 3.5.3', ver);
       }
     } catch (error) {
@@ -330,14 +372,18 @@ object), as opensheaf-py does. A pin to an object of this archive that
 has a tombstone is reported as *removed*, "not as a corruption" (section
 11.3); opensheaf-py reports it as unavailable. A revision set must also be
 in the order of the document's history (section 10.2), read from the
-head.
+head. At most `LIMITS.pins` pins of one collection version are checked
+(section 15); a member list with more is told so.
 
     // in checking one object:
     async function checkOwnPins(id, ver, mem, add) {
       const tombstoned = new Set(archive.tombstones().map((t) => t.id));
+      let budget = LIMITS.pins;
       for (const m of Array.isArray(mem.members) ? mem.members : []) {
         if (!m || m.archive !== archive.archiveId) continue;
         for (const { version: pv, pin, documentVersion: n } of memberPins(m)) {
+          if (budget-- === 0) add('warning', `has more than ${LIMITS.pins} pins: the others are not checked`, '15', ver);
+          if (budget < 0) continue;
           report.stats.pins++;
           if (tombstoned.has(m.id)) {
             add('warning', `member ${m.id} ${pv}: removed (a tombstone in this archive)`, '11.3, 14', ver);
@@ -380,6 +426,14 @@ revision presented), so that an index left behind after a change of the
 collection is noticed. The explorer makes the same check on the
 `index.html` next to the discovery document, if there is one.
 
+The specification requires an index page only of archives declaring the
+profile `website` (appendix C: "the website has an index page generated
+from the head version of the main collection"); other archives may serve
+any page there, or a page made by other tools. So a pin missing from the
+index is an error only for an archive declaring `website`; for the
+others, it is a note. Here the explorer departs from opensheaf-py, which
+makes it an error whatever the profiles.
+
     // in check that the index shows the pins of the main collection:
     const main = seen.get(archive.disc.mainCollection);
     const mainMembers = main && main.mems.get(main.inv.head);
@@ -391,12 +445,15 @@ collection is noticed. The explorer makes the same check on the
         if (aborted(error)) throw error;
         if (error.kind !== 'not-found') report.add(finding('info', 'index.html', `cannot be read (${error.detail}); not checked`, 'appendix C'));
       }
+      const website = Array.isArray(archive.disc.profiles) && archive.disc.profiles.includes('website');
       if (html !== null) {
         for (const m of mainMembers.members) {
           const pins = memberPins(m);
           const pin = pins[pins.length - 1]?.pin;
           if (!(typeof pin === 'string' && html.includes(pin.slice(0, 32)))) {
-            report.add(finding('error', 'index.html', `does not show the pin of ${m?.id}`, 'appendix C, 15'));
+            report.add(finding(website ? 'error' : 'info', 'index.html',
+              `does not show the pin of ${m?.id}` + (website ? '' : ' (the archive does not declare the profile website)'),
+              'appendix C, 15', { text: `index.html does not show the pin of ${m?.id}` }));
           }
         }
       }
@@ -412,7 +469,16 @@ versions of a collection are not resolved: section 14 makes it optional,
 and opensheaf-py does not do it either. A pin that cannot be confirmed
 anywhere is an error, as for opensheaf-py; the reasons at each source
 tried come with it. A pin confirmed only on a mirror is a note: the
-member's archive may be gone.
+member's archive may be gone. At most `LIMITS.pins` pins are resolved in
+one verification (section 15); a verification that stops there says so.
+
+The findings print as `osheaf verify --remote` prints them,
+`<collection>: member <id> <version>: <what went wrong at each source>`,
+without `ocfl/` and without the version of the collection, which is
+always its head. A removed member is a warning here and an error there
+(both say "removed (a tombstone in its archive)"); a pin confirmed on a
+mirror is a note here, a line of its output there (indented, as are its
+notes on accepted copies).
 
     // in check the members of other archives:
     const collections = [...seen.entries()].filter(([, s]) => !s.mirrorOf && s.objs.get(s.inv.head)?.kind === 'collection');
@@ -424,21 +490,29 @@ member's archive may be gone.
         for (const p of memberPins(m)) pins.push({ id, ver: s.inv.head, m, ...p });
       }
     }
+    if (pins.length > LIMITS.pins) {
+      report.add(finding('warning', 'opensheaf.json', `the collections pin more than ${LIMITS.pins} members of other archives: only the first ${LIMITS.pins} are resolved`, '14, 15'));
+      pins.length = LIMITS.pins;
+    }
     let resolved = 0;
     progress({ phase: 'members', done: 0, total: pins.length });
     await Promise.all(pins.map(async ({ id, ver, m, version, pin, documentVersion }) => {
       const result = await resolver.confirm(m, version, pin, documentVersion, options);
       report.stats.pins++;
-      const where = `ocfl/${id}`, context = { object: id, ver };
+      const where = `ocfl/${id}`;
       const about = `member ${m.id} ${version}`;
+      const context = (problem) => ({ object: id, ver, text: `${id}: ${about}: ${problem}` });
       if (result.status === 'removed') {
-        report.add(finding('warning', where, `${about}: removed (a tombstone in its archive)`, '11.3, 14', context));
+        const problem = 'removed (a tombstone in its archive)';
+        report.add(finding('warning', where, `${about}: ${problem}`, '11.3, 14', context(problem)));
       } else if (result.status !== 'verified') {
-        const f = finding('error', where, `${about}: ${result.status}: ${result.problems.join('; ')}`, '6.4, 10.2, 14', context);
+        const problem = result.problems.join('; ');
+        const f = finding('error', where, `${about}: ${result.status}: ${problem}`, '6.4, 10.2, 14', context(problem));
         f.errors = result.errors;
         report.add(f);
       } else if (result.viaMirror) {
-        report.add(finding('info', where, `${about}: its archive failed; checked on the mirror ${result.source}`, '6.4', context));
+        report.add(finding('info', where, `${about}: its archive failed; checked on the mirror ${result.source}`, '6.4',
+          { object: id, ver, text: `${m.id} ${version}: its archive failed; checked on the mirror ${result.source}` }));
       }
       progress({ phase: 'members', done: ++resolved, total: pins.length, current: m.id });
     }));
@@ -455,7 +529,8 @@ is its pin (section 10.5). The source's inventory is fetched and checked
 against the pin, and the two states are compared, path by path, without
 the two descriptions; since inventories record SHA-512 digests, no file
 needs to be fetched. A source that cannot be read is a note, not an
-error: the copy exists precisely so as not to depend on it.
+error: the copy exists precisely so as not to depend on it. The findings
+print as opensheaf-py prints them, `<id>: accepted copy: ...`.
 
     // in check the accepted copies against their sources:
     for (const [id, s] of seen) {
@@ -473,15 +548,17 @@ error: the copy exists precisely so as not to depend on it.
         bytes = await http.cached(record + '/inventory.json', options);
       } catch (error) {
         if (aborted(error)) throw error;
-        report.add(finding('info', where, `the source of the accepted copy is unavailable (${error.detail}); not checked`, '10.5, 14', { object: id }));
+        const message = `the source of the accepted copy is unavailable (${error.detail}); not checked`;
+        report.add(finding('info', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
         continue;
       }
       if ((await sha512(bytes)) !== pin) {
-        report.add(finding('error', where, `accepted copy: the source ${src.label} does not match its pin`, '10.5, 14', { object: id }));
+        const message = `accepted copy: the source ${src.label} does not match its pin`;
+        report.add(finding('error', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
         continue;
       }
       const files = (state) => {
-        const out = {};
+        const out = Object.create(null);
         for (const [d, paths] of Object.entries(state || {})) {
           for (const p of Array.isArray(paths) ? paths : []) if (p !== 'datacite.json' && p !== 'object.json') out[p] = d;
         }
@@ -493,8 +570,11 @@ error: the copy exists precisely so as not to depend on it.
       } catch {
         source = null;
       }
-      if (!same(files(source?.versions?.[ver]?.state), files(s.inv.versions[first]?.state))) {
-        report.add(finding('error', where, `accepted copy: its first version does not hold exactly the files of ${src.label}`, '10.5, 14', { object: id }));
+      const recorded = source?.versions && typeof source.versions === 'object' && Object.hasOwn(source.versions, ver)
+        ? source.versions[ver]?.state : null;
+      if (!same(files(recorded), files(s.inv.versions[first]?.state))) {
+        const message = `accepted copy: its first version does not hold exactly the files of ${src.label}`;
+        report.add(finding('error', where, message, '10.5, 14', { object: id, text: `${id}: ${message}` }));
       }
     }
 
@@ -504,7 +584,9 @@ When asked, every content file of every object is fetched and its SHA-512
 compared with the manifest, as opensheaf-py does for every file on disk.
 This is what makes verification slow: it reads the whole archive. A file
 is read whole into memory (WebCrypto does not hash in pieces), within the
-limit of files; a larger file is reported as not checked.
+limit of files; a larger file is reported as not checked. Large files
+are read one at a time by the HTTP client, so that the memory spent stays
+near the size of the largest file, not six times it.
 
     // in check the digest of every content file:
     const files = contentFiles(seen);

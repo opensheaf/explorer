@@ -6,8 +6,10 @@ reader chooses what to check, starts it, follows its progress, may cancel
 it, and reads the findings, grouped by object, each with its level and
 the section of the specification it rests on. A summary says how much was
 checked; a list says what was not, so that a clean report is never read
-as more than it is; and the errors are also given as text, in the form of
-`osheaf verify`, to be compared or pasted into an issue.
+as more than it is; and the errors are also given as text, one line
+each, as `osheaf verify` prints them for the checks it also makes (see
+[findings](16-rules.md) for where the lines differ), to be compared or
+pasted into an issue.
 
 A verification is kept by the explorer's context while it runs, so that
 the reader may look at an object meanwhile and come back to the page,
@@ -122,7 +124,7 @@ thousands of findings does not spend its time drawing.
       try {
         const schemas = await ctx.schemas();
         run.report = await verify(ctx.archive, {
-          schemas, remote: options.remote.checked, digests: options.digests.checked, resolver: ctx.resolver,
+          schemas, remote: options.remote.checked, digests: options.digests.checked,
           signal: run.controller.signal,
           progress: (p) => { run.progress = p; changed(); },
           onFinding: (f) => { run.findings.push(f); changed(); },
@@ -153,7 +155,9 @@ The findings
 ------------
 
 The summary gives the verdict and the counts, and how much was checked:
-objects, object versions, pins, files and requests, and the time taken.
+objects, object versions, pins, files, and the requests made and bytes
+read by this run (each run reads the archive afresh, see
+[the verification](17-verify.md)), and the time taken.
 A cancelled run says so: its findings are those of the part it checked.
 Below, the findings are grouped: first those about the archive as a whole
 (its discovery document, its presentation), then those of each object,
@@ -199,7 +203,7 @@ closed. The levels can be hidden one by one.
           counts.error ? `${plural(counts.error, 'error')} found.` : (r.cancelled ? 'No errors in what was checked.' : 'No errors found.'))),
         h('p', { class: 'small' }, `${plural(r.stats.objects, 'object')}, ${plural(r.stats.versions, 'object version')}, ` +
           `${plural(r.stats.pins, 'pin')}` + (r.options.digests ? `, ${plural(r.stats.files, 'file')} (${bytes(r.stats.filesBytes)})` : '') +
-          ` checked; ${plural(r.requests, 'request')} in ${seconds}.` +
+          ` checked; ${plural(r.requests, 'request')}, ${bytes(r.bytesRead)} read, in ${seconds}.` +
           (r.options.remote ? '' : ' Members of other archives were not resolved.') +
           (r.options.digests ? '' : ' The digests of the files were not checked.')));
     }

@@ -3,8 +3,8 @@ import { validate } from './schema.js';
 import { isObjectId, isVersion, versionNumber, logicalPathProblem, contentPathProblem } from './paths.js';
 import { versionsOf, filesOf, dateOf } from './versions.js';
 
-export function finding(level, where, message, section, { object = null, ver = null } = {}) {
-  const text = `${where}: ${ver ? ver + ' ' : ''}${message}`;
+export function finding(level, where, message, section, { object = null, ver = null, text = null } = {}) {
+  text = text ?? `${where}: ${ver ? ver + ' ' : ''}${message}`;
   return { level, where, object, ver, message, section, text };
 }
 
@@ -20,7 +20,6 @@ export function discoveryFindings(disc, schemas) {
   const out = [];
   const where = 'opensheaf.json';
   out.push(...schemaFindings(where, disc, schemas['opensheaf-archive/0.1'], '6.1, appendix D'));
-  if (disc.storageLayout !== LAYOUT) out.push(finding('error', where, 'storage root missing or with another layout', '5'));
   const objects = Array.isArray(disc.objects) ? disc.objects : [];
   const ids = objects.map((o) => o?.id);
   for (const id of new Set(ids.filter((id, k) => ids.indexOf(id) !== k))) {
@@ -33,7 +32,9 @@ export function discoveryFindings(disc, schemas) {
     if (!isObjectId(o?.id)) out.push(finding('error', where, `an object without a valid identifier: ${JSON.stringify(o?.id ?? o)}`, '6.3'));
   }
   for (const p of Array.isArray(disc.profiles) ? disc.profiles : []) {
-    out.push(finding('info', where, `declares the profile ${p}, whose requirements are not checked`, '4, 14'));
+    out.push(finding('info', where, p === 'website'
+      ? 'declares the profile website, whose requirements are not checked, except that the index page shows the pins of the main collection'
+      : `declares the profile ${p}, whose requirements are not checked`, '4, 14'));
   }
   for (const e of Array.isArray(disc.extensions) ? disc.extensions : []) {
     out.push(finding('info', where, `lists the extension ${e}, which the explorer does not know`, '4, 14'));
@@ -50,11 +51,12 @@ export function inventoryFindings(id, inv) {
   const names = Object.keys(inv.versions);
   const versions = versionsOf(inv);
   if (names.length !== versions.length) add(`versions with names other than v1, v2, ...: ${names.filter((v) => !isVersion(v)).join(', ')}`, '7.1');
-  versions.forEach((v, k) => { if (versionNumber(v) !== k + 1) add(`the versions are not v1 to v${versions.length} without gaps`, '7.1'); });
+  const last = versions.length ? versionNumber(versions[versions.length - 1]) : 0;
+  if (versions.some((v, k) => versionNumber(v) !== k + 1)) add(`the versions are not v1 to v${last} without gaps`, '7.1');
   if (!versions.length || inv.head !== versions[versions.length - 1]) add(`the head ${inv.head} is not the last version`, 'OCFL 3.5.1');
   for (const v of versions) {
     for (const digest of Object.keys(inv.versions[v]?.state || {})) {
-      if (!(digest in inv.manifest)) add(`a digest of the state is not in the manifest`, 'OCFL 3.5.3', v);
+      if (!Object.hasOwn(inv.manifest, digest)) add(`a digest of the state is not in the manifest`, 'OCFL 3.5.3', v);
     }
   }
   for (const paths of Object.values(inv.manifest)) {
@@ -95,7 +97,7 @@ export function descriptionFindings({ id, ver, inv, obj, dc, archiveId, mirrorOf
   if (String(obj.documentVersion) !== dc.version) add('datacite.json and object.json disagree on the version', '8, 9');
   if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== obj.withdrawal?.date) add('withdrawal dates disagree', '11.1');
   for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
-    if (!(k in dc)) add(`datacite.json lacks ${k}`, '8');
+    if (!Object.hasOwn(dc, k)) add(`datacite.json lacks ${k}`, '8');
   }
   for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
     const rights = typeof r?.rights === 'string' ? r.rights.toLowerCase() : '';
@@ -135,12 +137,12 @@ export function memberListFindings(id, ver, mem, schemas) {
   }
   for (const m of Array.isArray(mem.members) ? mem.members : []) {
     const add = (message) => out.push(finding('error', where, `member ${m?.id}: ${message}`, '10.2', context));
-    if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || 'revisions' in m)) {
+    if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || Object.hasOwn(m, 'revisions'))) {
       add('a member of a catalogue needs version and inventorySha512, and no revisions');
     }
     if (kind === 'selection') {
       const revs = m?.revisions;
-      if (['version', 'inventorySha512', 'follow'].some((k) => k in m)) {
+      if (['version', 'inventorySha512', 'follow'].some((k) => m != null && Object.hasOwn(m, k))) {
         add('a member of a selection has no version, inventorySha512 or follow');
       }
       if (!Array.isArray(revs) || !revs.length ||

@@ -45,15 +45,27 @@ logical path is found in the manifest through that digest. When a digest
 has several content paths (OCFL allows it), the first is used, as
 opensheaf-py does.
 
+Logical paths and digests are names chosen by the archive, and so is
+every key of an inventory: a logical path may be `constructor` or
+`__proto__`, a digest `toString`. An ordinary JavaScript object answers
+to such names with what it inherits (`'toString' in {}` is true, and
+`files['__proto__'] = d` changes the object's prototype instead of adding
+a file), so remote names never index ordinary objects here and in the
+other modules: the files of a version are an object without a prototype
+(`Object.create(null)`), and a remote key is looked up with
+`Object.hasOwn`.
+
     // in the versions and the state of an inventory:
     export function versionsOf(inv) {
       const versions = inv && typeof inv.versions === 'object' && inv.versions ? Object.keys(inv.versions) : [];
       return versions.filter(isVersion).sort((a, b) => versionNumber(a) - versionNumber(b));
     }
 
+    const own = (o, k) => o !== null && typeof o === 'object' && Object.hasOwn(o, k);
+
     export function filesOf(inv, ver) {
-      const files = {};
-      const state = inv?.versions?.[ver]?.state || {};
+      const files = Object.create(null);
+      const state = (own(inv?.versions, ver) && inv.versions[ver]?.state) || {};
       for (const [digest, paths] of Object.entries(state)) {
         for (const p of Array.isArray(paths) ? paths : []) files[p] = digest;
       }
@@ -62,7 +74,7 @@ opensheaf-py does.
 
     export function contentPath(inv, ver, logical) {
       const digest = filesOf(inv, ver)[logical];
-      const paths = digest && inv.manifest?.[digest];
+      const paths = digest && own(inv.manifest, digest) ? inv.manifest[digest] : null;
       return Array.isArray(paths) && typeof paths[0] === 'string' ? paths[0] : null;
     }
 
@@ -136,13 +148,14 @@ The pins of a member
 A member of a catalogue has one pin, its `version` with its
 `inventorySha512`; a member of a selection has one per revision, each also
 stating the document version that the pinned object version holds
-(section 10.2). The version presented for a member is the last revision
-of a selection's member, or the current version as of the pin of a
-catalogue's member.
+(section 10.2). The pin presented, and the version shown at it, are
+those of [resolving members](15-resolve.md): the last revision of a
+selection's member; for a catalogue's member, the current version read
+from the history of the pinned version (section 10.2).
 
     // in the pins of a member:
     export function memberPins(m) {
-      if (m && 'revisions' in m) {
+      if (own(m, 'revisions')) {
         return (Array.isArray(m.revisions) ? m.revisions : []).map((r) => ({
           version: r?.version, pin: r?.inventorySha512, documentVersion: r?.documentVersion,
         }));
@@ -192,14 +205,13 @@ an empty list rather than failing.
     }
 
     export function ownFiles(inv, ver, obj) {
-      const notes = new Set(list(obj?.notices).map((x) => x?.path).filter(text));
-      const withdrawal = obj?.withdrawal?.reason?.path;
-      if (text(withdrawal)) notes.add(withdrawal);
-      const own = {};
+      const notes = new Set([...list(obj?.notices), obj?.withdrawal?.reason, obj?.licence]
+        .map((x) => x?.path).filter(text));
+      const files = Object.create(null);
       for (const [p, digest] of Object.entries(filesOf(inv, ver))) {
-        if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) own[p] = digest;
+        if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) files[p] = digest;
       }
-      return own;
+      return files;
     }
 
 The rules of document versions
@@ -219,10 +231,22 @@ The check is a port of `document_version_errors` of `osheaf verify`
 ([its chapter](https://opensheaf.org/opensheaf-py/17-verify.html)), line
 for line, with the same messages, so that the two verifiers report the
 same problems in the same words. It goes once through the object
-versions, remembering for each document version its *own* files
-(everything except the two descriptions and the files of notices and of a
-withdrawal, which description-only versions add), its change note, and
-whether its sources were missing. It stops at the first object version
+versions, remembering for each document version its *own* files, its
+change note, and whether its sources were missing.
+
+The own files of a document version are, by section 7.3, its "sources,
+renditions, change note": everything the version holds except the two
+descriptions and the files of the notes that describe the object rather
+than the document version. Those notes are the notices and a withdrawal,
+which description-only versions add (section 7.3), and the licence terms
+(`licence`, section 9), which "any object MAY contain" and which belong
+to the description of the object, like `rightsList` in `datacite.json`:
+a description-only version may add or replace the file of the licence
+terms. The note of missing sources stays with the document version (a
+completion "changes or removes no file of the version", section 7.3).
+Here the explorer departs from opensheaf-py, which leaves the file of the
+licence terms among the own files, and so reports a description-only
+version adding one as having "other files" than its document version. It stops at the first object version
 that is not a document (a collection has no document versions) or whose
 `object.json` could not be read, as opensheaf-py does.
 
@@ -255,8 +279,8 @@ the next number.
     if (seen.has(n)) {
       const before = filesOfDoc.get(n);
       if (missingOf.get(n)) {
-        const changed = Object.entries(own).some(([p, d]) => p in before && before[p] !== d);
-        const removed = Object.keys(before).some((p) => !(p in own));
+        const changed = Object.entries(own).some(([p, d]) => Object.hasOwn(before, p) && before[p] !== d);
+        const removed = Object.keys(before).some((p) => !Object.hasOwn(own, p));
         if (changed || removed) add(ver, `changes files of document version ${n} (only additions allowed)`);
       } else if (!same(own, before) || change !== seen.get(n)) {
         add(ver, `has other files than document version ${n}`);

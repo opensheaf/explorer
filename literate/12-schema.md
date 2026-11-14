@@ -230,16 +230,20 @@ JSON values, above), and have a schema for every item.
 
 Properties not named in `properties` are checked against
 `additionalProperties`, which the schemas never set to `false`: readers
-ignore unknown properties (section 12).
+ignore unknown properties (section 12). The names of the properties of
+the data are the archive's: a property named `constructor` must not be
+taken for one named in the schema because every JavaScript object
+inherits a `constructor`, so names are looked up with `Object.hasOwn`
+(see also [the versions](13-versions.md)).
 
     // in the keywords of objects:
     for (const name of s.required || []) {
-      if (!(name in v)) fail(`${JSON.stringify(name)} is a required property`);
+      if (!Object.hasOwn(v, name)) fail(`${JSON.stringify(name)} is a required property`);
     }
     const props = s.properties || {};
     for (const [name, value] of Object.entries(v)) {
       const where = `${path}/${name.replace(/~/g, '~0').replace(/\//g, '~1')}`;
-      if (name in props) check(props[name], value, where, root, errors);
+      if (Object.hasOwn(props, name)) check(props[name], value, where, root, errors);
       else if (s.additionalProperties !== undefined) check(s.additionalProperties, value, where, root, errors);
       if (s.propertyNames !== undefined) {
         for (const e of collect(s.propertyNames, name, root)) {
@@ -248,9 +252,9 @@ ignore unknown properties (section 12).
       }
     }
     for (const [name, needed] of Object.entries(s.dependentRequired || {})) {
-      if (name in v) {
+      if (Object.hasOwn(v, name)) {
         for (const other of needed) {
-          if (!(other in v)) fail(`${JSON.stringify(other)} is required with ${JSON.stringify(name)}`);
+          if (!Object.hasOwn(v, other)) fail(`${JSON.stringify(other)} is required with ${JSON.stringify(name)}`);
         }
       }
     }
