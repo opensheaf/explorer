@@ -223,7 +223,8 @@ the new one: a request shared with the new page goes on, one used only by
 the old page is aborted and forgotten (see [the HTTP client](10-http.md)),
 and a summary being loaded for the old page is replaced by one for the
 new page (see [the summaries](22-pieces.md)). Summaries loaded are kept
-across pages.
+across pages. Each page starts a new budget of requests and bytes (see
+[the limits](10-http.md)).
 
     // in the pages and the fragment:
     let controller = null;
@@ -233,6 +234,7 @@ across pages.
       controller?.abort();
       controller = new AbortController();
       ctx.signal = controller.signal;
+      ctx.http.newPage();
       let parts;
       try {
         parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);

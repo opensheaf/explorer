@@ -52,6 +52,14 @@ same archive at once still make one request, since the
 [HTTP client](10-http.md) shares a request in progress among its callers;
 an archive that fails to open is not kept, and is tried again.
 
+A member resolved again must be resolved from the server, not from what
+the resolver and its HTTP client have kept: the curator who presses
+"Resolve again" has usually just fixed something. `again()` gives a
+resolver for the same archive explored, with no archive opened yet and
+an [HTTP client](10-http.md) of its own, whose cache is empty (it shares
+the pool and the page budget of the first). The archive explored is then
+read again too, when a member of it is resolved.
+
     // in the archives met while resolving:
     export class Resolver {
       constructor(http, home = null) {
@@ -59,6 +67,12 @@ an archive that fails to open is not kept, and is tried again.
         this.home = home;
         this.archives = new Map();
         if (home) this.archives.set(home.base, home);
+      }
+
+      again() {
+        const fresh = new Resolver(this.http.another());
+        fresh.home = this.home;
+        return fresh;
       }
 
       async open(url, options = {}) {
@@ -169,12 +183,24 @@ creators of the version presented, and the status of the object, which
 belongs to the object whatever version is pinned (section 11.1): a
 withdrawal in the member's archive is shown, saying where it comes from.
 
+Finding the current version of a catalogue's member reads the
+`object.json` of each of its object versions, and a collection may have
+up to `LIMITS.pins` members: a hostile one, whose members each have
+thousands of versions, would make a page read millions of files. So the
+current version is looked for only in a member of at most
+`LIMITS.described` object versions; a larger one is described at the
+version pinned, and the answer says so (`limited`). The page budget of
+the [HTTP client](10-http.md) bounds the rest.
+
     // in describe a resolved member:
     async describe(m, archive, options = {}) {
       const ver = presentedPin(m);
-      let shown = ver;
-      if (!Object.hasOwn(m, 'revisions')) shown = (await archive.history(m.id, ver, options)).current;
       const inv = await archive.inventory(m.id, null, options);
+      let shown = ver, limited = false;
+      if (!Object.hasOwn(m, 'revisions')) {
+        if (Object.keys(inv.versions).length > LIMITS.described) limited = true;
+        else shown = (await archive.history(m.id, ver, options)).current;
+      }
       const [{ dc, obj }, head] = await Promise.all([
         archive.descriptions(m.id, inv, shown, options),
         archive.json(m.id, inv, inv.head, 'object.json', options),
@@ -182,7 +208,7 @@ withdrawal in the member's archive is shown, saying where it comes from.
       return {
         version: shown, title: titleOf(dc), creators: creatorsOf(dc),
         documentVersion: obj?.documentVersion ?? null,
-        status: head?.status || null, withdrawal: head?.withdrawal || null,
+        status: head?.status || null, withdrawal: head?.withdrawal || null, limited,
       };
     }
 

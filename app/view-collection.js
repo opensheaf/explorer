@@ -128,7 +128,10 @@ function memberItem(ctx, home, m, k, level, list, type) {
     delete nested.dataset.open;
   };
   const checkButton = h('button', { type: 'button', class: 'small', onclick: () => {
-    if (resolved) reset();
+    if (resolved) {
+      reset();
+      ctx.resolver = ctx.resolver.again();
+    }
     item.check(false);
   } }, 'Resolve');
   item.check = (deep, again = false) => {

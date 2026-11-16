@@ -68,6 +68,22 @@ hundred thousand objects. Section 15 asks verifiers to limit what they
 follow, so each of these is bounded as well, and the pages and the
 verification say when a limit stopped them.
 
+The same holds for what one page of the explorer may cost. Each limit
+above bounds one thing; together they still allow a hostile archive to
+make a page read for hours. So the requests made and the bytes read for
+one page are counted, and the page stops reading once it has made
+`pageRequests` requests or read `pageBytes` bytes. The limits are wide:
+the page of an archive at the limit of objects, each of one or two
+versions, reads three or four files per object for their descriptions,
+some forty thousand in all. A verification is not counted against them:
+it reads a whole archive on purpose, and has limits of its own.
+
+A JSON file may also be small and still harmful: an array nested a
+million times is a few megabytes, and makes every function that walks it
+by recursion (the validator, `JSON.stringify`) overflow the stack. JSON
+nested deeper than `nesting` levels is refused; the files of OpenSheaf
+need fewer than ten.
+
     // in the limits of the explorer:
     export const LIMITS = {
       json: 16 * 2 ** 20,      // a JSON file: discovery document, inventory, object.json, members.json
@@ -83,6 +99,11 @@ verification say when a limit stopped them.
       mirrors: 5,              // mirrors tried for one pin, after the member's archive
       versions: 10_000,        // object versions of one object
       objects: 10_000,         // objects of one archive listed or verified
+      described: 200,          // object versions read to find the current version of a member
+      nesting: 64,             // levels of arrays and objects in a JSON file
+      retry: 30_000,           // milliseconds a busy server may ask to be left alone (Retry-After)
+      pageRequests: 40_000,    // requests made for one page
+      pageBytes: 256 * 2 ** 20, // bytes read for one page
     };
 
 Errors
@@ -97,12 +118,17 @@ explain the failure, and the address it concerns. The kinds are:
 - `unsafe`: an address that would be built from an identifier or a path
   breaking the rules of sections 6.3 and 7.1, refused before any request
   (see [untrusted names](11-paths.md));
-- `not-found` and `http`: the server answered with an error status;
+- `not-found`, `forbidden` (403), `busy` (429 or 5xx, still so after
+  two more tries) and `http`: the server answered with an error status;
+- `html`: the server answered with an HTML page where a JSON file was
+  expected;
 - `cors`: the server answered, but the browser did not let the page read
   the answer;
 - `mixed`: an `http:` address read from an `https:` page, which browsers
   block;
-- `network`: no answer at all;
+- `network`: no answer at all, or an answer interrupted;
+- `budget`: the page has made all the requests, or read all the bytes,
+  it may (see the limits above);
 - `timeout`, `too-large`, `json` (not UTF-8 JSON), `digest` (an inventory
   that does not match its checksum file), `crypto` (no WebCrypto) and
   `aborted` (cancelled by the reader).
@@ -127,7 +153,20 @@ site only if that site says so, with the header
 browser can read them; GitHub Pages sends it for every file. When it is
 missing, the remedies are on the side of the archive: send the header, or
 serve a copy of the explorer from the archive's own site, where every
-request is same-origin (see [the application](30-app.md)).
+request is same-origin (see [the application](30-app.md)). A browser
+cannot tell a refusal from a missing file, though: a server that answers
+404 without the header is refused the same way, so the explanation says
+that the file may simply not be there.
+
+Some failures are common enough on the hosts archives use to deserve an
+explanation of their own. A site that serves a page of its own for every
+address it does not know (a "fallback" page, as single-page sites and
+some hosts do), or a base URL that names the site rather than the
+archive, answers with an HTML page where a JSON file was expected.
+Object storage (S3 and its imitators) answers 403 both for a key that
+does not exist and for a bucket that the public may not read. And a
+server that stays busy after the tries described below is reported as
+busy, not as broken.
 
     // in explaining a failed request to the reader:
     export function explain(error) {
@@ -137,7 +176,24 @@ request is same-origin (see [the application](30-app.md)).
             'browser does not let this page read the answer. OpenSheaf archives should allow ' +
             'cross-origin requests (section 5 of the specification); GitHub Pages does. Otherwise, ' +
             'copy the explorer into the archive’s own site (for instance as explorer/ next to ' +
-            'opensheaf.json): served from there, it reads the archive without cross-origin requests.';
+            'opensheaf.json): served from there, it reads the archive without cross-origin requests. ' +
+            'The file may also simply be missing: a server that answers 404 without the header looks ' +
+            'the same to the browser.';
+        case 'html':
+          return 'The server sent an HTML page instead of the file: probably a wrong base URL (it ' +
+            'should be the folder holding opensheaf.json), or a site that answers every unknown ' +
+            'address with a page of its own.';
+        case 'forbidden':
+          return 'The server refuses to give the file (403). Object storage answers so both for a ' +
+            'file that does not exist and for a bucket that is not public: check the address, and ' +
+            'that the bucket allows public read.';
+        case 'busy':
+          return 'The server is busy or failing (429 or 5xx), and still was after two more tries. ' +
+            'Try again later.';
+        case 'budget':
+          return 'This page has made all the requests, or read all the bytes, the explorer allows ' +
+            'for one page (section 15 asks verifiers to limit what they fetch). Open a page that ' +
+            'needs less, or verify the archive.';
         case 'mixed':
           return 'This page was loaded over https:, and browsers do not let it read http: addresses. ' +
             'Serve the archive over https:, or open a copy of the explorer served over http:.';
@@ -145,8 +201,8 @@ request is same-origin (see [the application](30-app.md)).
           return 'Only http: and https: addresses can be read by a web page. A collection made from ' +
             'a folder on disk records file: addresses, which only tools on that computer can read.';
         case 'network':
-          return 'No answer: the address may be wrong, the server down, or the network unavailable. ' +
-            'Some browsers also report a refused cross-origin request this way.';
+          return 'No answer, or an answer interrupted: the address may be wrong, the server down, or ' +
+            'the network unavailable. Some browsers also report a refused cross-origin request this way.';
         case 'not-found':
           return 'The server has no such file. Check the address: it should be the base URL of ' +
             'the archive, the folder holding opensheaf.json.';
@@ -277,7 +333,6 @@ stopped, and re-armed with the same limit.
       };
     }
 
-    const BUSY = Symbol('busy');
 
 Reading a body within a limit
 -----------------------------
@@ -288,15 +343,20 @@ a server may declare nothing, or declare the size of a compressed body
 smaller than what it decompresses to.
 
 Memory is spent with care, since a content file may be hundreds of
-megabytes: when the size is declared, the bytes are read into one buffer
-of that size, allocated once (keeping the pieces and copying them at the
-end would hold the file twice); when it is not declared, or is wrong, the
-buffer grows by doubling. A body that passes `LIMITS.large` waits, before
-going further, until no other large body is being read by the client:
-the digests of large files are thus checked one at a time, whatever the
-number of requests in flight (six files of 512 MB at once would be three
-gigabytes). The hash of one large file may still overlap the download of
-the next. While a body waits for its turn, its watchdog is stopped.
+megabytes. The declared size is a claim, not bytes: a server may declare
+512 MB and send ten bytes, and the buffer is therefore allocated as the
+bytes arrive. It starts at 64 KiB at most and grows by doubling, never
+beyond the declared size while that is right. A body that passes
+`LIMITS.large`, or whose buffer would, waits, before going further, until
+no other large body is being read by the client: the digests of large
+files are thus checked one at a time, whatever the number of requests in
+flight (six files of 512 MB at once would be three gigabytes). The hash
+of one large file may still overlap the download of the next. While a
+body waits for its turn, its watchdog is stopped. Once a body holds the
+place of the large ones, its buffer grows at once to the declared size
+(keeping the pieces and copying them at the end would hold the file
+twice); a server lying about the size can then waste one buffer within
+the limit, one body at a time.
 
 The watchdog is re-armed by every piece that arrives, so that the time
 limit is on silence, not on the length of the download.
@@ -319,21 +379,26 @@ limit is on silence, not on the length of the download.
         return bytes;
       }
       const reader = response.body.getReader();
-      let buffer = new Uint8Array(declared > 0 ? declared : Math.min(limit, 65536));
+      let buffer = new Uint8Array(Math.min(declared > 0 ? declared : limit, 65536));
       let size = 0, release = null;
+      const turn = async () => {
+        dog?.stop();
+        release = await large.acquire(signal);
+        dog?.rearm();
+      };
       try {
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
           const end = size + value.length;
           if (end > limit) throw tooLarge(url, limit);
-          if (!release && large && end > LIMITS.large) {
-            dog?.stop();
-            release = await large.acquire(signal);
-            dog?.rearm();
-          }
+          if (!release && large && end > LIMITS.large) await turn();
           if (end > buffer.length) {
-            const grown = new Uint8Array(Math.min(limit, Math.max(2 * buffer.length, end)));
+            let room = Math.min(limit, Math.max(2 * buffer.length, end));
+            if (declared >= end) room = Math.min(room, declared);
+            if (!release && large && room > LIMITS.large) await turn();
+            if (release && declared >= end) room = declared;
+            const grown = new Uint8Array(room);
             grown.set(buffer.subarray(0, size));
             buffer = grown;
           }
@@ -365,14 +430,22 @@ and bytes of that run alone, and reads the archive afresh; two clients may
 share one pool (`run`), so that together they stay within the limit of
 requests in flight.
 
+The client also counts what is spent for the page shown, against the
+`budget` of a page (see the limits above): the requests made and the
+bytes read since `newPage()` was last called, which
+[the application](30-app.md) calls whenever the reader goes to another
+page. A budget of `null` sets no such limit.
+
     // in the HTTP client:
     export class Http {
       constructor({ fetch = globalThis.fetch?.bind(globalThis), concurrency = LIMITS.concurrency,
                     timeout = LIMITS.timeout, stall = LIMITS.stall, cacheLimit = LIMITS.cache,
-                    run = pool(concurrency) } = {}) {
+                    run = pool(concurrency), large = pool(1),
+                    budget = { requests: LIMITS.pageRequests, bytes: LIMITS.pageBytes },
+                    spent = { requests: 0, bytes: 0 } } = {}) {
         this.fetchImpl = fetch;
         this.run = run;
-        this.large = pool(1);
+        this.large = large;
         this.timeout = timeout;
         this.stall = stall;
         this.cache = new Map();
@@ -380,7 +453,16 @@ requests in flight.
         this.cacheBytes = 0;
         this.requests = 0;
         this.bytesRead = 0;
+        this.budget = budget;
+        this.spent = spent;
       }
+
+      newPage() {
+        this.spent.requests = 0;
+        this.spent.bytes = 0;
+      }
+
+      <<another client like this one>>
 
       <<check the scheme of an address>>
 
@@ -389,6 +471,22 @@ requests in flight.
       <<find why a request failed>>
 
       <<requests whose answers are kept>>
+    }
+
+Another client, with an empty cache and counts of its own, is made by
+`another()`. It shares the fetch, the time limits and the pools of this
+one, so that together they stay within the limit of requests in flight
+and read one large body at a time, and, unless told otherwise, its page
+budget too: what it spends is spent for the same page. A verification
+asks for one without a page budget; a member resolved again asks for one
+so as to read the server again rather than the answers kept (see
+[resolving members](15-resolve.md)).
+
+    // in another client like this one:
+    another({ budget = this.budget } = {}) {
+      return new Http({ fetch: this.fetchImpl, timeout: this.timeout, stall: this.stall, run: this.run,
+                        large: this.large, cacheLimit: this.cacheLimit, budget,
+                        spent: budget === this.budget ? this.spent : undefined });
     }
 
 Only `http:` and `https:` addresses are read; anything else (`file:`,
@@ -418,10 +516,13 @@ missing: 429 (too many requests) and 5xx. Static hosts answer so now and
 then under the load of a verification that reads a whole archive (GitHub
 Pages answered one 503 in a thousand requests while this was written), so
 such a request is tried again, twice, after a pause of one and then three
-seconds, before it counts as failed. The body of the busy answer is
-cancelled at once, and the pause is made *outside* the pool: a request
-waiting to be tried again does not hold a place that another could use,
-and a cancelled one stops waiting at once.
+seconds, before it counts as failed (as `busy`). A server may say how
+long to wait, with the header `Retry-After` (a number of seconds, or a
+date); the pause is then what it asks, but never more than
+`LIMITS.retry`. The body of the busy answer is cancelled at once, and the
+pause is made *outside* the pool: a request waiting to be tried again
+does not hold a place that another could use, and a cancelled one stops
+waiting at once.
 
     // in make one request:
     async request(url, { method = 'GET', limit = LIMITS.json, signal } = {}) {
@@ -435,18 +536,47 @@ and a cancelled one stops waiting at once.
         } finally {
           release();
         }
-        if (answer !== BUSY) return answer;
-        await pause(wait, signal).catch(() => { throw cancelled(); });
+        if (!(answer instanceof Busy)) return answer;
+        await pause(answer.after ?? wait, signal).catch(() => { throw cancelled(); });
       }
     }
+
+A busy answer carries the pause the server asked for, if any, in
+milliseconds.
+
+    // in the watchdog of a request:
+    class Busy {
+      constructor(retryAfter) {
+        const s = String(retryAfter ?? '').trim();
+        const ms = /^\d+$/.test(s) ? Number(s) * 1000 : s ? Date.parse(s) - Date.now() : NaN;
+        this.after = Number.isNaN(ms) ? null : Math.min(Math.max(ms, 0), LIMITS.retry);
+      }
+    }
+
+Before each try, the page budget is checked; the try then counts as a
+request of the page, and its body may not read more than the bytes left
+to the page. A body stopped by that, and not by the limit of its own
+kind, is reported as `budget`.
+
+A body that breaks off after the answer has arrived (the connection is
+cut, the server stops) is not diagnosed as a request that never got an
+answer: the answer did arrive, so the browser had let the page read it,
+and the failure is `network`, "the answer was interrupted", not a
+cross-origin refusal.
 
 One try, in its place in the pool, under its watchdog:
 
     // in make one request:
     async attempt(url, method, limit, signal, canRetry) {
+      const room = this.budget ? this.budget.bytes - this.spent.bytes : Infinity;
+      if (this.budget && (this.spent.requests >= this.budget.requests || room <= 0)) {
+        throw new FetchError('budget', url, `not read: this page has made ${this.spent.requests} requests ` +
+          `and read ${this.spent.bytes} bytes, the most allowed for one page`);
+      }
       const dog = watchdog();
       const both = signal ? AbortSignal.any([signal, dog.signal]) : dog.signal;
       this.requests++;
+      this.spent.requests++;
       dog.arm(this.timeout, `no answer in ${this.timeout / 1000} s`);
       try {
         let response;
@@ -455,24 +585,30 @@ One try, in its place in the pool, under its watchdog:
         } catch (error) {
           throw await this.diagnose(url, error, signal, dog);
         }
-        if (canRetry && (response.status === 429 || response.status >= 500)) {
+        const status = response.status;
+        const busy = status === 429 || status >= 500;
+        if (canRetry && busy) {
           response.body?.cancel().catch(() => {});
-          return BUSY;
+          return new Busy(response.headers.get('retry-after'));
         }
         if (!response.ok) {
           response.body?.cancel().catch(() => {});
-          const missing = response.status === 404 || response.status === 410;
-          throw new FetchError(missing ? 'not-found' : 'http', url, `HTTP ${response.status}`, response.status);
+          const kind = status === 404 || status === 410 ? 'not-found' : status === 403 ? 'forbidden' : busy ? 'busy' : 'http';
+          throw new FetchError(kind, url, `HTTP ${status}`, status);
         }
         if (method === 'HEAD') return response;
         dog.arm(this.stall, `the answer stalled: nothing received for ${this.stall / 1000} s`);
         try {
-          const bytes = await readLimited(response, url, limit, { dog, large: this.large, signal });
+          const bytes = await readLimited(response, url, Math.min(limit, room), { dog, large: this.large, signal });
           this.bytesRead += bytes.length;
+          this.spent.bytes += bytes.length;
           return bytes;
         } catch (error) {
+          if (error?.kind === 'too-large' && room < limit) {
+            throw new FetchError('budget', url, `not read whole: this page may read ${this.budget.bytes} bytes at most`);
+          }
           if (error instanceof FetchError && error.kind !== 'aborted') throw error;
-          throw await this.diagnose(url, error, signal, dog);
+          throw this.interrupted(url, error, signal, dog);
         }
       } finally {
         dog.stop();
@@ -501,12 +637,18 @@ stopped by its watchdog is a `timeout`, which says which limit ran out.
           await this.fetchImpl(url, { method: 'HEAD', mode: 'no-cors', credentials: 'omit',
                                       signal: AbortSignal.timeout(this.timeout) });
           return new FetchError('cors', url, 'the server does not allow other sites to read it ' +
-                                '(no Access-Control-Allow-Origin header)');
+                                '(no Access-Control-Allow-Origin header), or it is missing');
         } catch {
           // no answer at all: a network error
         }
       }
       return new FetchError('network', url, `cannot be reached (${error?.message || error})`);
+    }
+
+    interrupted(url, error, signal, dog) {
+      if (signal?.aborted) return new FetchError('aborted', url, 'cancelled');
+      if (dog.fired) return new FetchError('timeout', url, dog.fired);
+      return new FetchError('network', url, `the answer was interrupted (${error?.message || error})`);
     }
 
 The answers of most requests are kept: inventories and the files of
@@ -615,9 +757,31 @@ which for a compressed answer is the compressed size.
 
 JSON, as section 2 defines it, is UTF-8 without a byte order mark. Bytes
 that are not UTF-8, or start with a byte order mark, or do not parse, are
-an error of kind `json`.
+an error of kind `json`. Bytes that start with `<` (after white space,
+and a byte order mark if any) are an HTML page, where a file was
+expected: an error of kind `html`, which says what probably happened
+(see the explanations above).
+
+JSON nested deeper than `LIMITS.nesting` levels is refused as
+`too-large` before it is parsed. The depth is found in one pass over the
+text: brackets count only outside strings, and a string ends at a
+quotation mark that no backslash escapes.
 
     // in decoding JSON:
+    function nesting(text) {
+      let depth = 0, most = 0, inString = false;
+      for (let k = 0; k < text.length; k++) {
+        const c = text.charCodeAt(k);
+        if (inString) {
+          if (c === 92) k++;                                // \ escapes the next character
+          else if (c === 34) inString = false;              // "
+        } else if (c === 34) inString = true;
+        else if (c === 91 || c === 123) most = Math.max(most, ++depth);   // [ {
+        else if (c === 93 || c === 125) depth--;            // ] }
+      }
+      return most;
+    }
+
     export function parseJson(bytes, url = '') {
       let text;
       try {
@@ -625,7 +789,13 @@ an error of kind `json`.
       } catch {
         throw new FetchError('json', url, 'is not UTF-8 (section 2)');
       }
+      if (/^\ufeff?\s*</.test(text)) {
+        throw new FetchError('html', url, 'an HTML page, not the file: probably a wrong base URL or a site’s fallback page');
+      }
       if (text.charCodeAt(0) === 0xfeff) throw new FetchError('json', url, 'starts with a byte order mark (section 2)');
+      if (nesting(text) > LIMITS.nesting) {
+        throw new FetchError('too-large', url, `is nested deeper than ${LIMITS.nesting} levels`);
+      }
       try {
         return JSON.parse(text);
       } catch (error) {

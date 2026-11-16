@@ -87,6 +87,7 @@ function route() {
   controller?.abort();
   controller = new AbortController();
   ctx.signal = controller.signal;
+  ctx.http.newPage();
   let parts;
   try {
     parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);

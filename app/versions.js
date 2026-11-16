@@ -137,6 +137,12 @@ export function documentVersionErrors(inv, objOf) {
       filesOfDoc.set(n, own);
     } else {
       if (n !== highest + 1) add(ver, `document version ${n} breaks the numbering (expected ${highest + 1})`);
+      for (const [m, files] of filesOfDoc) {
+        if (same(own, files) && change === seen.get(m)) {
+          add(ver, `document version ${n} holds the same files and change note as document version ${m}, whose number it keeps`);
+          break;
+        }
+      }
       highest = Math.max(highest, Number.isInteger(n) ? n : 0);
       seen.set(n, change);
       filesOfDoc.set(n, own);

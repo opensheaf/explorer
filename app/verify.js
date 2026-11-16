@@ -1,5 +1,5 @@
 // Generated from literate/17-verify.md by opensheaf-literate: edit the document, not this file.
-import { Http, sha512, pool, LIMITS } from './http.js';
+import { sha512, pool, LIMITS } from './http.js';
 import { Archive } from './archive.js';
 import { versionsOf, filesOf, documentVersionErrors, memberPins } from './versions.js';
 import { versionNumber } from './paths.js';
@@ -57,8 +57,7 @@ export async function verify(archive, { schemas, remote = true, digests = false,
                                         progress = () => {}, onFinding } = {}) {
   const report = new Report(archive, { remote, digests });
   if (onFinding) report.listeners.add(onFinding);
-  const given = archive.http;
-  const http = new Http({ fetch: given.fetchImpl, timeout: given.timeout, stall: given.stall, run: given.run });
+  const http = archive.http.another({ budget: null });
   const options = { signal };
   const seen = new Map();
   let resolver;
@@ -393,10 +392,11 @@ export async function estimateContent(archive, { signal, progress = () => {} } =
       if (error.kind === 'aborted') throw error;
     }
   }
+  const http = archive.http.another({ budget: null });
   let bytes = 0, unknown = 0, done = 0;
   await Promise.all(files.map(async (url) => {
     try {
-      const size = await archive.http.size(url, options);
+      const size = await http.size(url, options);
       if (size === null) unknown++;
       else bytes += size;
     } catch (error) {

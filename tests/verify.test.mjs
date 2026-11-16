@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { Http } from '../app/http.js';
+import { Http, LIMITS } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { verify } from '../app/verify.js';
 import { Resolver } from '../app/resolve.js';
@@ -52,6 +52,7 @@ test('the broken copies give the problems osheaf verify gives', async () => {
   assert.deepEqual(errors(await run('broken/gap/')), [
     'ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)',
     'ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)',
+    'ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps',
     'ocfl/alpha: v4 has other files than document version 3',
     'ocfl/collection-main: v2 member alpha v4: mismatch',
     'ocfl/reading: v1 member alpha v3: mismatch',
@@ -85,6 +86,44 @@ test('a verification reads the archive afresh, and counts its own requests', asy
   assert.equal(second.requests, log.length - between);
   assert.equal(first.requests, second.requests);
   assert.ok(first.bytesRead > 0);
+});
+
+test('a verification is not held to the budget of a page', async () => {
+  const http = new Http({ fetch: diskFetch(), budget: { requests: 1, bytes: 2 ** 20 } });
+  const archive = await Archive.open(http, ORIGIN + 'archive/');
+  const report = await verify(archive, { schemas });
+  assert.deepEqual(errors(report), []);
+  assert.ok(report.requests > 1);
+});
+
+test('a member resolved again is read from the server again', async () => {
+  const down = [];
+  const http = new Http({ fetch: diskFetch({ down }) });
+  const text = await readFile(new URL('./fixtures/archive/ocfl/alpha/v1/inventory.json', import.meta.url), 'utf-8');
+  const m = { archive: 'tag:example.org,2026:fixture', archiveUrl: ORIGIN + 'archive/', id: 'alpha' };
+  const resolver = new Resolver(http);
+  assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
+  down.push(ORIGIN + 'archive/');
+  assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
+  assert.equal((await resolver.again().confirm(m, 'v1', digestOf(text))).status, 'unavailable');
+});
+
+test('a member of many versions is described at its pin', async () => {
+  const log = [];
+  const http = new Http({ fetch: diskFetch({ log }) });
+  const archive = await Archive.open(http, ORIGIN + 'archive/');
+  const m = { archive: archive.archiveId, id: 'alpha', version: 'v1' };
+  const saved = LIMITS.described;
+  LIMITS.described = 2;
+  let d;
+  try {
+    d = await new Resolver(http, archive).describe(m, archive);
+  } finally {
+    LIMITS.described = saved;
+  }
+  assert.equal(d.version, 'v1');
+  assert.ok(d.limited);
+  assert.equal(log.filter((url) => url.endsWith('/object.json')).length, 2);
 });
 
 test('an inventory copy with another head, or fewer versions', async () => {

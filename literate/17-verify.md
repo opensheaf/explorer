@@ -18,7 +18,7 @@ verification keeps what it found), and collects its findings in a
 The module is `app/verify.js`.
 
     // in app/verify.js:
-    import { Http, sha512, pool, LIMITS } from './http.js';
+    import { sha512, pool, LIMITS } from './http.js';
     import { Archive } from './archive.js';
     import { versionsOf, filesOf, documentVersionErrors, memberPins } from './versions.js';
     import { versionNumber } from './paths.js';
@@ -117,9 +117,12 @@ it has read while the reader browses, and a verification run after a
 change of the archive (the curator fixing what the last run found) must
 not check the old inventories and discovery document. So each run makes
 an [HTTP client](10-http.md) of its own, with an empty cache and its own
-counts, sharing only the pool of the explorer's client, so that the
+counts, sharing only the pools of the explorer's client, so that the
 pages and the verification together stay within the limit of requests in
-flight; it reopens the archive, reading its discovery document again, and
+flight and read one large body at a time. It is not held to the budget
+of a page (see [the limits](10-http.md)): it reads a whole archive on
+purpose, and is bounded by limits of its own (objects, pins, the size of
+each file); it reopens the archive, reading its discovery document again, and
 resolves members with a resolver of its own. Its answers are dropped with
 it when the run ends, which also bounds the memory a verification keeps.
 
@@ -135,8 +138,7 @@ they see the archive, the options and the report.
                                             progress = () => {}, onFinding } = {}) {
       const report = new Report(archive, { remote, digests });
       if (onFinding) report.listeners.add(onFinding);
-      const given = archive.http;
-      const http = new Http({ fetch: given.fetchImpl, timeout: given.timeout, stall: given.stall, run: given.run });
+      const http = archive.http.another({ budget: null });
       const options = { signal };
       const seen = new Map();
       let resolver;
@@ -634,6 +636,9 @@ Before checking the digests, the page says how much it will download.
 Inventories do not record sizes, so the size of each file is asked of the
 server with a `HEAD` request: what it declares, which for files it
 compresses is the compressed size, so the estimate is a lower bound.
+These requests are made by a client of their own without a page budget,
+as the verification's are: an archive of many files needs more of them
+than a page may make.
 
     // in estimate the bytes of the content files:
     export async function estimateContent(archive, { signal, progress = () => {} } = {}) {
@@ -655,10 +660,11 @@ compresses is the compressed size, so the estimate is a lower bound.
           if (error.kind === 'aborted') throw error;
         }
       }
+      const http = archive.http.another({ budget: null });
       let bytes = 0, unknown = 0, done = 0;
       await Promise.all(files.map(async (url) => {
         try {
-          const size = await archive.http.size(url, options);
+          const size = await http.size(url, options);
           if (size === null) unknown++;
           else bytes += size;
         } catch (error) {

@@ -12,6 +12,12 @@ export class Resolver {
     if (home) this.archives.set(home.base, home);
   }
 
+  again() {
+    const fresh = new Resolver(this.http.another());
+    fresh.home = this.home;
+    return fresh;
+  }
+
   async open(url, options = {}) {
     const base = baseOf(url);
     if (!this.archives.has(base)) {
@@ -76,9 +82,12 @@ export class Resolver {
 
   async describe(m, archive, options = {}) {
     const ver = presentedPin(m);
-    let shown = ver;
-    if (!Object.hasOwn(m, 'revisions')) shown = (await archive.history(m.id, ver, options)).current;
     const inv = await archive.inventory(m.id, null, options);
+    let shown = ver, limited = false;
+    if (!Object.hasOwn(m, 'revisions')) {
+      if (Object.keys(inv.versions).length > LIMITS.described) limited = true;
+      else shown = (await archive.history(m.id, ver, options)).current;
+    }
     const [{ dc, obj }, head] = await Promise.all([
       archive.descriptions(m.id, inv, shown, options),
       archive.json(m.id, inv, inv.head, 'object.json', options),
@@ -86,7 +95,7 @@ export class Resolver {
     return {
       version: shown, title: titleOf(dc), creators: creatorsOf(dc),
       documentVersion: obj?.documentVersion ?? null,
-      status: head?.status || null, withdrawal: head?.withdrawal || null,
+      status: head?.status || null, withdrawal: head?.withdrawal || null, limited,
     };
   }
 }

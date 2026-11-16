@@ -271,7 +271,12 @@ read, as opensheaf-py does.
 A document version seen before must have the same own files and change
 note, except while its sources are missing: then files may be added,
 never changed or removed. A document version not seen before must have
-the next number.
+the next number, and must hold something new: an object version holding
+the same own files (the same paths, with the same digests) and the same
+change note as an earlier document version "keeps its number" (section
+7.3), so a new number given to it is reported, naming the first document
+version it repeats. Only this exact repetition is checked; opensheaf-py
+makes the same check, with the same message.
 
     // in check the number and the files of a document version:
     if (seen.has(n)) {
@@ -287,6 +292,12 @@ the next number.
       filesOfDoc.set(n, own);
     } else {
       if (n !== highest + 1) add(ver, `document version ${n} breaks the numbering (expected ${highest + 1})`);
+      for (const [m, files] of filesOfDoc) {
+        if (same(own, files) && change === seen.get(m)) {
+          add(ver, `document version ${n} holds the same files and change note as document version ${m}, whose number it keeps`);
+          break;
+        }
+      }
       highest = Math.max(highest, Number.isInteger(n) ? n : 0);
       seen.set(n, change);
       filesOfDoc.set(n, own);

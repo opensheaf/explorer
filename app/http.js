@@ -13,6 +13,11 @@ export const LIMITS = {
   mirrors: 5,              // mirrors tried for one pin, after the member's archive
   versions: 10_000,        // object versions of one object
   objects: 10_000,         // objects of one archive listed or verified
+  described: 200,          // object versions read to find the current version of a member
+  nesting: 64,             // levels of arrays and objects in a JSON file
+  retry: 30_000,           // milliseconds a busy server may ask to be left alone (Retry-After)
+  pageRequests: 40_000,    // requests made for one page
+  pageBytes: 256 * 2 ** 20, // bytes read for one page
 };
 
 export class FetchError extends Error {
@@ -32,7 +37,24 @@ export function explain(error) {
         'browser does not let this page read the answer. OpenSheaf archives should allow ' +
         'cross-origin requests (section 5 of the specification); GitHub Pages does. Otherwise, ' +
         'copy the explorer into the archive’s own site (for instance as explorer/ next to ' +
-        'opensheaf.json): served from there, it reads the archive without cross-origin requests.';
+        'opensheaf.json): served from there, it reads the archive without cross-origin requests. ' +
+        'The file may also simply be missing: a server that answers 404 without the header looks ' +
+        'the same to the browser.';
+    case 'html':
+      return 'The server sent an HTML page instead of the file: probably a wrong base URL (it ' +
+        'should be the folder holding opensheaf.json), or a site that answers every unknown ' +
+        'address with a page of its own.';
+    case 'forbidden':
+      return 'The server refuses to give the file (403). Object storage answers so both for a ' +
+        'file that does not exist and for a bucket that is not public: check the address, and ' +
+        'that the bucket allows public read.';
+    case 'busy':
+      return 'The server is busy or failing (429 or 5xx), and still was after two more tries. ' +
+        'Try again later.';
+    case 'budget':
+      return 'This page has made all the requests, or read all the bytes, the explorer allows ' +
+        'for one page (section 15 asks verifiers to limit what they fetch). Open a page that ' +
+        'needs less, or verify the archive.';
     case 'mixed':
       return 'This page was loaded over https:, and browsers do not let it read http: addresses. ' +
         'Serve the archive over https:, or open a copy of the explorer served over http:.';
@@ -40,8 +62,8 @@ export function explain(error) {
       return 'Only http: and https: addresses can be read by a web page. A collection made from ' +
         'a folder on disk records file: addresses, which only tools on that computer can read.';
     case 'network':
-      return 'No answer: the address may be wrong, the server down, or the network unavailable. ' +
-        'Some browsers also report a refused cross-origin request this way.';
+      return 'No answer, or an answer interrupted: the address may be wrong, the server down, or ' +
+        'the network unavailable. Some browsers also report a refused cross-origin request this way.';
     case 'not-found':
       return 'The server has no such file. Check the address: it should be the base URL of ' +
         'the archive, the folder holding opensheaf.json.';
@@ -145,7 +167,13 @@ function watchdog() {
   };
 }
 
-const BUSY = Symbol('busy');
+class Busy {
+  constructor(retryAfter) {
+    const s = String(retryAfter ?? '').trim();
+    const ms = /^\d+$/.test(s) ? Number(s) * 1000 : s ? Date.parse(s) - Date.now() : NaN;
+    this.after = Number.isNaN(ms) ? null : Math.min(Math.max(ms, 0), LIMITS.retry);
+  }
+}
 
 function tooLarge(url, limit, declared = null) {
   return new FetchError('too-large', url, declared === null ? `more than ${limit} bytes`
@@ -164,21 +192,26 @@ async function readLimited(response, url, limit, { dog, large, signal } = {}) {
     return bytes;
   }
   const reader = response.body.getReader();
-  let buffer = new Uint8Array(declared > 0 ? declared : Math.min(limit, 65536));
+  let buffer = new Uint8Array(Math.min(declared > 0 ? declared : limit, 65536));
   let size = 0, release = null;
+  const turn = async () => {
+    dog?.stop();
+    release = await large.acquire(signal);
+    dog?.rearm();
+  };
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       const end = size + value.length;
       if (end > limit) throw tooLarge(url, limit);
-      if (!release && large && end > LIMITS.large) {
-        dog?.stop();
-        release = await large.acquire(signal);
-        dog?.rearm();
-      }
+      if (!release && large && end > LIMITS.large) await turn();
       if (end > buffer.length) {
-        const grown = new Uint8Array(Math.min(limit, Math.max(2 * buffer.length, end)));
+        let room = Math.min(limit, Math.max(2 * buffer.length, end));
+        if (declared >= end) room = Math.min(room, declared);
+        if (!release && large && room > LIMITS.large) await turn();
+        if (release && declared >= end) room = declared;
+        const grown = new Uint8Array(room);
         grown.set(buffer.subarray(0, size));
         buffer = grown;
       }
@@ -198,10 +231,12 @@ async function readLimited(response, url, limit, { dog, large, signal } = {}) {
 export class Http {
   constructor({ fetch = globalThis.fetch?.bind(globalThis), concurrency = LIMITS.concurrency,
                 timeout = LIMITS.timeout, stall = LIMITS.stall, cacheLimit = LIMITS.cache,
-                run = pool(concurrency) } = {}) {
+                run = pool(concurrency), large = pool(1),
+                budget = { requests: LIMITS.pageRequests, bytes: LIMITS.pageBytes },
+                spent = { requests: 0, bytes: 0 } } = {}) {
     this.fetchImpl = fetch;
     this.run = run;
-    this.large = pool(1);
+    this.large = large;
     this.timeout = timeout;
     this.stall = stall;
     this.cache = new Map();
@@ -209,6 +244,19 @@ export class Http {
     this.cacheBytes = 0;
     this.requests = 0;
     this.bytesRead = 0;
+    this.budget = budget;
+    this.spent = spent;
+  }
+
+  newPage() {
+    this.spent.requests = 0;
+    this.spent.bytes = 0;
+  }
+
+  another({ budget = this.budget } = {}) {
+    return new Http({ fetch: this.fetchImpl, timeout: this.timeout, stall: this.stall, run: this.run,
+                      large: this.large, cacheLimit: this.cacheLimit, budget,
+                      spent: budget === this.budget ? this.spent : undefined });
   }
 
   checkUrl(url) {
@@ -235,15 +283,21 @@ export class Http {
       } finally {
         release();
       }
-      if (answer !== BUSY) return answer;
-      await pause(wait, signal).catch(() => { throw cancelled(); });
+      if (!(answer instanceof Busy)) return answer;
+      await pause(answer.after ?? wait, signal).catch(() => { throw cancelled(); });
     }
   }
 
   async attempt(url, method, limit, signal, canRetry) {
+    const room = this.budget ? this.budget.bytes - this.spent.bytes : Infinity;
+    if (this.budget && (this.spent.requests >= this.budget.requests || room <= 0)) {
+      throw new FetchError('budget', url, `not read: this page has made ${this.spent.requests} requests ` +
+        `and read ${this.spent.bytes} bytes, the most allowed for one page`);
+    }
     const dog = watchdog();
     const both = signal ? AbortSignal.any([signal, dog.signal]) : dog.signal;
     this.requests++;
+    this.spent.requests++;
     dog.arm(this.timeout, `no answer in ${this.timeout / 1000} s`);
     try {
       let response;
@@ -252,24 +306,30 @@ export class Http {
       } catch (error) {
         throw await this.diagnose(url, error, signal, dog);
       }
-      if (canRetry && (response.status === 429 || response.status >= 500)) {
+      const status = response.status;
+      const busy = status === 429 || status >= 500;
+      if (canRetry && busy) {
         response.body?.cancel().catch(() => {});
-        return BUSY;
+        return new Busy(response.headers.get('retry-after'));
       }
       if (!response.ok) {
         response.body?.cancel().catch(() => {});
-        const missing = response.status === 404 || response.status === 410;
-        throw new FetchError(missing ? 'not-found' : 'http', url, `HTTP ${response.status}`, response.status);
+        const kind = status === 404 || status === 410 ? 'not-found' : status === 403 ? 'forbidden' : busy ? 'busy' : 'http';
+        throw new FetchError(kind, url, `HTTP ${status}`, status);
       }
       if (method === 'HEAD') return response;
       dog.arm(this.stall, `the answer stalled: nothing received for ${this.stall / 1000} s`);
       try {
-        const bytes = await readLimited(response, url, limit, { dog, large: this.large, signal });
+        const bytes = await readLimited(response, url, Math.min(limit, room), { dog, large: this.large, signal });
         this.bytesRead += bytes.length;
+        this.spent.bytes += bytes.length;
         return bytes;
       } catch (error) {
+        if (error?.kind === 'too-large' && room < limit) {
+          throw new FetchError('budget', url, `not read whole: this page may read ${this.budget.bytes} bytes at most`);
+        }
         if (error instanceof FetchError && error.kind !== 'aborted') throw error;
-        throw await this.diagnose(url, error, signal, dog);
+        throw this.interrupted(url, error, signal, dog);
       }
     } finally {
       dog.stop();
@@ -288,12 +348,18 @@ export class Http {
         await this.fetchImpl(url, { method: 'HEAD', mode: 'no-cors', credentials: 'omit',
                                     signal: AbortSignal.timeout(this.timeout) });
         return new FetchError('cors', url, 'the server does not allow other sites to read it ' +
-                              '(no Access-Control-Allow-Origin header)');
+                              '(no Access-Control-Allow-Origin header), or it is missing');
       } catch {
         // no answer at all: a network error
       }
     }
     return new FetchError('network', url, `cannot be reached (${error?.message || error})`);
+  }
+
+  interrupted(url, error, signal, dog) {
+    if (signal?.aborted) return new FetchError('aborted', url, 'cancelled');
+    if (dog.fired) return new FetchError('timeout', url, dog.fired);
+    return new FetchError('network', url, `the answer was interrupted (${error?.message || error})`);
   }
 
   cached(url, options = {}) {
@@ -373,6 +439,20 @@ export class Http {
   }
 }
 
+function nesting(text) {
+  let depth = 0, most = 0, inString = false;
+  for (let k = 0; k < text.length; k++) {
+    const c = text.charCodeAt(k);
+    if (inString) {
+      if (c === 92) k++;                                // \ escapes the next character
+      else if (c === 34) inString = false;              // "
+    } else if (c === 34) inString = true;
+    else if (c === 91 || c === 123) most = Math.max(most, ++depth);   // [ {
+    else if (c === 93 || c === 125) depth--;            // ] }
+  }
+  return most;
+}
+
 export function parseJson(bytes, url = '') {
   let text;
   try {
@@ -380,7 +460,13 @@ export function parseJson(bytes, url = '') {
   } catch {
     throw new FetchError('json', url, 'is not UTF-8 (section 2)');
   }
+  if (/^\ufeff?\s*</.test(text)) {
+    throw new FetchError('html', url, 'an HTML page, not the file: probably a wrong base URL or a site’s fallback page');
+  }
   if (text.charCodeAt(0) === 0xfeff) throw new FetchError('json', url, 'starts with a byte order mark (section 2)');
+  if (nesting(text) > LIMITS.nesting) {
+    throw new FetchError('too-large', url, `is nested deeper than ${LIMITS.nesting} levels`);
+  }
   try {
     return JSON.parse(text);
   } catch (error) {

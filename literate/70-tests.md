@@ -257,6 +257,7 @@ broken/changed-file:   ocfl/alpha: digest mismatch for v1/content/paper.pdf
 broken/wrong-pin:      ocfl/reading: v1 member alpha v1: mismatch
 broken/gap:            ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)
                        ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)
+                       ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps
                        ocfl/alpha: v4 has other files than document version 3
                        ocfl/collection-main: v2 member alpha v4: mismatch
                        ocfl/reading: v1 member alpha v3: mismatch
@@ -409,7 +410,7 @@ for the time limits, which concern the body of an answer as it arrives.
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
     import { createServer } from 'node:http';
-    import { Http, LIMITS } from '../app/http.js';
+    import { Http, LIMITS, parseJson, explain } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { summary } from '../app/summary.js';
     import { diskFetch, ORIGIN } from './disk.mjs';
@@ -587,6 +588,125 @@ after it are never being read for two bodies at once.
       }
     });
 
+A body that breaks off after its answer has arrived is an interrupted
+answer, not a cross-origin refusal, even in a browser where a `no-cors`
+request to the server succeeds (imitated here by a `document`).
+
+    // in tests of requests:
+    test('a body interrupted is not a cross-origin refusal', async () => {
+      const fetch = async (url, init = {}) => {
+        if (init.mode === 'no-cors') return new Response(null, { status: 200 });
+        let k = 0;
+        const body = new ReadableStream({
+          pull(controller) {
+            if (k++ === 0) controller.enqueue(new Uint8Array(10));
+            else controller.error(new TypeError('terminated'));
+          },
+        });
+        return new Response(body);
+      };
+      globalThis.document = {};
+      try {
+        await assert.rejects(new Http({ fetch }).request('http://example.org/x'),
+          { kind: 'network', detail: /interrupted/ });
+      } finally {
+        delete globalThis.document;
+      }
+      assert.match(explain({ kind: 'cors' }), /missing/);
+    });
+
+The failures common on the hosts of archives are told apart: an HTML
+page where JSON was expected (a fallback page, or a wrong base URL), a
+403 of object storage, and a server still busy after its tries. The
+pause before a new try is what the server asks with `Retry-After`, in
+seconds or as a date, here none at all.
+
+    // in tests of requests:
+    test('an HTML page, a 403, and a busy server', async () => {
+      const page = new TextEncoder().encode('\ufeff\n  <!DOCTYPE html><html></html>');
+      assert.throws(() => parseJson(page), { kind: 'html', detail: /HTML page/ });
+      const html = new Http({ fetch: async () => new Response('<html>Welcome</html>') });
+      await assert.rejects(html.json('http://example.org/opensheaf.json'), { kind: 'html' });
+      const forbidden = new Http({ fetch: async () => new Response('', { status: 403 }) });
+      await assert.rejects(forbidden.request('http://example.org/x'), { kind: 'forbidden', status: 403 });
+      assert.match(explain({ kind: 'forbidden' }), /public read/);
+      let tries = 0;
+      const past = new Date(Date.now() - 60_000).toUTCString();
+      const busy = new Http({ fetch: async () => {
+        tries++;
+        return new Response('busy', { status: 503, headers: { 'retry-after': tries === 1 ? '0' : past } });
+      } });
+      const started = Date.now();
+      await assert.rejects(busy.request('http://example.org/x'), { kind: 'busy', status: 503 });
+      assert.equal(tries, 3);
+      assert.ok(Date.now() - started < 500);
+      assert.match(explain({ kind: 'busy' }), /try/i);
+    });
+
+JSON nested deeper than the limit is refused before it is parsed, whatever
+the brackets inside its strings; at the limit, it is read.
+
+    // in tests of requests:
+    test('JSON nested too deeply', () => {
+      const nested = (n) => new TextEncoder().encode('['.repeat(n) + '"\\\\\\"]]"' + ']'.repeat(n));
+      assert.deepEqual(parseJson(nested(1)), ['\\"]]']);
+      assert.equal(parseJson(nested(LIMITS.nesting)).length, 1);
+      assert.throws(() => parseJson(nested(LIMITS.nesting + 1)), { kind: 'too-large', detail: /nested/ });
+      assert.throws(() => parseJson(nested(100_000)), { kind: 'too-large' });
+    });
+
+A declared size is not trusted with memory: a server declaring 400 MB
+and sending ten bytes costs a buffer of 64 KiB, not 400 MB. The buffers
+made are watched through the global `Uint8Array`, which the module uses.
+
+    // in tests of requests:
+    test('a declared size does not allocate memory before the bytes arrive', async () => {
+      const declared = 400 * 2 ** 20;
+      const fetch = async () => ({ ok: true, status: 200, headers: new Headers({ 'content-length': String(declared) }),
+                                   body: new Response(new Uint8Array(10)).body });
+      const http = new Http({ fetch, budget: null });
+      const Original = globalThis.Uint8Array;
+      let most = 0;
+      globalThis.Uint8Array = class extends Original {
+        constructor(...args) {
+          super(...args);
+          if (typeof args[0] === 'number') most = Math.max(most, args[0]);
+        }
+      };
+      let bytes;
+      try {
+        bytes = await http.request('http://example.org/x', { limit: LIMITS.file });
+      } finally {
+        globalThis.Uint8Array = Original;
+      }
+      assert.equal(bytes.length, 10);
+      assert.ok(most <= 65536, `a buffer of ${most} bytes`);
+    });
+
+A page has a budget of requests and of bytes, which `newPage()` renews; a
+client made by `another()` spends the same budget, unless it is given
+none, as the verification is.
+
+    // in tests of requests:
+    test('the budget of a page', async () => {
+      const fetch = async () => new Response(new Uint8Array(10));
+      const http = new Http({ fetch, budget: { requests: 3, bytes: 25 } });
+      await http.request('http://example.org/1');
+      await http.request('http://example.org/2');
+      await assert.rejects(http.request('http://example.org/3'), { kind: 'budget' });
+      http.newPage();
+      await http.request('http://example.org/4');
+      await http.another().request('http://example.org/5');
+      await assert.rejects(http.request('http://example.org/6'), { kind: 'budget', detail: /bytes/ });
+      const few = new Http({ fetch, budget: { requests: 2, bytes: 1000 } });
+      await few.request('http://example.org/1');
+      await few.request('http://example.org/2');
+      await assert.rejects(few.request('http://example.org/3'), { kind: 'budget', detail: /2 requests/ });
+      const free = http.another({ budget: null });
+      for (let k = 0; k < 5; k++) await free.request(`http://example.org/free/${k}`);
+      assert.match(explain({ kind: 'budget' }), /one page/);
+    });
+
 Untrusted names
 ---------------
 
@@ -727,6 +847,25 @@ number of the version it completes; each rule broken gives its message.
       ]);
       assert.deepEqual(documentVersionErrors(inv, objOf), []);
       assert.equal(rolesOf(inv, objOf).v2, 'description');
+    });
+
+An object version that repeats the own files and the change note of an
+earlier document version keeps its number: a new number is reported,
+naming the first document version repeated. A different change note is
+something new, and is not reported.
+
+    // in tests of document versions:
+    test('a new number for files and a change note deposited before (section 7.3)', () => {
+      const note = { text: 'typos' };
+      const { inv, objOf } = make([
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 2, changes: note }, files: { 'a.tex': 'a2' } },
+        { obj: { documentVersion: 3 }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 4 }, files: { 'a.tex': 'a2' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v3 document version 3 holds the same files and change note as document version 1, whose number it keeps',
+      ]);
     });
 
 Logical paths are the archive's names, and may be those of the
@@ -1005,7 +1144,7 @@ index page of the profile `website`), find what they should.
     import assert from 'node:assert/strict';
     import { readFile } from 'node:fs/promises';
     import { createHash } from 'node:crypto';
-    import { Http } from '../app/http.js';
+    import { Http, LIMITS } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { verify } from '../app/verify.js';
     import { Resolver } from '../app/resolve.js';
@@ -1065,6 +1204,7 @@ The tests themselves:
       assert.deepEqual(errors(await run('broken/gap/')), [
         'ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)',
         'ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)',
+        'ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps',
         'ocfl/alpha: v4 has other files than document version 3',
         'ocfl/collection-main: v2 member alpha v4: mismatch',
         'ocfl/reading: v1 member alpha v3: mismatch',
@@ -1098,6 +1238,59 @@ The tests themselves:
       assert.equal(second.requests, log.length - between);
       assert.equal(first.requests, second.requests);
       assert.ok(first.bytesRead > 0);
+    });
+
+A verification is not held to the budget of a page: here the explorer's
+client may make one request, which opens the archive, and the
+verification still finds nothing wrong.
+
+    // in tests of the verification:
+    test('a verification is not held to the budget of a page', async () => {
+      const http = new Http({ fetch: diskFetch(), budget: { requests: 1, bytes: 2 ** 20 } });
+      const archive = await Archive.open(http, ORIGIN + 'archive/');
+      const report = await verify(archive, { schemas });
+      assert.deepEqual(errors(report), []);
+      assert.ok(report.requests > 1);
+    });
+
+A member resolved again is resolved from the server, not from the answers
+kept: here the member's archive disappears after a first resolution,
+which a resolver read afresh sees, and the first does not.
+
+    // in tests of the verification:
+    test('a member resolved again is read from the server again', async () => {
+      const down = [];
+      const http = new Http({ fetch: diskFetch({ down }) });
+      const text = await readFile(new URL('./fixtures/archive/ocfl/alpha/v1/inventory.json', import.meta.url), 'utf-8');
+      const m = { archive: 'tag:example.org,2026:fixture', archiveUrl: ORIGIN + 'archive/', id: 'alpha' };
+      const resolver = new Resolver(http);
+      assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
+      down.push(ORIGIN + 'archive/');
+      assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
+      assert.equal((await resolver.again().confirm(m, 'v1', digestOf(text))).status, 'unavailable');
+    });
+
+A member of a catalogue with more object versions than the explorer
+reads to find its current version is described at its pin, without
+reading the `object.json` of every version.
+
+    // in tests of the verification:
+    test('a member of many versions is described at its pin', async () => {
+      const log = [];
+      const http = new Http({ fetch: diskFetch({ log }) });
+      const archive = await Archive.open(http, ORIGIN + 'archive/');
+      const m = { archive: archive.archiveId, id: 'alpha', version: 'v1' };
+      const saved = LIMITS.described;
+      LIMITS.described = 2;
+      let d;
+      try {
+        d = await new Resolver(http, archive).describe(m, archive);
+      } finally {
+        LIMITS.described = saved;
+      }
+      assert.equal(d.version, 'v1');
+      assert.ok(d.limited);
+      assert.equal(log.filter((url) => url.endsWith('/object.json')).length, 2);
     });
 
 The copy of the inventory in a version folder must be the inventory as of

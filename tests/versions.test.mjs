@@ -68,6 +68,19 @@ test('a description-only version may add the file of the licence terms (sections
   assert.equal(rolesOf(inv, objOf).v2, 'description');
 });
 
+test('a new number for files and a change note deposited before (section 7.3)', () => {
+  const note = { text: 'typos' };
+  const { inv, objOf } = make([
+    { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+    { obj: { documentVersion: 2, changes: note }, files: { 'a.tex': 'a2' } },
+    { obj: { documentVersion: 3 }, files: { 'a.tex': 'a1' } },
+    { obj: { documentVersion: 4 }, files: { 'a.tex': 'a2' } },
+  ]);
+  assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+    'v3 document version 3 holds the same files and change note as document version 1, whose number it keeps',
+  ]);
+});
+
 test('logical paths named like inherited properties', () => {
   let { inv, objOf } = make([
     { obj: { documentVersion: 1, sourcesMissing: { text: 'lost' } }, files: { 'p.pdf': 'p1' } },

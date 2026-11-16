@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { Http, LIMITS } from '../app/http.js';
+import { Http, LIMITS, parseJson, explain } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { summary } from '../app/summary.js';
 import { diskFetch, ORIGIN } from './disk.mjs';
@@ -147,4 +147,97 @@ test('bodies are read whole, and large ones one at a time', async () => {
   } finally {
     LIMITS.large = saved;
   }
+});
+
+test('a body interrupted is not a cross-origin refusal', async () => {
+  const fetch = async (url, init = {}) => {
+    if (init.mode === 'no-cors') return new Response(null, { status: 200 });
+    let k = 0;
+    const body = new ReadableStream({
+      pull(controller) {
+        if (k++ === 0) controller.enqueue(new Uint8Array(10));
+        else controller.error(new TypeError('terminated'));
+      },
+    });
+    return new Response(body);
+  };
+  globalThis.document = {};
+  try {
+    await assert.rejects(new Http({ fetch }).request('http://example.org/x'),
+      { kind: 'network', detail: /interrupted/ });
+  } finally {
+    delete globalThis.document;
+  }
+  assert.match(explain({ kind: 'cors' }), /missing/);
+});
+
+test('an HTML page, a 403, and a busy server', async () => {
+  const page = new TextEncoder().encode('\ufeff\n  <!DOCTYPE html><html></html>');
+  assert.throws(() => parseJson(page), { kind: 'html', detail: /HTML page/ });
+  const html = new Http({ fetch: async () => new Response('<html>Welcome</html>') });
+  await assert.rejects(html.json('http://example.org/opensheaf.json'), { kind: 'html' });
+  const forbidden = new Http({ fetch: async () => new Response('', { status: 403 }) });
+  await assert.rejects(forbidden.request('http://example.org/x'), { kind: 'forbidden', status: 403 });
+  assert.match(explain({ kind: 'forbidden' }), /public read/);
+  let tries = 0;
+  const past = new Date(Date.now() - 60_000).toUTCString();
+  const busy = new Http({ fetch: async () => {
+    tries++;
+    return new Response('busy', { status: 503, headers: { 'retry-after': tries === 1 ? '0' : past } });
+  } });
+  const started = Date.now();
+  await assert.rejects(busy.request('http://example.org/x'), { kind: 'busy', status: 503 });
+  assert.equal(tries, 3);
+  assert.ok(Date.now() - started < 500);
+  assert.match(explain({ kind: 'busy' }), /try/i);
+});
+
+test('JSON nested too deeply', () => {
+  const nested = (n) => new TextEncoder().encode('['.repeat(n) + '"\\\\\\"]]"' + ']'.repeat(n));
+  assert.deepEqual(parseJson(nested(1)), ['\\"]]']);
+  assert.equal(parseJson(nested(LIMITS.nesting)).length, 1);
+  assert.throws(() => parseJson(nested(LIMITS.nesting + 1)), { kind: 'too-large', detail: /nested/ });
+  assert.throws(() => parseJson(nested(100_000)), { kind: 'too-large' });
+});
+
+test('a declared size does not allocate memory before the bytes arrive', async () => {
+  const declared = 400 * 2 ** 20;
+  const fetch = async () => ({ ok: true, status: 200, headers: new Headers({ 'content-length': String(declared) }),
+                               body: new Response(new Uint8Array(10)).body });
+  const http = new Http({ fetch, budget: null });
+  const Original = globalThis.Uint8Array;
+  let most = 0;
+  globalThis.Uint8Array = class extends Original {
+    constructor(...args) {
+      super(...args);
+      if (typeof args[0] === 'number') most = Math.max(most, args[0]);
+    }
+  };
+  let bytes;
+  try {
+    bytes = await http.request('http://example.org/x', { limit: LIMITS.file });
+  } finally {
+    globalThis.Uint8Array = Original;
+  }
+  assert.equal(bytes.length, 10);
+  assert.ok(most <= 65536, `a buffer of ${most} bytes`);
+});
+
+test('the budget of a page', async () => {
+  const fetch = async () => new Response(new Uint8Array(10));
+  const http = new Http({ fetch, budget: { requests: 3, bytes: 25 } });
+  await http.request('http://example.org/1');
+  await http.request('http://example.org/2');
+  await assert.rejects(http.request('http://example.org/3'), { kind: 'budget' });
+  http.newPage();
+  await http.request('http://example.org/4');
+  await http.another().request('http://example.org/5');
+  await assert.rejects(http.request('http://example.org/6'), { kind: 'budget', detail: /bytes/ });
+  const few = new Http({ fetch, budget: { requests: 2, bytes: 1000 } });
+  await few.request('http://example.org/1');
+  await few.request('http://example.org/2');
+  await assert.rejects(few.request('http://example.org/3'), { kind: 'budget', detail: /2 requests/ });
+  const free = http.another({ budget: null });
+  for (let k = 0; k < 5; k++) await free.request(`http://example.org/free/${k}`);
+  assert.match(explain({ kind: 'budget' }), /one page/);
 });

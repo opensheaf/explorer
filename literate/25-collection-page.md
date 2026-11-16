@@ -242,7 +242,10 @@ the members of a member collection are opened and resolved at once.
 
 A member resolved before is resolved again by the button "Resolve again",
 and by a run of "Resolve and check all pins" (`again`): its marks, its
-counts and its members opened are reset first.
+counts and its members opened are reset first. The button also gives the
+page a resolver read afresh (see [resolving members](15-resolve.md)), so
+that the member is checked against what the servers hold now, not against
+the answers kept.
 
     // in resolve a member:
     const TONES = { verified: 'ok', mismatch: 'bad', unavailable: 'warn', removed: 'warn', invalid: 'bad' };
@@ -258,7 +261,10 @@ counts and its members opened are reset first.
       delete nested.dataset.open;
     };
     const checkButton = h('button', { type: 'button', class: 'small', onclick: () => {
-      if (resolved) reset();
+      if (resolved) {
+        reset();
+        ctx.resolver = ctx.resolver.again();
+      }
       item.check(false);
     } }, 'Resolve');
     item.check = (deep, again = false) => {
