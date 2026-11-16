@@ -41,7 +41,9 @@ fills, and a footer with the warning that the specification is a draft.
 Its content security policy is a second line of defence behind the rule
 of [building pages from untrusted data](20-dom.md): no script but the explorer's own, no inline
 script or style, no plugin, no images from elsewhere; requests (to read
-archives) may go anywhere.
+archives) may go anywhere. Besides the module, the head loads the
+[theme button](31-style.md), a small classic script run
+before the page is painted.
 
     <!-- in index.html: -->
     <!DOCTYPE html>
@@ -55,6 +57,7 @@ archives) may go anywhere.
     <meta name="description" content="Explore and verify OpenSheaf archives and collections in the browser.">
     <link rel="icon" href="opensheaf-symbol.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
+    <script src="app/theme.js"></script>
     <script type="module" src="app/main.js"></script>
     </head>
     <body>

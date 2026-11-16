@@ -14,7 +14,8 @@ set things apart; there are no frames, shadows or icons. The text is set
 in IBM Plex Sans, the code and the identifiers in JetBrains Mono. The
 layout has 16-pixel gutters on a phone; tables that would be too wide
 scroll inside their box rather than the page. The colours follow the
-reader's system (`prefers-color-scheme`).
+reader's system (`prefers-color-scheme`), and the site's theme button
+switches between light and dark.
 
 The symbol of OpenSheaf (`opensheaf-symbol.svg`, the dot mark of the
 logo, a copy of `resources/brand/opensheaf-symbol.svg`) is drawn in black,
@@ -30,6 +31,8 @@ the GPL of the explorer, and its use as a mark follows the OpenSheaf
     <<the page>>
 
     <<the header and the footer>>
+
+    <<the theme button>>
 
     <<lists of facts, chips and alerts>>
 
@@ -200,10 +203,97 @@ follows the name of the explorer.
     header.site .nav a { color: var(--muted); text-decoration: none; }
     header.site .nav a:hover, header.site .nav a.current { color: var(--text); font-weight: inherit; }
     img.symbol { width: 20px; height: 20px; }
-    @media (prefers-color-scheme: dark) { img.symbol { filter: invert(1); } }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.symbol { filter: invert(1); } }
+    :root[data-theme="dark"] img.symbol { filter: invert(1); }
     footer.site { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 2.5rem; color: var(--muted);
                   font-size: 0.78rem; line-height: 1.5; }
     footer.site a { color: inherit; }
+
+The theme button
+----------------
+
+The theme control is that of the site (`resources/theme.js` and
+`resources/opensheaf.css` there): one button, a half-lit circle,
+floating at the top right corner of the window, which switches between
+light and dark. A visit opens in the default theme, which follows the
+system, also without JavaScript, through the stylesheet alone. The
+choice sets `data-theme` on the root element and is kept for the
+browsing session (the tab) under the same name as on the site,
+`opensheaf-theme`; on `opensheaf.org` the explorer and the pages of the
+site share it, since they share the origin, and a self-hosted explorer
+keeps its own. If storage is refused, the button still switches the
+page being read.
+
+The script is a classic script, not a module, loaded by the head of
+`index.html` before the page is painted, so that a page opened in the
+dark theme is never drawn light first. It is the explorer's own file,
+as the content security policy wants.
+
+    // in app/theme.js:
+    /* The theme: the default follows the system; one button switches
+       between light and dark, kept for the browsing session. A classic
+       script, run in the head before the page is painted. */
+    (function () {
+      'use strict';
+      var key = 'opensheaf-theme';
+      var root = document.documentElement;
+      var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+      function apply(value) {
+        if (value === 'light' || value === 'dark') root.setAttribute('data-theme', value);
+        else root.removeAttribute('data-theme');
+      }
+      try { apply(sessionStorage.getItem(key)); } catch (_) { apply(null); }
+
+      function current() {
+        var set = root.getAttribute('data-theme');
+        if (set === 'light' || set === 'dark') return set;
+        return media && media.matches ? 'dark' : 'light';
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var control = document.createElement('div');
+        control.className = 'theme-control';
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-toggle';
+
+        function describe() {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          button.setAttribute('aria-label', 'Switch to the ' + next + ' theme');
+          button.title = 'Switch to the ' + next + ' theme';
+        }
+
+        button.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          apply(next);
+          try { sessionStorage.setItem(key, next); } catch (_) { /* the page still switches */ }
+          describe();
+        });
+        if (media && media.addEventListener) media.addEventListener('change', describe);
+
+        describe();
+        control.appendChild(button);
+        document.body.insertBefore(control, document.body.firstChild);
+      });
+    }());
+
+The button sits on the paper, so that it stays legible over the text
+scrolling below it, and takes no room in the page. Where the window is
+too narrow for the masthead to clear it, the masthead leaves room on its
+right. It is not printed.
+
+    /* in the theme button: */
+    .theme-control { position: fixed; top: 0.7rem; right: 0.8rem; z-index: 10; margin: 0; }
+    .theme-control .theme-toggle { display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
+        border: 0; border-radius: 50%; background: var(--bg); color: var(--faint); cursor: pointer; }
+    .theme-control .theme-toggle::before { content: ""; width: 13px; height: 13px;
+        border: 1.5px solid currentColor; border-radius: 50%;
+        background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+    .theme-control .theme-toggle:hover { color: var(--text); }
+    .theme-control .theme-toggle:focus-visible { outline: 1.5px solid var(--text); outline-offset: 2px; }
+    @media screen and (max-width: 60rem) { header.site { padding-right: 3rem; } }
+    @media print { .theme-control { display: none !important; } }
 
 Facts, chips and alerts
 -----------------------

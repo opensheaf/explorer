@@ -123,10 +123,22 @@ header.site .nav { display: flex; gap: 1.5em; margin-left: auto; font-size: 0.82
 header.site .nav a { color: var(--muted); text-decoration: none; }
 header.site .nav a:hover, header.site .nav a.current { color: var(--text); font-weight: inherit; }
 img.symbol { width: 20px; height: 20px; }
-@media (prefers-color-scheme: dark) { img.symbol { filter: invert(1); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.symbol { filter: invert(1); } }
+:root[data-theme="dark"] img.symbol { filter: invert(1); }
 footer.site { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 2.5rem; color: var(--muted);
               font-size: 0.78rem; line-height: 1.5; }
 footer.site a { color: inherit; }
+
+.theme-control { position: fixed; top: 0.7rem; right: 0.8rem; z-index: 10; margin: 0; }
+.theme-control .theme-toggle { display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
+    border: 0; border-radius: 50%; background: var(--bg); color: var(--faint); cursor: pointer; }
+.theme-control .theme-toggle::before { content: ""; width: 13px; height: 13px;
+    border: 1.5px solid currentColor; border-radius: 50%;
+    background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+.theme-control .theme-toggle:hover { color: var(--text); }
+.theme-control .theme-toggle:focus-visible { outline: 1.5px solid var(--text); outline-offset: 2px; }
+@media screen and (max-width: 60rem) { header.site { padding-right: 3rem; } }
+@media print { .theme-control { display: none !important; } }
 
 dl.facts { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 0.35em 1.4em;
            margin: 0.8em 0; font-size: 0.94rem; }
