@@ -44,6 +44,11 @@ version, so their addresses are made from the version they belong to. A failure 
 left (its own signal aborted): then nothing is drawn, since the page is
 gone. Whether the page was left is asked of its signal, not read from
 the kind of the error, so that a page is never left saying "Loading…".
+The signal is asked again once everything is read, before anything is
+drawn: a description that cannot be read is replaced by none, and that
+replacement also swallows the error of a page that was left, so reaching
+the end of the reading does not mean that the page is still there.
+Without this check, the page left would be drawn below the next one.
 
     // in show an object:
     export async function showObject(ctx, root, id, ver) {
@@ -61,6 +66,7 @@ the kind of the error, so that a page is never left saying "Loading…".
         if (!options.signal?.aborted) wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
         return;
       }
+      if (options.signal?.aborted) return;
       wait.remove();
       const { obj, dc } = descs.get(shown);
       const fileUrl = (v) => (p) => { try { return a.fileUrl(id, s.inv, v, p); } catch { return null; } };

@@ -99,7 +99,17 @@ must not get the text of a JavaScript function); then superscripts and subscript
 character has a superscript or subscript form, and otherwise as `^(...)`
 and `_(...)`; finally the braces left over, which only grouped.
 
+Titles come from the archive, which may be hostile, so every pattern must
+run in time linear in the text: no pattern has two unbounded repetitions
+that can match the same characters one after the other (`\s*\{?\s*` would
+try every way of splitting a run of spaces between its two halves, and a
+title of `\mathbb` followed by a million spaces would hold the page for
+hours). Mathematics longer than `MAX_MATH` characters is not rewritten at
+all: no real formula in a title is that long.
+
     // in mathematics made readable:
+    const MAX_MATH = 2000;
+
     const script = (table, mark) => (_, braced, single) => {
       const body = braced ?? single;
       const chars = [...body];
@@ -108,8 +118,9 @@ and `_(...)`; finally the braces left over, which only grouped.
     };
 
     export function readableMath(tex) {
+      if (tex.length > MAX_MATH) return tex;
       return tex
-        .replace(/\\mathbb\s*\{?\s*([A-Z])\s*\}?/g, (m, c) => (Object.hasOwn(BLACKBOARD, c) ? BLACKBOARD[c] : c))
+        .replace(/\\mathbb\s*(?:\{\s*)?([A-Z])\s*\}?/g, (m, c) => (Object.hasOwn(BLACKBOARD, c) ? BLACKBOARD[c] : c))
         .replace(/\\(mathrm|mathbf|mathit|mathsf|mathcal|mathscr|mathfrak|text|textrm|operatorname|boldsymbol)\s*\{([^{}]*)\}/g, '$2')
         .replace(/\\(left|right|big|Big|bigg|Bigg)\b\s*/g, '')
         .replace(/\\[,;:! ]|\\q?quad\b/g, ' ')

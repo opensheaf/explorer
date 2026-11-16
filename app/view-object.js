@@ -20,6 +20,7 @@ export async function showObject(ctx, root, id, ver) {
     if (!options.signal?.aborted) wait.replaceWith(errorBox(`The object ${id} cannot be read.`, error));
     return;
   }
+  if (options.signal?.aborted) return;
   wait.remove();
   const { obj, dc } = descs.get(shown);
   const fileUrl = (v) => (p) => { try { return a.fileUrl(id, s.inv, v, p); } catch { return null; } };

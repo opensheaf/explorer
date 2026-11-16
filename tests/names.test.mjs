@@ -26,6 +26,19 @@ test('LaTeX commands named like inherited properties are left as they are', () =
   assert.equal(readableMath('\\alpha^2'), 'α²');
 });
 
+test('mathematics made to be slow is read at once', async () => {
+  const { plain } = await import('../app/text.js');
+  for (const tex of ['\\mathbb' + ' '.repeat(5e4), '\\mathbb{' + ' '.repeat(5e4), '\\mathbb' + ' '.repeat(1999)]) {
+    const start = performance.now();
+    readableMath(tex);
+    plain(`a $${tex}$ b`);
+    assert.ok(performance.now() - start < 200, `${tex.length} characters took too long`);
+  }
+  assert.equal(readableMath('\\mathbb{R}^2'), 'ℝ²');
+  assert.equal(readableMath('\\mathbb R'), 'ℝ');
+  assert.equal(readableMath('\\mathbb { Z }'), 'ℤ');
+});
+
 test('properties named like inherited ones are checked by the schema', async () => {
   const schema = { type: 'object', required: ['toString'], properties: { a: { type: 'string' } },
                    additionalProperties: { type: 'string' } };

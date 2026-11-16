@@ -47,6 +47,8 @@ const SUPERSCRIPT = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6
 const SUBSCRIPT = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉',
                     '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎' };
 
+const MAX_MATH = 2000;
+
 const script = (table, mark) => (_, braced, single) => {
   const body = braced ?? single;
   const chars = [...body];
@@ -55,8 +57,9 @@ const script = (table, mark) => (_, braced, single) => {
 };
 
 export function readableMath(tex) {
+  if (tex.length > MAX_MATH) return tex;
   return tex
-    .replace(/\\mathbb\s*\{?\s*([A-Z])\s*\}?/g, (m, c) => (Object.hasOwn(BLACKBOARD, c) ? BLACKBOARD[c] : c))
+    .replace(/\\mathbb\s*(?:\{\s*)?([A-Z])\s*\}?/g, (m, c) => (Object.hasOwn(BLACKBOARD, c) ? BLACKBOARD[c] : c))
     .replace(/\\(mathrm|mathbf|mathit|mathsf|mathcal|mathscr|mathfrak|text|textrm|operatorname|boldsymbol)\s*\{([^{}]*)\}/g, '$2')
     .replace(/\\(left|right|big|Big|bigg|Bigg)\b\s*/g, '')
     .replace(/\\[,;:! ]|\\q?quad\b/g, ' ')

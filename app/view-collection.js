@@ -12,7 +12,8 @@ const KINDS = {
   selection: 'A selection: it vets particular revisions of documents; each member pins a revision set, and only those revisions belong to it (section 10.1).',
 };
 
-export async function showCollection(ctx, root, id, ver) {
+export async function showCollection(app, root, id, ver) {
+  const ctx = Object.create(app, { signal: { value: app.signal } });
   const a = ctx.archive;
   const options = { signal: ctx.signal };
   const wait = root.appendChild(loading());
@@ -31,6 +32,7 @@ export async function showCollection(ctx, root, id, ver) {
     if (!options.signal?.aborted) wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
     return;
   }
+  if (options.signal?.aborted) return;
   wait.remove();
   const members = Array.isArray(mem?.members) ? mem.members : [];
   const description = (Array.isArray(dc?.descriptions) ? dc.descriptions : [])[0]?.description;
@@ -150,6 +152,7 @@ function memberItem(ctx, home, m, k, level, list, type) {
     clear(results, loading('Resolving…'));
     const problems = [];
     for (const [i, p] of pinList.entries()) {
+      if (ctx.signal?.aborted) return;
       if (i >= granted) {
         list.budget.stopped.push(list.budget.reason(level));
         clear(marks[i], chip('not resolved', ''), h('span', { class: 'small muted' }, ` (${list.budget.reason(level)})`));

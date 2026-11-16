@@ -50,13 +50,26 @@ page itself was left, as on [the page of an object](24-object-page.md). The cont
 collections to the depth chosen; one budget is shared by everything
 resolved on the page.
 
+Resolving goes on long after the page is drawn, while the reader waits or
+clicks. Its requests must be cancelled with the signal of *this* page:
+`ctx.signal` is replaced by the next page as soon as the reader leaves
+(see [the application](30-app.md)), and code reading it later would carry
+on under the new page's signal, fetching for a page that is gone and
+taking the connections the new page needs. So the page receives the
+context of the application as `app` and works with a context of its own,
+`ctx`, made from `app` with the signal of the moment fixed (everything
+else is read through to `app`); the member lists, nested ones included,
+are given this `ctx`, and the resolution of a member's pins stops at the
+next pin once the page is left.
+
     // in show a collection:
     const KINDS = {
       catalogue: 'A catalogue: it keeps objects whole, each member pinned with all its versions up to the pinned one (section 10.1).',
       selection: 'A selection: it vets particular revisions of documents; each member pins a revision set, and only those revisions belong to it (section 10.1).',
     };
 
-    export async function showCollection(ctx, root, id, ver) {
+    export async function showCollection(app, root, id, ver) {
+      const ctx = Object.create(app, { signal: { value: app.signal } });
       const a = ctx.archive;
       const options = { signal: ctx.signal };
       const wait = root.appendChild(loading());
@@ -75,6 +88,7 @@ resolved on the page.
         if (!options.signal?.aborted) wait.replaceWith(errorBox(`The collection ${id} cannot be read.`, error));
         return;
       }
+      if (options.signal?.aborted) return;
       wait.remove();
       const members = Array.isArray(mem?.members) ? mem.members : [];
       const description = (Array.isArray(dc?.descriptions) ? dc.descriptions : [])[0]?.description;
@@ -268,6 +282,7 @@ counts and its members opened are reset first.
       clear(results, loading('Resolving…'));
       const problems = [];
       for (const [i, p] of pinList.entries()) {
+        if (ctx.signal?.aborted) return;
         if (i >= granted) {
           list.budget.stopped.push(list.budget.reason(level));
           clear(marks[i], chip('not resolved', ''), h('span', { class: 'small muted' }, ` (${list.budget.reason(level)})`));
