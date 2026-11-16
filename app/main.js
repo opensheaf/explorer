@@ -97,13 +97,27 @@ function route() {
   clear(main);
   for (const a of document.querySelectorAll('#nav a')) a.classList.toggle('current', a.dataset.page === (page || 'archive'));
   const valid = isObjectId(id) && (ver === undefined || isVersion(ver)) && parts.length <= 3;
-  if (page === '') showArchive(ctx, main);
-  else if (page === 'object' && valid) showObject(ctx, main, id, ver);
-  else if (page === 'collection' && valid) showCollection(ctx, main, id, ver);
-  else if (page === 'verify' && parts.length === 1) showVerify(ctx, main);
-  else append(main, h('p', {}, 'There is no such page. ', h('a', { href: pages.archive() }, 'The archive.')));
+  let shown = null;
+  if (page === '') shown = showArchive(ctx, main);
+  else if (page === 'object' && valid) shown = showObject(ctx, main, id, ver);
+  else if (page === 'collection' && valid) shown = showCollection(ctx, main, id, ver);
+  else if (page === 'verify' && parts.length === 1) shown = showVerify(ctx, main);
+  else append(main, h('header', { class: 'page-head' }, h('h1', {}, 'No such page')),
+    h('p', {}, 'The address names no page of the explorer. ', h('a', { href: pages.archive() }, 'The archive.')));
   document.title = `${page === '' ? '' : (id || page) + ' · '}${ctx.archive.name} · OpenSheaf Explorer`;
   window.scrollTo(0, 0);
+  if (navigated) focusHeading(main, shown, ctx.signal);
+  navigated = true;
+}
+
+let navigated = false;
+
+async function focusHeading(main, shown, signal) {
+  await Promise.resolve(shown).catch(() => {});
+  const heading = main.querySelector('h1');
+  if (signal.aborted || !heading) return;
+  heading.setAttribute('tabindex', '-1');
+  heading.focus({ preventScroll: true });
 }
 
 async function start() {

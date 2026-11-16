@@ -112,7 +112,8 @@ The context
 
 The context is what the pages share: the HTTP client (with its kept
 answers), the archive, the resolver of members (with the archives it has
-opened), the summaries of objects, the schemas (read once, when a
+opened), the summaries of objects (the most recently used, see
+[the summaries](22-pieces.md)), the schemas (read once, when a
 verification first needs them), the verification in progress, and the
 `signal` of the page shown, which is aborted when the reader goes to
 another page, so that its pending requests stop.
@@ -225,6 +226,17 @@ and a summary being loaded for the old page is replaced by one for the
 new page (see [the summaries](22-pieces.md)). Summaries loaded are kept
 across pages.
 
+A page reached by a link replaces the one before, and the element that
+had the focus (the link clicked) is gone with it: a screen reader would
+be left at the start of the document, or nowhere. After such a
+navigation, the focus is moved to the heading of the new page, which is
+made focusable for this (`tabindex` -1: it can be focused, but is not a
+stop of the tab key), once the page has drawn it: the pages that read
+the archive first draw their heading after (their function returns when
+they are drawn). A page left before then is not focused. The first page
+shown, when the explorer starts, is not focused: the reader has not
+moved yet. An address that names no page also gets a heading.
+
     // in the pages and the fragment:
     let controller = null;
 
@@ -243,13 +255,27 @@ across pages.
       clear(main);
       for (const a of document.querySelectorAll('#nav a')) a.classList.toggle('current', a.dataset.page === (page || 'archive'));
       const valid = isObjectId(id) && (ver === undefined || isVersion(ver)) && parts.length <= 3;
-      if (page === '') showArchive(ctx, main);
-      else if (page === 'object' && valid) showObject(ctx, main, id, ver);
-      else if (page === 'collection' && valid) showCollection(ctx, main, id, ver);
-      else if (page === 'verify' && parts.length === 1) showVerify(ctx, main);
-      else append(main, h('p', {}, 'There is no such page. ', h('a', { href: pages.archive() }, 'The archive.')));
+      let shown = null;
+      if (page === '') shown = showArchive(ctx, main);
+      else if (page === 'object' && valid) shown = showObject(ctx, main, id, ver);
+      else if (page === 'collection' && valid) shown = showCollection(ctx, main, id, ver);
+      else if (page === 'verify' && parts.length === 1) shown = showVerify(ctx, main);
+      else append(main, h('header', { class: 'page-head' }, h('h1', {}, 'No such page')),
+        h('p', {}, 'The address names no page of the explorer. ', h('a', { href: pages.archive() }, 'The archive.')));
       document.title = `${page === '' ? '' : (id || page) + ' · '}${ctx.archive.name} · OpenSheaf Explorer`;
       window.scrollTo(0, 0);
+      if (navigated) focusHeading(main, shown, ctx.signal);
+      navigated = true;
+    }
+
+    let navigated = false;
+
+    async function focusHeading(main, shown, signal) {
+      await Promise.resolve(shown).catch(() => {});
+      const heading = main.querySelector('h1');
+      if (signal.aborted || !heading) return;
+      heading.setAttribute('tabindex', '-1');
+      heading.focus({ preventScroll: true });
     }
 
 Starting

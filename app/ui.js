@@ -63,5 +63,5 @@ export function errorBox(what, error) {
 }
 
 export function loading(text = 'Loading…') {
-  return h('p', { class: 'loading' }, text);
+  return h('p', { class: 'loading', role: 'status', 'aria-live': 'polite' }, text);
 }

@@ -13,7 +13,7 @@ The module is `app/view-archive.js`.
     import { h, append, external, plural } from './dom.js';
     import { rich, plain } from './text.js';
     import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere } from './ui.js';
-    import { summary } from './summary.js';
+    import { summary, rowSummary } from './summary.js';
     import { memberPins } from './versions.js';
     import { LIMITS } from './http.js';
 
@@ -81,10 +81,10 @@ identifier, kind, head and status, and, for a mirror, the archive it
 copies. The main collection, if there is one, gives at once the order of
 presentation of the archive's documents (its order is authoritative,
 section 10.2) and their cached citations (`cite`), so that the list is
-readable before anything else is fetched. Then the summary of every
-object is read, a few at a time, and each row is completed with the
-title, creators and current version as the object's own descriptions
-state them; the citations of the collection are not authoritative. A
+readable before anything else is fetched. Then the row summary of every
+object (see [the summaries](22-pieces.md)) is read, a few at a time, and
+each row is completed with the title, creators and current version as
+the object's own descriptions state them; the citations of the collection are not authoritative. A
 discovery document listing more than `LIMITS.objects` objects has only
 the first of them listed, and the page says so (section 15).
 
@@ -102,8 +102,8 @@ the first of them listed, and the page says so (section 15).
         rows.set(entry.id, row);
         list.append(row.el);
       }
-      <<order the list by the main collection>>
       <<complete the rows with the summaries>>
+      <<order the list by the main collection>>
       const cut = all.length > entries.length
         ? h('p', { class: 'alert warn' }, `The discovery document lists ${all.length} objects; only the first ${entries.length} are shown.`) : null;
       return section('Objects', controls, cut, status, list);
@@ -115,7 +115,10 @@ of first appearance. Until the object's own summary is read, a member of
 the main collection shows its cached citation and the version the
 collection pins, labelled as such ("pinned"), which may be earlier than
 the head. Its text, for the search, is kept up to date with
-what it shows.
+what it shows, and folded (see below) once, when it changes, not at every
+search: the list is filtered again each time a row is completed, and
+folding the text of every row each time would make reading a list of
+thousands of objects take a time growing as the square of their number.
 
     // in the list of objects:
     function objectRow(entry) {
@@ -137,6 +140,7 @@ what it shows.
                             s.pinned ? `pinned ${s.pinned}` : `head ${s.head ?? entry.head}`,
                             s.year ? String(s.year) : null].filter(Boolean).join(' · ');
         row.text = [entry.id, plain(s.title || ''), ...(s.creators || [])].join(' ');
+        row.folded = fold(row.text);
       } };
       row.set({ head: entry.head });
       return row;
@@ -145,10 +149,18 @@ what it shows.
 The search matches every word typed, ignoring case and accents, against
 the identifier, the title and the creators; the filters select a kind
 and a status. Both apply at once, and the status line says how many
-objects are shown.
+objects are shown, and how many rows are completed. The list is filtered
+when the reader types or chooses, and when a row is completed; the
+filtering asked for in the meantime is done once, at the next frame
+drawn (with a timer where there are no frames, as in the tests).
+
+    // in the list of objects:
+    const fold = (s) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const frame = (f) => (globalThis.requestAnimationFrame ? requestAnimationFrame(f) : setTimeout(f, 0));
+
+The controls, and the filtering:
 
     // in the controls of the list:
-    const fold = (s) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
     const search = h('input', { type: 'search', placeholder: 'Search titles, authors, identifiers', 'aria-label': 'Search' });
     const kind = h('select', { 'aria-label': 'Kind' },
       h('option', { value: '' }, 'all kinds'), h('option', { value: 'document' }, 'documents'),
@@ -156,21 +168,29 @@ objects are shown.
     const state = h('select', { 'aria-label': 'Status' },
       h('option', { value: '' }, 'any status'), h('option', { value: 'active' }, 'active'),
       h('option', { value: 'withdrawn' }, 'withdrawn'), h('option', { value: 'mirror' }, 'mirrors'));
+    let loaded = 0;
     const filter = () => {
-      const words = fold(search.value).split(/\s+/).filter(Boolean);
+      const words = fold(search.value || '').split(/\s+/).filter(Boolean);
       let shown = 0;
       for (const row of rows.values()) {
         const e = row.entry;
-        const ok = words.every((w) => fold(row.text).includes(w)) && (!kind.value || e.kind === kind.value) &&
+        const ok = words.every((w) => row.folded.includes(w)) && (!kind.value || e.kind === kind.value) &&
           (!state.value || (state.value === 'mirror' ? Boolean(e.mirrorOf) : e.status === state.value));
         row.el.hidden = !ok;
         if (ok) shown++;
       }
-      status.textContent = `${shown} of ${plural(rows.size, 'object')} shown`;
+      status.textContent = `${shown} of ${plural(rows.size, 'object')} shown` +
+        (loaded < rows.size ? `; descriptions read: ${loaded} of ${rows.size}` : '');
     };
-    search.addEventListener('input', filter);
-    kind.addEventListener('change', filter);
-    state.addEventListener('change', filter);
+    let pending = false;
+    const later = () => {
+      if (pending) return;
+      pending = true;
+      frame(() => { pending = false; filter(); });
+    };
+    search.addEventListener('input', later);
+    kind.addEventListener('change', later);
+    state.addEventListener('change', later);
     const controls = h('div', { class: 'controls' }, search, kind, state);
 
 The main collection is read through its summary; its members of this
@@ -195,30 +215,56 @@ document.
             row.set({ title: m.cite.title, creators: m.cite.creators, year: m.cite.year, pinned: pins[pins.length - 1]?.version });
           }
         }
-        filter();
+        reorder();
+        later();
       }).catch(() => {});
     }
 
-Then the summaries. They are requested all at once; the HTTP client lets a
-few requests run at a time, and leaving the page cancels the rest. An
-object whose summary cannot be read is marked, and the reason is in its
-tooltip; its page will say more.
+Then the row summaries. They are read a few at a time (`ROWS_AT_ONCE`,
+as many as the requests the HTTP client lets run at once), in the order
+of the list, so that the first rows, those the reader sees, are
+completed first; when the main collection reorders the list, the rows
+not yet started are taken in the new order. Requesting them all at once
+would queue the requests of every object in the HTTP client, mixed, and
+the first screen would be completed last. Leaving the page stops the
+reading: the rows not started are not read. An object whose summary
+cannot be read is marked, and the reason is in its tooltip; its page
+will say more.
+
+    // in the list of objects:
+    export const ROWS_AT_ONCE = 6;
+
+The reading itself:
 
     // in complete the rows with the summaries:
-    let loaded = 0;
-    for (const row of rows.values()) {
-      summary(ctx, row.entry.id).then((s) => {
+    const signal = ctx.signal;
+    const rowOf = new Map([...rows.values()].map((row) => [row.el, row]));
+    let queue = [...rows.values()];
+    let next = 0;
+    const reorder = () => {
+      queue = [...list.childNodes].map((el) => rowOf.get(el)).filter((row) => row && !row.started);
+      next = 0;
+    };
+    const read = async (row) => {
+      try {
+        const s = await rowSummary(ctx, row.entry.id, signal);
         row.loaded = true;
         row.set({ title: s.title, creators: s.creators, documentVersion: s.kind === 'document' ? s.documentVersion : null,
                   head: s.inv.head, year: s.issued?.slice(0, 4) });
-      }, (error) => {
+      } catch (error) {
         if (error?.kind === 'aborted') return;
         row.el.classList.add('unreadable');
         row.el.title = `cannot be read: ${error?.detail || error?.message || error}`;
-      }).finally(() => {
-        loaded++;
-        status.dataset.loaded = loaded < rows.size ? `; descriptions read: ${loaded} of ${rows.size}` : '';
-        filter();
-        if (status.dataset.loaded) status.textContent += status.dataset.loaded;
-      });
-    }
+      }
+      loaded++;
+      later();
+    };
+    const worker = async () => {
+      while (!signal?.aborted && next < queue.length) {
+        const row = queue[next++];
+        if (row.started) continue;
+        row.started = true;
+        await read(row);
+      }
+    };
+    for (let k = 0; k < ROWS_AT_ONCE; k++) worker();
