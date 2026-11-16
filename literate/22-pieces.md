@@ -117,8 +117,12 @@ an archive cannot be explored from another site.
         why ? h('p', {}, why) : null);
     }
 
+The message shown while a page is read is a live region, which a screen
+reader announces when it changes, without interrupting the reader.
+
+    // in notes, JSON and errors:
     export function loading(text = 'Loading…') {
-      return h('p', { class: 'loading' }, text);
+      return h('p', { class: 'loading', role: 'status', 'aria-live': 'polite' }, text);
     }
 
 Summaries of objects
@@ -139,23 +143,45 @@ another page, the old page's signal is aborted and the new page starts at
 once, before the old loading has even failed; it must not be handed that
 doomed loading, and starts its own. The requests are not made twice: the
 [HTTP client](10-http.md) shares those in progress, and aborts one only
-when all its callers have left. A summary loaded is kept for the session;
-one that fails, or is aborted, is forgotten, so that it is tried again on
-the next visit.
+when all its callers have left. A summary that fails, or is aborted, is
+forgotten, so that it is tried again on the next visit.
+
+The summaries loaded are kept for the session, but not all of them: an
+archive of thousands of objects would otherwise keep thousands of
+inventories and descriptions in memory. The context keeps the
+`SUMMARIES` most recently used (a `Map`, whose order is the order of
+use: a summary used is moved to its end); past that number, the least
+recently used are forgotten, except those still loading, which their pages
+are waiting for.
 
     // in app/summary.js:
-    import { titleOf, creatorsOf, dateOf, rolesOf } from './versions.js';
+    import { titleOf, creatorsOf, dateOf, rolesOf, versionsOf, currentVersion } from './versions.js';
 
-    export function summary(ctx, id) {
-      const known = ctx.summaries.get(id);
-      if (known && (known.done || known.signal === ctx.signal)) return known.loading;
-      const entry = { signal: ctx.signal, done: false };
-      entry.loading = load(ctx.archive, id, { signal: ctx.signal });
-      ctx.summaries.set(id, entry);
+    export const SUMMARIES = 500;
+
+    function kept(ctx, key, signal, load) {
+      const known = ctx.summaries.get(key);
+      if (known && (known.done || known.signal === signal)) {
+        ctx.summaries.delete(key);
+        ctx.summaries.set(key, known);
+        return known.loading;
+      }
+      const entry = { signal, done: false };
+      entry.loading = load();
+      ctx.summaries.set(key, entry);
       entry.loading.then(() => { entry.done = true; }, () => {
-        if (ctx.summaries.get(id) === entry) ctx.summaries.delete(id);
+        if (ctx.summaries.get(key) === entry) ctx.summaries.delete(key);
       });
+      const limit = ctx.summaryLimit ?? SUMMARIES;
+      for (const [k, e] of ctx.summaries) {
+        if (ctx.summaries.size <= limit) break;
+        if (e.done) ctx.summaries.delete(k);
+      }
       return entry.loading;
+    }
+
+    export function summary(ctx, id, signal = ctx.signal) {
+      return kept(ctx, id, signal, () => load(ctx.archive, id, { signal }));
     }
 
     async function load(archive, id, options) {
@@ -168,6 +194,59 @@ the next visit.
         objOf: (v) => objs.get(v) ?? null,
         roles: rolesOf(inv, (v) => objs.get(v) ?? null),
         kind: head?.kind ?? null, status: head?.status ?? null,
+        title: titleOf(dc), creators: creatorsOf(dc),
+        issued: dateOf(dc, 'Issued', 'Available', 'Created'),
+        documentVersion: obj?.documentVersion ?? null,
+      };
+    }
+
+The list of the archive's objects shows, for each object, only part of
+its summary: the title, the creators, the date and the document version
+of the version presented, the kind and the head. Reading the whole
+summary of every object would read the `object.json` of every object
+version: some two thousand requests for an archive of three hundred
+objects of five versions each. A *row summary* reads only what the row
+shows, when that is enough to know the current version: the inventory,
+the `object.json` of the head and, when it has `history`, the
+descriptions of the last entry of that history, which is the current
+version (section 7.3). Without `history`, the current version is the
+last object version of the highest document version, which only the
+`object.json` of every version tells; the row summary is then the whole
+summary, read as before. A whole summary already known is used as it is.
+So the values a row shows are those the whole summary gives, read in
+four requests (or fewer) for an object with `history`, instead of one per
+object version.
+
+The head is read as the whole summary reads it: an `object.json` that
+cannot be read, or a head that is not one of the object versions, is
+left to the whole summary. Row summaries are kept with the summaries,
+under a key that is not an identifier.
+
+    // in app/summary.js:
+    export function rowSummary(ctx, id, signal = ctx.signal) {
+      const whole = ctx.summaries.get(id);
+      if (whole?.done) return summary(ctx, id, signal);
+      return kept(ctx, `row ${id}`, signal, () => loadRow(ctx, id, signal));
+    }
+
+    async function loadRow(ctx, id, signal) {
+      const archive = ctx.archive;
+      const options = { signal };
+      const inv = await archive.inventory(id, null, options);
+      let head = null;
+      if (versionsOf(inv).includes(inv.head)) {
+        head = await archive.json(id, inv, inv.head, 'object.json', options).catch((error) => {
+          if (error?.kind === 'aborted') throw error;
+          return null;
+        });
+      }
+      if (!Array.isArray(head?.history) || !head.history.length) return summary(ctx, id, signal);
+      const current = currentVersion(inv, (v) => (v === inv.head ? head : null), inv.head);
+      const shown = head.kind === 'collection' ? inv.head : current;
+      const { obj, dc } = await archive.descriptions(id, inv, shown, options);
+      return {
+        id, inv, current, head, shown, obj, dc, row: true,
+        kind: head.kind ?? null, status: head.status ?? null,
         title: titleOf(dc), creators: creatorsOf(dc),
         issued: dateOf(dc, 'Issued', 'Available', 'Created'),
         documentVersion: obj?.documentVersion ?? null,

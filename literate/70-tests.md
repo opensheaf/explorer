@@ -485,6 +485,25 @@ The same holds for summaries, which the pages load with their signals.
       assert.equal(await summary(ctx, 'alpha'), s);
     });
 
+The summaries kept are bounded too: past the limit, the least recently
+used summary is forgotten, but never one still loading, which a page is
+waiting for.
+
+    // in tests of requests:
+    test('the summaries kept are bounded, and those loading are kept', async () => {
+      const http = new Http({ fetch: slowFetch(5) });
+      const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map(),
+                    signal: new AbortController().signal, summaryLimit: 1 };
+      await summary(ctx, 'alpha');
+      const beta = summary(ctx, 'beta');
+      const gamma = summary(ctx, 'gamma');
+      assert.deepEqual([...ctx.summaries.keys()], ['beta', 'gamma']);
+      await Promise.all([beta, gamma]);
+      await summary(ctx, 'beta');
+      await summary(ctx, 'alpha');
+      assert.deepEqual([...ctx.summaries.keys()], ['alpha']);
+    });
+
 The answers kept are bounded: past the limit, the least recently used
 are forgotten.
 
@@ -963,13 +982,13 @@ click or the back button replaces `ctx.signal` and empties the main
 element, and the page left must then draw nothing and fetch nothing more.
 These tests run the pages on a small imitation of the document, enough
 for what the pages do with it (elements, text, children, listeners, the
-value of a menu), and
+value of a menu or of a progress bar), and
 on fixtures served slowly, so that the reader can leave in the middle.
 
     // in tests/pages.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { diskFetch, ORIGIN } from './disk.mjs';
+    import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
 
     <<a small imitation of the document>>
 
@@ -978,11 +997,15 @@ on fixtures served slowly, so that the reader can leave in the middle.
     const { Resolver } = await import('../app/resolve.js');
     const { showObject } = await import('../app/view-object.js');
     const { showCollection } = await import('../app/view-collection.js');
+    const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
+    const { showVerify } = await import('../app/view-verify.js');
     const { clear } = await import('../app/dom.js');
 
     <<a session of the explorer on slow fixtures>>
 
     <<tests of pages left>>
+
+    <<tests of pages that grow>>
 
 The imitation keeps the tree of nodes and the listeners; the pages are
 imported after it is installed, since they create elements through the
@@ -1001,6 +1024,13 @@ global `document`.
       }
       prepend(...children) { for (const c of children.reverse()) { c.parent?.detach(c); c.parent = this; this.childNodes.unshift(c); } }
       appendChild(c) { this.append(c); return c; }
+      insertBefore(n, ref) {
+        if (!ref) return this.appendChild(n);
+        n.parent?.detach(n);
+        n.parent = this;
+        this.childNodes.splice(this.childNodes.indexOf(ref), 0, n);
+        return n;
+      }
       detach(c) { const k = this.childNodes.indexOf(c); if (k >= 0) this.childNodes.splice(k, 1); c.parent = null; }
       remove() { this.parent?.detach(this); }
       replaceWith(n) {
@@ -1035,6 +1065,7 @@ global `document`.
         const options = this.all('option');
         return (options.find((o) => 'selected' in o.attributes) || options[0])?.attributes.value;
       }
+      set value(v) { this.attributes.value = v; }
       all(tag, out = []) {
         for (const c of this.childNodes) {
           if (c instanceof FakeElement) { if (c.tagName === tag) out.push(c); c.all(tag, out); }
@@ -1123,6 +1154,106 @@ fourteen files after the reader had gone).
       await resolving;
       await wait(100);
       assert.deepEqual(log.slice(before), []);
+    });
+
+Pages that grow
+---------------
+
+The page of the archive completes its rows as their summaries come, and
+the page of the verification adds the findings as they are found. Both
+must do so at a cost in proportion to what is added, and leave alone
+what the reader is doing.
+
+The page of the first fixture archive reads, for `alpha`, whose head has
+`history`, only what its row shows: the inventory, the `object.json` of
+the head, and the descriptions of the current version (`v3`); not the
+`object.json` of the other object versions.
+
+    // in tests of pages that grow:
+    test('the page of an archive reads only what its rows show', async () => {
+      const { ctx, main, log, go } = await session('archive/', 1);
+      go();
+      showArchive(ctx, main);
+      const status = () => main.all('p').find((p) => p.className === 'muted small').textContent;
+      for (let t = 0; /descriptions read|^$/.test(status()) && t < 3000; t++) await wait(1);
+      await wait(20);
+      const alpha = log.filter((u) => u.includes('/ocfl/alpha/')).map((u) => u.split('/ocfl/alpha/')[1]).sort();
+      assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json']);
+      const row = main.all('li').find((li) => li.all('code').some((c) => c.textContent === 'alpha'));
+      assert.match(row.textContent, /version 2 · head v4/);
+    });
+
+An archive of three hundred objects, whose objects cannot be read, with
+a word in the search: the rows are read `ROWS_AT_ONCE` at a time, in the
+order of the list, and the text of the rows is folded (counted through
+`String.prototype.normalize`) a number of times in proportion to the
+number of rows, not to its square, although the list is filtered again
+as each row is completed.
+
+    // in tests of pages that grow:
+    test('the rows of a large archive are read a few at a time, and filtered in linear time', async () => {
+      const N = 300;
+      const objects = Array.from({ length: N }, (_, k) => ({ id: `doc-${k}`, kind: 'document', head: 'v1', status: 'active' }));
+      const started = [];
+      let inFlight = 0, most = 0;
+      const read = (id) => {
+        started.push(id);
+        most = Math.max(most, ++inFlight);
+        return new Promise((resolve, reject) => setTimeout(() => {
+          inFlight--;
+          reject(Object.assign(new Error('gone'), { kind: 'missing' }));
+        }, 1));
+      };
+      const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/', archiveId: 'synthetic',
+                        disc: { objects }, objects: () => objects, tombstones: () => [], inventory: read, history: read };
+      const ctx = { archive, summaries: new Map(), signal: new AbortController().signal };
+      const main = new FakeElement('main');
+      const normalize = String.prototype.normalize;
+      let folds = 0;
+      String.prototype.normalize = function (...args) { folds++; return normalize.apply(this, args); };
+      try {
+        showArchive(ctx, main);
+        main.all('input').find((i) => i.attributes.type === 'search').attributes.value = 'doc';
+        for (let t = 0; (started.length < N || inFlight > 0) && t < 5000; t++) await wait(1);
+        await wait(20);
+      } finally {
+        String.prototype.normalize = normalize;
+      }
+      assert.deepEqual(started, objects.map((o) => o.id));
+      assert.ok(most <= ROWS_AT_ONCE, `${most} rows read at once`);
+      assert.ok(folds < 5 * N, `${folds} folds for ${N} rows`);
+      assert.match(main.all('p').find((p) => p.className === 'muted small').textContent, /^300 of 300 objects shown$/);
+    });
+
+The page of a verification in progress is updated, not drawn again: a
+group the reader opened stays open, and the boxes choosing the levels
+stay those the reader may be on. The page left stops listening to the
+run.
+
+    // in tests of pages that grow:
+    test('the page of a verification in progress keeps what the reader opened', async () => {
+      const { ctx, main, go } = await session('broken/gap/', 20);
+      ctx.schemas = readSchemas;
+      go();
+      showVerify(ctx, main);
+      main.all('button').find((b) => b.textContent === 'Verify').listeners.click[0]();
+      const boxes = main.all('input');
+      let group;
+      for (let t = 0; !group && t < 3000; t++) {
+        await wait(5);
+        group = main.all('details').find((d) => d.className === 'group' && !d.hidden);
+      }
+      assert.ok(group && ctx.verification.running, 'no finding while running');
+      group.open = !group.open;
+      const open = group.open;
+      for (let t = 0; ctx.verification.running && t < 3000; t++) await wait(5);
+      await wait(250);
+      assert.ok(ctx.verification.report, 'the verification did not end');
+      assert.ok(main.all('details').includes(group), 'the group was drawn again');
+      assert.equal(group.open, open);
+      for (const box of boxes) assert.ok(main.all('input').includes(box), 'a box was drawn again');
+      go();
+      assert.equal(ctx.verification.listeners.size, 0);
     });
 
 Verification

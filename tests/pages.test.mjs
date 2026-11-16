@@ -1,7 +1,7 @@
 // Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { diskFetch, ORIGIN } from './disk.mjs';
+import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
 
 class FakeNode {
   constructor() { this.childNodes = []; this.parent = null; this.listeners = {}; }
@@ -15,6 +15,13 @@ class FakeNode {
   }
   prepend(...children) { for (const c of children.reverse()) { c.parent?.detach(c); c.parent = this; this.childNodes.unshift(c); } }
   appendChild(c) { this.append(c); return c; }
+  insertBefore(n, ref) {
+    if (!ref) return this.appendChild(n);
+    n.parent?.detach(n);
+    n.parent = this;
+    this.childNodes.splice(this.childNodes.indexOf(ref), 0, n);
+    return n;
+  }
   detach(c) { const k = this.childNodes.indexOf(c); if (k >= 0) this.childNodes.splice(k, 1); c.parent = null; }
   remove() { this.parent?.detach(this); }
   replaceWith(n) {
@@ -49,6 +56,7 @@ class FakeElement extends FakeNode {
     const options = this.all('option');
     return (options.find((o) => 'selected' in o.attributes) || options[0])?.attributes.value;
   }
+  set value(v) { this.attributes.value = v; }
   all(tag, out = []) {
     for (const c of this.childNodes) {
       if (c instanceof FakeElement) { if (c.tagName === tag) out.push(c); c.all(tag, out); }
@@ -65,6 +73,8 @@ const { Archive } = await import('../app/archive.js');
 const { Resolver } = await import('../app/resolve.js');
 const { showObject } = await import('../app/view-object.js');
 const { showCollection } = await import('../app/view-collection.js');
+const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
+const { showVerify } = await import('../app/view-verify.js');
 const { clear } = await import('../app/dom.js');
 
 async function session(base = 'archive/', delay = 15) {
@@ -119,4 +129,76 @@ test('the pins of a collection page left are not resolved further', async () => 
   await resolving;
   await wait(100);
   assert.deepEqual(log.slice(before), []);
+});
+
+test('the page of an archive reads only what its rows show', async () => {
+  const { ctx, main, log, go } = await session('archive/', 1);
+  go();
+  showArchive(ctx, main);
+  const status = () => main.all('p').find((p) => p.className === 'muted small').textContent;
+  for (let t = 0; /descriptions read|^$/.test(status()) && t < 3000; t++) await wait(1);
+  await wait(20);
+  const alpha = log.filter((u) => u.includes('/ocfl/alpha/')).map((u) => u.split('/ocfl/alpha/')[1]).sort();
+  assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json']);
+  const row = main.all('li').find((li) => li.all('code').some((c) => c.textContent === 'alpha'));
+  assert.match(row.textContent, /version 2 · head v4/);
+});
+
+test('the rows of a large archive are read a few at a time, and filtered in linear time', async () => {
+  const N = 300;
+  const objects = Array.from({ length: N }, (_, k) => ({ id: `doc-${k}`, kind: 'document', head: 'v1', status: 'active' }));
+  const started = [];
+  let inFlight = 0, most = 0;
+  const read = (id) => {
+    started.push(id);
+    most = Math.max(most, ++inFlight);
+    return new Promise((resolve, reject) => setTimeout(() => {
+      inFlight--;
+      reject(Object.assign(new Error('gone'), { kind: 'missing' }));
+    }, 1));
+  };
+  const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/', archiveId: 'synthetic',
+                    disc: { objects }, objects: () => objects, tombstones: () => [], inventory: read, history: read };
+  const ctx = { archive, summaries: new Map(), signal: new AbortController().signal };
+  const main = new FakeElement('main');
+  const normalize = String.prototype.normalize;
+  let folds = 0;
+  String.prototype.normalize = function (...args) { folds++; return normalize.apply(this, args); };
+  try {
+    showArchive(ctx, main);
+    main.all('input').find((i) => i.attributes.type === 'search').attributes.value = 'doc';
+    for (let t = 0; (started.length < N || inFlight > 0) && t < 5000; t++) await wait(1);
+    await wait(20);
+  } finally {
+    String.prototype.normalize = normalize;
+  }
+  assert.deepEqual(started, objects.map((o) => o.id));
+  assert.ok(most <= ROWS_AT_ONCE, `${most} rows read at once`);
+  assert.ok(folds < 5 * N, `${folds} folds for ${N} rows`);
+  assert.match(main.all('p').find((p) => p.className === 'muted small').textContent, /^300 of 300 objects shown$/);
+});
+
+test('the page of a verification in progress keeps what the reader opened', async () => {
+  const { ctx, main, go } = await session('broken/gap/', 20);
+  ctx.schemas = readSchemas;
+  go();
+  showVerify(ctx, main);
+  main.all('button').find((b) => b.textContent === 'Verify').listeners.click[0]();
+  const boxes = main.all('input');
+  let group;
+  for (let t = 0; !group && t < 3000; t++) {
+    await wait(5);
+    group = main.all('details').find((d) => d.className === 'group' && !d.hidden);
+  }
+  assert.ok(group && ctx.verification.running, 'no finding while running');
+  group.open = !group.open;
+  const open = group.open;
+  for (let t = 0; ctx.verification.running && t < 3000; t++) await wait(5);
+  await wait(250);
+  assert.ok(ctx.verification.report, 'the verification did not end');
+  assert.ok(main.all('details').includes(group), 'the group was drawn again');
+  assert.equal(group.open, open);
+  for (const box of boxes) assert.ok(main.all('input').includes(box), 'a box was drawn again');
+  go();
+  assert.equal(ctx.verification.listeners.size, 0);
 });

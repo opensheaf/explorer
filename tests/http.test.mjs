@@ -67,6 +67,20 @@ test('a summary loading for a page left is not handed to the next page', async (
   assert.equal(await summary(ctx, 'alpha'), s);
 });
 
+test('the summaries kept are bounded, and those loading are kept', async () => {
+  const http = new Http({ fetch: slowFetch(5) });
+  const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map(),
+                signal: new AbortController().signal, summaryLimit: 1 };
+  await summary(ctx, 'alpha');
+  const beta = summary(ctx, 'beta');
+  const gamma = summary(ctx, 'gamma');
+  assert.deepEqual([...ctx.summaries.keys()], ['beta', 'gamma']);
+  await Promise.all([beta, gamma]);
+  await summary(ctx, 'beta');
+  await summary(ctx, 'alpha');
+  assert.deepEqual([...ctx.summaries.keys()], ['alpha']);
+});
+
 test('the answers kept are bounded', async () => {
   const http = new Http({ fetch: diskFetch(), cacheLimit: 10_000 });   // the inventories are 4 to 10 kB
   const url = (id) => `${ORIGIN}archive/ocfl/${id}/inventory.json`;
