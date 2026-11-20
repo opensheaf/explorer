@@ -120,7 +120,39 @@ should be able to see them whole. The text is put in a `pre` as text.
     export function jsonView(label, value, url = null) {
       return h('details', { class: 'json' },
         h('summary', {}, label, url ? [' ', h('span', { class: 'muted' }, '(', external(url, 'raw'), ')')] : null),
-        h('pre', {}, JSON.stringify(value, null, 2)));
+        h('pre', {}, ...jsonText(value)));
+    }
+
+The text is coloured as code is on the site (the style chapter): the keys
+in the tone of names, and the values, strings, numbers, `true`, `false`
+and `null`, in the tone of values; the punctuation stays in ink. The
+colours come from tokens, never from the file: the tokens are found in the
+text as `JSON.stringify` writes it, and every piece is put in the page as
+text, so nothing of the file is ever read as markup. A string followed by
+a colon is a key.
+
+    // in notes, JSON and errors:
+    export function jsonTokens(text) {
+      const tokens = [];
+      const re = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b/g;
+      let at = 0;
+      for (const m of text.matchAll(re)) {
+        if (m.index > at) tokens.push({ kind: null, text: text.slice(at, m.index) });
+        if (m[1] !== undefined) {
+          tokens.push({ kind: m[2] !== undefined ? 'key' : 'string', text: m[1] });
+          if (m[2] !== undefined) tokens.push({ kind: null, text: m[2] });
+        } else {
+          tokens.push({ kind: m[3] !== undefined ? 'number' : 'literal', text: m[0] });
+        }
+        at = m.index + m[0].length;
+      }
+      if (at < text.length) tokens.push({ kind: null, text: text.slice(at) });
+      return tokens;
+    }
+
+    export function jsonText(value) {
+      return jsonTokens(JSON.stringify(value, null, 2))
+        .map(({ kind, text }) => (kind ? h('span', { class: `j-${kind}` }, text) : text));
     }
 
 An error is shown with what was being done, the reason, the address, and

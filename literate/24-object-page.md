@@ -27,7 +27,7 @@ The module is `app/view-object.js`.
     // in app/view-object.js:
     import { h, append, external, doiLink, identifierLink, digest, bytes, timestamp, plural } from './dom.js';
     import { rich } from './text.js';
-    import { facts, chip, statusChip, verdictChip, section, jsonView, errorBox, loading, noteView, pages, elsewhere,
+    import { facts, chip, statusChip, verdictChip, section, jsonView, jsonText, errorBox, loading, noteView, pages, elsewhere,
              ref } from './ui.js';
     import { summary } from './summary.js';
     import { versionsOf, filesOf, dateOf, titleOf, creatorsOf, abstractOf, isEvidence } from './versions.js';
@@ -446,7 +446,7 @@ The inventory of a version is read only when its box is opened.
       box.addEventListener('toggle', () => {
         if (!box.open || box.dataset.read) return;
         box.dataset.read = 'yes';
-        read().then((value) => { pre.textContent = JSON.stringify(value, null, 2); },
+        read().then((value) => { pre.replaceChildren(...jsonText(value)); },
                     (error) => { pre.textContent = `cannot be read: ${error?.detail || error?.message || error}`; });
       });
       return box;

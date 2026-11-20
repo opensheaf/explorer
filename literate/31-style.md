@@ -70,7 +70,9 @@ The block of variables `--os-*` is that of the site's stylesheet
 (`resources/opensheaf.css`), copied whole, never one value at a time:
 the paper, the surface of tinted blocks, the hairlines, the ink, the
 secondary text, the faint grey of bullets and underlines, the three
-states with their tints, and the faces; light, dark and print. The
+states with their tints, the four muted tones of code (`--os-code-*`,
+which colour the JSON files shown, below), and the faces; light, dark and
+print. The
 explorer's own names are set from it.
 
     /* in the colours of the two themes: */
@@ -88,6 +90,10 @@ explorer's own names are set from it.
         --os-bad-bg: #f6e4e0;
         --os-warn: #7d5200;
         --os-warn-bg: #f5ecd6;
+        --os-code-keyword: #7b3f8c;
+        --os-code-title: #1f5b8f;
+        --os-code-type: #2c6a64;
+        --os-code-literal: #8a5a14;
         --os-serif: "CMU Serif", "Latin Modern Roman", "Computer Modern", "Times New Roman", serif;
         --os-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
         --os-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -107,6 +113,10 @@ explorer's own names are set from it.
             --os-bad-bg: #342025;
             --os-warn: #e7c277;
             --os-warn-bg: #2d281c;
+            --os-code-keyword: #cfa6dd;
+            --os-code-title: #9cc3ea;
+            --os-code-type: #8ccbc1;
+            --os-code-literal: #e2bd7e;
         }
     }
     :root[data-theme="dark"] {
@@ -123,6 +133,10 @@ explorer's own names are set from it.
         --os-bad-bg: #342025;
         --os-warn: #e7c277;
         --os-warn-bg: #2d281c;
+        --os-code-keyword: #cfa6dd;
+        --os-code-title: #9cc3ea;
+        --os-code-type: #8ccbc1;
+        --os-code-literal: #e2bd7e;
     }
     @media print {
         :root, :root[data-theme] {
@@ -139,6 +153,10 @@ explorer's own names are set from it.
             --os-bad-bg: #fff !important;
             --os-warn: #000 !important;
             --os-warn-bg: #fff !important;
+            --os-code-keyword: #000 !important;
+            --os-code-title: #000 !important;
+            --os-code-type: #000 !important;
+            --os-code-literal: #000 !important;
         }
     }
     :root {
@@ -365,7 +383,9 @@ Tables, forms and JSON
 Tables are ruled as in a book: a rule in ink at the head and at the foot,
 hairlines between the rows, no vertical rules, the header in small
 letter-spaced capitals. Controls have a hairline border on the paper; the
-one primary button is in ink.
+one primary button is in ink. JSON files are shown on the surface, coloured as code
+is on the site: keys in the tone of names, values in the tone of values,
+punctuation in ink.
 
     /* in tables, forms and JSON: */
     .table-wrap { overflow-x: auto; }
@@ -395,6 +415,8 @@ one primary button is in ink.
     details.json summary { cursor: pointer; }
     details.json pre { max-height: 32rem; overflow: auto; padding: 0.9em 1.1em; background: var(--surface);
                        border-radius: 4px; font-size: 0.78rem; line-height: 1.55; }
+    details.json .j-key { color: var(--os-code-title); }
+    details.json .j-string, details.json .j-number, details.json .j-literal { color: var(--os-code-literal); }
     fieldset.options { border: 1px solid var(--border); border-radius: 4px; padding: 0.6em 1em; }
     fieldset.options label { display: block; margin: 0.3em 0; }
 

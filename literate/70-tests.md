@@ -1809,3 +1809,28 @@ node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [-
                   `${report.stats.pins} pins, ${report.stats.files} files; ${report.requests} requests, ` +
                   `${report.bytesRead} bytes`);
     process.exit(n ? 1 : 0);
+
+
+The colours of JSON
+-------------------
+
+The tokens that colour a JSON file shown ([the pieces](22-pieces.md)): a
+string followed by a colon is a key, other strings, numbers and `true`,
+`false`, `null` are values, an escaped quote does not end a string, and
+the pieces, joined, give back the text.
+
+    // in tests/json.test.mjs:
+    import { test } from 'node:test';
+    import assert from 'node:assert/strict';
+    import { jsonTokens } from '../app/ui.js';
+
+    test('JSON is split into keys, values and the rest', () => {
+      const text = JSON.stringify({ a: 'x"y: 1', n: -1.5e3, ok: true, z: null, k: ['s'] }, null, 2);
+      const tokens = jsonTokens(text);
+      assert.equal(tokens.map((t) => t.text).join(''), text);
+      const kinds = (kind) => tokens.filter((t) => t.kind === kind).map((t) => t.text);
+      assert.deepEqual(kinds('key'), ['"a"', '"n"', '"ok"', '"z"', '"k"']);
+      assert.deepEqual(kinds('string'), ['"x\\"y: 1"', '"s"']);
+      assert.deepEqual(kinds('number'), ['-1500']);
+      assert.deepEqual(kinds('literal'), ['true', 'null']);
+    });

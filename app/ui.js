@@ -66,7 +66,30 @@ export function noteView(note, fileUrl) {
 export function jsonView(label, value, url = null) {
   return h('details', { class: 'json' },
     h('summary', {}, label, url ? [' ', h('span', { class: 'muted' }, '(', external(url, 'raw'), ')')] : null),
-    h('pre', {}, JSON.stringify(value, null, 2)));
+    h('pre', {}, ...jsonText(value)));
+}
+
+export function jsonTokens(text) {
+  const tokens = [];
+  const re = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b/g;
+  let at = 0;
+  for (const m of text.matchAll(re)) {
+    if (m.index > at) tokens.push({ kind: null, text: text.slice(at, m.index) });
+    if (m[1] !== undefined) {
+      tokens.push({ kind: m[2] !== undefined ? 'key' : 'string', text: m[1] });
+      if (m[2] !== undefined) tokens.push({ kind: null, text: m[2] });
+    } else {
+      tokens.push({ kind: m[3] !== undefined ? 'number' : 'literal', text: m[0] });
+    }
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) tokens.push({ kind: null, text: text.slice(at) });
+  return tokens;
+}
+
+export function jsonText(value) {
+  return jsonTokens(JSON.stringify(value, null, 2))
+    .map(({ kind, text }) => (kind ? h('span', { class: `j-${kind}` }, text) : text));
 }
 
 export function errorBox(what, error) {
