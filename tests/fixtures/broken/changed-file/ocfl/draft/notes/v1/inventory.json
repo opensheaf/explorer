@@ -40,7 +40,7 @@
   "type": "https://ocfl.io/1.1/spec/#inventory",
   "versions": {
     "v1": {
-      "created": "2026-11-20T00:03:56Z",
+      "created": "2026-11-20T17:06:44Z",
       "state": {
         "cb9f269e33d1fa28bc4bc73136097b9a83f757be553b92e7564411da09196e0815da7d7bd523a6429526f4af40624dfb7cb0993d2363bb21855a9dac48dac02c": [
           "datacite.json"

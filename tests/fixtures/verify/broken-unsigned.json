@@ -1,13 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq",
-    "message": "key log of cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq: latest version v1"
+    "place": "owner zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+    "message": "key log of zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq: latest version v1"
   },
   {
     "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
+    "place": "main",
+    "message": "latest signed version v2"
   },
   {
     "severity": "warning",
@@ -31,18 +31,13 @@
   },
   {
     "severity": "result",
-    "place": "alpha",
-    "message": "latest signed version v4"
+    "place": "reading",
+    "message": "latest signed version v1"
   },
   {
     "severity": "result",
-    "place": "main",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "error",
-    "place": "reading v1 member beta v2",
-    "message": "not a version: a collection pins only signed versions (section 8.5)"
+    "place": "alpha",
+    "message": "latest signed version v4"
   },
   {
     "severity": "error",
@@ -50,8 +45,13 @@
     "message": "not a version: a collection pins only signed versions (section 8.5)"
   },
   {
+    "severity": "error",
+    "place": "reading v1 member beta v2",
+    "message": "not a version: a collection pins only signed versions (section 8.5)"
+  },
+  {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:t246sk3u3wh3wlb5a56s3dyaksosato7rz3odljzugartwz6dxia:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq (2026-11-20: Taken down for the tests.)"
+    "message": "removed: sheaf:oaik6h7sdz5etsffjdkp42ynv7sd2vkljpix4tawe6lnaebotbua:zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq (2026-11-20: Taken down for the tests.)"
   }
 ]

@@ -1,0 +1,12 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "sha512",
+  "entries": [
+    {
+      "inventorySha512": "c7dbdef1d921692a5e4330ae811c8149288e476f01b4a1f0cd0e960a31c16b910128ac83fdc0a811eb07e735aa0ed09fd60b1af466c0e53e3127e9d7e283acaa",
+      "id": "sheaf:oaik6h7sdz5etsffjdkp42ynv7sd2vkljpix4tawe6lnaebotbua:zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "version": "v1",
+      "status": "removed"
+    }
+  ]
+}

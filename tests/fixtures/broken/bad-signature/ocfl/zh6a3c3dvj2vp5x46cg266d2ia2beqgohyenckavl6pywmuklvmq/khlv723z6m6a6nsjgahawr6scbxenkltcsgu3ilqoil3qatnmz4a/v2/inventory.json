@@ -1,0 +1,147 @@
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "6c67719ff157e5a2194e2b8a28c7ec38": [
+        "v1/content/alpha-1.tex"
+      ],
+      "3e75eef7458aed8e105d7ba11c210bd4": [
+        "v1/content/datacite.json"
+      ],
+      "d32b466634efbeac61e5a95942759054": [
+        "v1/content/genesis.json"
+      ],
+      "60d1288c6f9aa45faa52d08ba74b7370": [
+        "v1/content/object.json"
+      ],
+      "3b48e959dde46787fdb4a83968fc6b26": [
+        "v1/content/paper.pdf"
+      ],
+      "b8dd0b4511268000e92e95a8c9929608": [
+        "v2/content/alpha-2.tex"
+      ],
+      "75a71e98b6e0d826e3b3da1110948b44": [
+        "v2/content/datacite.json"
+      ],
+      "410d959b9add508b2d12df3f54014f10": [
+        "v2/content/object.json"
+      ],
+      "0b8a6bf484a5fdbbe95ae52cea9c0f52": [
+        "v2/content/paper.pdf"
+      ]
+    },
+    "sha256": {
+      "d09686f96421a1ed77557f5bf8ff25672ec2a80127049c3ffb00c53c107565a4": [
+        "v1/content/alpha-1.tex"
+      ],
+      "e5fa46d046aea312e5074ad01fdf1ad8aa2836d95493efb75faf56d9f6a28f45": [
+        "v1/content/datacite.json"
+      ],
+      "2ee4a3528a7128639428ee45a4a68b6d684a1b5385c24622e6a428abe95aced2": [
+        "v1/content/genesis.json"
+      ],
+      "523b4bf7ab07616577994b61c6cc4c6c2d1b3c82d1dfa02b795133ff696708d7": [
+        "v1/content/object.json"
+      ],
+      "a275d4ca594f414f18efc41f14983895fa9e2cf6188a5ccbe6aa4f2478490aad": [
+        "v1/content/paper.pdf"
+      ],
+      "16a861772e100e9578867ee62e31af3db9d67a92c509f753dbfe495583263e9f": [
+        "v2/content/alpha-2.tex"
+      ],
+      "cfbf271b2cfa8bea7607a7ed81b9e891e4ddb080f454cfd0cd117369af20fe20": [
+        "v2/content/datacite.json"
+      ],
+      "15e9423f5139db77e990380f348ba15522c07b3aa14098d164ac126470ac590c": [
+        "v2/content/object.json"
+      ],
+      "7f527c33b0fb072ddfeed83bf6f2ded0e4ed09fc0d644ae88fd7529815c87fcc": [
+        "v2/content/paper.pdf"
+      ]
+    }
+  },
+  "head": "v2",
+  "id": "sheaf:khlv723z6m6a6nsjgahawr6scbxenkltcsgu3ilqoil3qatnmz4a:zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+  "manifest": {
+    "47944813ba96711a78b6a2d1dd40da4757653b9e1b10589627098a02ae222405deadf1518ed2332f469b291017b7d5618f6f75a52676bfca3db7516868a38aa4": [
+      "v1/content/alpha-1.tex"
+    ],
+    "d36afb0d8568c234f033f5189101385d6d4ed65d768038f27044cf842970b24598ea4e7b790a3e4ad54471ee9c083f40ae2d8e208be7f8622697c3eae0358e7a": [
+      "v1/content/datacite.json"
+    ],
+    "1b341b4f27b0b5bd38e1705d1c86adb0459c14f1d8bef5ecf05c73a7c54f64785a5fd0f8d4ae9170eb933198c097dd9a136db665f09d062fb64d9cc12fdd148b": [
+      "v1/content/genesis.json"
+    ],
+    "387f1f14345fd173f06dc55c1a98ba76145adcdb96fe3dbf2f8b4d99b5e1320588af4247ab5b4a6041487e4b6cf8c4dac899a29780449d6f4d2deed53d34b4e0": [
+      "v1/content/object.json"
+    ],
+    "0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0": [
+      "v1/content/paper.pdf"
+    ],
+    "99e26d81ed26316b11a95281d13b8344b779afffcafa6cc010a924187327eb81d45bc4a2550185e5bb77136c61edede0cc304e6d85d91283d0578cd03171b57f": [
+      "v2/content/alpha-2.tex"
+    ],
+    "d97bd5cd51a2f2fa668848961b23febd62f0fbb6932bdaac2cca6bef684b177f6174d1668eebe481d4e80434273d6a7829f3fe3b3fc901d486bb4f51fe0198b7": [
+      "v2/content/datacite.json"
+    ],
+    "9f0c72c1e0d67b17157b91008482cb6f1a973d936ceba0b24ddb498ffe8c9f3fd785c6dd0f3b98da6b47d240ab6729a63a9ef987503dea56e5036d8405f7d783": [
+      "v2/content/object.json"
+    ],
+    "ac44df80d71c50caeec6f0de9ce8b9892d86ec70d724cc553cde48cb5f1af6d9fd5994d5b20f8d531aaf56fe1262134b270e5fb9a46f86c1ea4c89080f540760": [
+      "v2/content/paper.pdf"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-20T17:06:43Z",
+      "state": {
+        "47944813ba96711a78b6a2d1dd40da4757653b9e1b10589627098a02ae222405deadf1518ed2332f469b291017b7d5618f6f75a52676bfca3db7516868a38aa4": [
+          "alpha-1.tex"
+        ],
+        "d36afb0d8568c234f033f5189101385d6d4ed65d768038f27044cf842970b24598ea4e7b790a3e4ad54471ee9c083f40ae2d8e208be7f8622697c3eae0358e7a": [
+          "datacite.json"
+        ],
+        "1b341b4f27b0b5bd38e1705d1c86adb0459c14f1d8bef5ecf05c73a7c54f64785a5fd0f8d4ae9170eb933198c097dd9a136db665f09d062fb64d9cc12fdd148b": [
+          "genesis.json"
+        ],
+        "387f1f14345fd173f06dc55c1a98ba76145adcdb96fe3dbf2f8b4d99b5e1320588af4247ab5b4a6041487e4b6cf8c4dac899a29780449d6f4d2deed53d34b4e0": [
+          "object.json"
+        ],
+        "0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0": [
+          "paper.pdf"
+        ]
+      },
+      "message": "Deposit: document version 1",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/archive/"
+      }
+    },
+    "v2": {
+      "created": "2026-11-20T17:06:43Z",
+      "state": {
+        "99e26d81ed26316b11a95281d13b8344b779afffcafa6cc010a924187327eb81d45bc4a2550185e5bb77136c61edede0cc304e6d85d91283d0578cd03171b57f": [
+          "alpha-2.tex"
+        ],
+        "d97bd5cd51a2f2fa668848961b23febd62f0fbb6932bdaac2cca6bef684b177f6174d1668eebe481d4e80434273d6a7829f3fe3b3fc901d486bb4f51fe0198b7": [
+          "datacite.json"
+        ],
+        "1b341b4f27b0b5bd38e1705d1c86adb0459c14f1d8bef5ecf05c73a7c54f64785a5fd0f8d4ae9170eb933198c097dd9a136db665f09d062fb64d9cc12fdd148b": [
+          "genesis.json"
+        ],
+        "9f0c72c1e0d67b17157b91008482cb6f1a973d936ceba0b24ddb498ffe8c9f3fd785c6dd0f3b98da6b47d240ab6729a63a9ef987503dea56e5036d8405f7d783": [
+          "object.json"
+        ],
+        "ac44df80d71c50caeec6f0de9ce8b9892d86ec70d724cc553cde48cb5f1af6d9fd5994d5b20f8d531aaf56fe1262134b270e5fb9a46f86c1ea4c89080f540760": [
+          "paper.pdf"
+        ]
+      },
+      "message": "Deposit: document version 2",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/archive/"
+      }
+    }
+  }
+}

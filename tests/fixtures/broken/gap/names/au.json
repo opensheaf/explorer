@@ -1,0 +1,15 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "auueewft5mugv7pyiklroe5gzhx2rvsn6asnr7oublbwi25wzoca",
+      "owner": "zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "id": "sheaf:auueewft5mugv7pyiklroe5gzhx2rvsn6asnr7oublbwi25wzoca:zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "status": "active",
+      "originator": "zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"collection\",\n  \"created\": \"2026-11-20T17:06:43Z\",\n  \"originator\": \"zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq\",\n  \"nonce\": \"40bbef1fe03dd287eee8a8ee662a0bd3\"\n}\n",
+      "label": "main"
+    }
+  ]
+}

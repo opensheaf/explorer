@@ -93,8 +93,9 @@ $O deposit exposed --pdf $src/eps-1.pdf --new --no-source "x" --title "Signed wi
 $O deposit vouched --pdf $src/zeta-1.pdf --new --no-source "x" --title "Vouched for" \
   --author "Example, Ada" --rights cc-by-4.0
 $O collection add main "$(uri other exposed)"
-FIRST=$($O owner show | sed -n 's/^current key //p' | head -1)
-SECOND=$($O key new | head -1)
+DID='did:key:z[1-9A-HJ-NP-Za-km-z]*'
+FIRST=$($O owner show | grep -i 'current key' | grep -o "$DID" | head -1)
+SECOND=$($O key new | grep -o "$DID" | head -1)
 $O owner expose "$FIRST" --add "$SECOND" --rotation-key "$(rk other 1)" --rotation-key "$(rk other 2)" \
   --export work/keys/other-2 --no-passphrase --yes
 $O deposit vouched --pdf $src/zeta-2.pdf --no-source "x" --title "Vouched for" --author "Example, Ada" --i-know

@@ -1,0 +1,123 @@
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "e6063aa13a9d07386c2d6646a3213641": [
+        "v1/content/datacite.json"
+      ],
+      "6534ffed71e1d08ca488ba96db020327": [
+        "v1/content/genesis.json"
+      ],
+      "5fa0f6b909fdac391acc761ff224ffb1": [
+        "v1/content/members.json"
+      ],
+      "0bd0365ced8a997b0fbee1579fa1ac7c": [
+        "v1/content/object.json"
+      ],
+      "b3b16ac8a0d8a8ca7ba1f58991001816": [
+        "v2/content/datacite.json"
+      ],
+      "6dc51d0883101d47deea07b5f824f5cb": [
+        "v2/content/members.json"
+      ],
+      "dbeb61f525c67c80266460be395871dc": [
+        "v2/content/object.json"
+      ]
+    },
+    "sha256": {
+      "618b21726386fdc253c37ab5311d4bfe2444cb475f8f2b04e7314df883e9929f": [
+        "v1/content/datacite.json"
+      ],
+      "9ed13a272d92cd5157e591946e95a1215088336ba1b69f3b1f8d81aeae63a401": [
+        "v1/content/genesis.json"
+      ],
+      "ef4653675dd4b5d89a7b6f361058d953b7ea2862ac535bf88a1f9d5621f685ab": [
+        "v1/content/members.json"
+      ],
+      "789c07be9822d99a8f292b96ce095c7eafd4d378b995f33ca67314ad2bef7ad5": [
+        "v1/content/object.json"
+      ],
+      "0b65bc58ce24323a215cc63555e2ee166a6ab79795432f7e7f7b8b0626288cf4": [
+        "v2/content/datacite.json"
+      ],
+      "279ac15244f47aeef87ef3bcb909858e4ecb8facbaa6f44aaa42f40f37334234": [
+        "v2/content/members.json"
+      ],
+      "b21ec171a48bedcb0dd3410c44a8035119583ec47f50bac4621797834cf4b886": [
+        "v2/content/object.json"
+      ]
+    }
+  },
+  "head": "v2",
+  "id": "sheaf:6ms6hxyjcnrkqnx76kcbuc72yubzu6fb7yaxenurmxq32fg3jqfa:2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+  "manifest": {
+    "9529169f6a177a76d902272a4574129b87477d7f80705be6c6412aaa207eebaba3c11d40fa468c6d3eeeb7859bc6bb7aed8c9601d9f43e7cd68baab6fe299333": [
+      "v1/content/datacite.json"
+    ],
+    "0175943ea3e5bdb39e2a8fd05ee9c382e7b00c18eac80a9fe209d984ac118a9d0b027833430d91d40d6e799a58c8c0fa62266f813e8fc6108996cb84a61ae63a": [
+      "v1/content/genesis.json"
+    ],
+    "841664cbd0671d55ba91d21a24f06e70c1005a297af7fadee8e9f6a0bd5dca245d22028e7815e9962c1cd1291113f8c1847f22a271b7f33590c7154f5b2a1ccf": [
+      "v1/content/members.json"
+    ],
+    "58e5b8f4ee5d7fbc886071dd4ec2f1dc1ab798315ce690d316ebe902257990a5ee5ee28585535f5cf65fab1697b708cb8ce15c74701b624af130b5c609a78de0": [
+      "v1/content/object.json"
+    ],
+    "a049f6ef46d484150f2cc6e6cbe668706c62c499847549a137e5de145f2b6630664a48bce892bd42a34d9741aed86c59031e17e3cf7c729952de6a8fc5c85987": [
+      "v2/content/datacite.json"
+    ],
+    "06f33bff2250d80c51a28c589a77b15ff664a8316470b910f10548b173bfe6d93d2ac81a4ed877084277074d0863fcc3b632255e1673299254f12e3378e28a7c": [
+      "v2/content/members.json"
+    ],
+    "9a4a04316734d7e0c1a5424f3409096e66eb4e66097d29f46b07ac4c154effa9b15999ea762f1eaaa0a65ca1c20c2ab0a545d088f182b6d3dfbac4d41c928bab": [
+      "v2/content/object.json"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-20T17:06:45Z",
+      "state": {
+        "9529169f6a177a76d902272a4574129b87477d7f80705be6c6412aaa207eebaba3c11d40fa468c6d3eeeb7859bc6bb7aed8c9601d9f43e7cd68baab6fe299333": [
+          "datacite.json"
+        ],
+        "0175943ea3e5bdb39e2a8fd05ee9c382e7b00c18eac80a9fe209d984ac118a9d0b027833430d91d40d6e799a58c8c0fa62266f813e8fc6108996cb84a61ae63a": [
+          "genesis.json"
+        ],
+        "841664cbd0671d55ba91d21a24f06e70c1005a297af7fadee8e9f6a0bd5dca245d22028e7815e9962c1cd1291113f8c1847f22a271b7f33590c7154f5b2a1ccf": [
+          "members.json"
+        ],
+        "58e5b8f4ee5d7fbc886071dd4ec2f1dc1ab798315ce690d316ebe902257990a5ee5ee28585535f5cf65fab1697b708cb8ce15c74701b624af130b5c609a78de0": [
+          "object.json"
+        ]
+      },
+      "message": "Collection version 1: 0 documents",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/other/"
+      }
+    },
+    "v2": {
+      "created": "2026-11-20T17:06:46Z",
+      "state": {
+        "a049f6ef46d484150f2cc6e6cbe668706c62c499847549a137e5de145f2b6630664a48bce892bd42a34d9741aed86c59031e17e3cf7c729952de6a8fc5c85987": [
+          "datacite.json"
+        ],
+        "0175943ea3e5bdb39e2a8fd05ee9c382e7b00c18eac80a9fe209d984ac118a9d0b027833430d91d40d6e799a58c8c0fa62266f813e8fc6108996cb84a61ae63a": [
+          "genesis.json"
+        ],
+        "06f33bff2250d80c51a28c589a77b15ff664a8316470b910f10548b173bfe6d93d2ac81a4ed877084277074d0863fcc3b632255e1673299254f12e3378e28a7c": [
+          "members.json"
+        ],
+        "9a4a04316734d7e0c1a5424f3409096e66eb4e66097d29f46b07ac4c154effa9b15999ea762f1eaaa0a65ca1c20c2ab0a545d088f182b6d3dfbac4d41c928bab": [
+          "object.json"
+        ]
+      },
+      "message": "Added: sheaf:ywxp5rvt3bjorqee4fnxj2dbswaoxc5gxv3h4lqzsxap3fuu6fwq:2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/other/"
+      }
+    }
+  }
+}

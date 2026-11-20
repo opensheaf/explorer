@@ -214,8 +214,9 @@ copy; and `before` of `forked`.
     $O deposit vouched --pdf $src/zeta-1.pdf --new --no-source "x" --title "Vouched for" \
       --author "Example, Ada" --rights cc-by-4.0
     $O collection add main "$(uri other exposed)"
-    FIRST=$($O owner show | sed -n 's/^current key //p' | head -1)
-    SECOND=$($O key new | head -1)
+    DID='did:key:z[1-9A-HJ-NP-Za-km-z]*'
+    FIRST=$($O owner show | grep -i 'current key' | grep -o "$DID" | head -1)
+    SECOND=$($O key new | grep -o "$DID" | head -1)
     $O owner expose "$FIRST" --add "$SECOND" --rotation-key "$(rk other 1)" --rotation-key "$(rk other 2)" \
       --export work/keys/other-2 --no-passphrase --yes
     $O deposit vouched --pdf $src/zeta-2.pdf --no-source "x" --title "Vouched for" --author "Example, Ada" --i-know
@@ -933,7 +934,7 @@ with a `fetch` that answers as the ORCID registry and a keeper's domain
 do. The ORCID answer has the shape of the registry's (version 3.0 of its
 public API): links in `researcher-url`, each address in `url.value`. A
 link confirms when its address names the owner as a word of its own, and
-names a successor when it names one other owner; the request asks for
+names a successor when another owner follows it; the request asks for
 JSON and carries no credentials. A missing or wrong file is read as the
 keeper not confirming; a network failure leaves the link not checked; an
 ORCID iD whose check digit is wrong, and a domain that is local, are not
@@ -967,7 +968,8 @@ read at all.
       assert.equal(seen[0][1].credentials, 'omit');
       answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/${OWNER}`))];
       assert.deepEqual(await checkKeeper(http, ORCID_ID, OWNER), { status: CONFIRMED, reason: 'a link of the ORCID record names this owner', successors: [] });
-      answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/x${OWNER}`), link('https://example.org/'))];
+      answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/x${OWNER}`), link(`https://opensheaf.org/owner/${OWNER}9`),
+                                       link(`https://opensheaf.org/owner/${NEXT}/${OWNER}`), link('https://example.org/'))];
       assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);
       answers[orcidApi] = [200, record()];
       assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);
@@ -1844,11 +1846,12 @@ byte order mark, or holds bytes that are not UTF-8, which is not JSON for
     });
 
     test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
-      const url = `${ORIGIN}archive/owners/cf.json`;
+      const shard = (await fixture('archive/opensheaf.json')).owners[0].slice(0, 2);
+      const url = `${ORIGIN}archive/owners/${shard}.json`;
       const text = await (await diskFetch()(url)).text();
       for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
         const found = errors(await run('archive/', { patch: { [url]: change } }));
-        assert.ok(found.some((f) => /^owners\/cf\.json: not JSON: (starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+        assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: not JSON: `) && /(starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
       }
     });
 

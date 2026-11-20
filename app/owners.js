@@ -331,7 +331,7 @@ export class KeyLog {
       else if (j.status !== GOOD) warnings.push(`${where}/${j.file}: ${j.status}: ${j.reason}`);
     }
     const need = prev.keys.nextThreshold;
-    if (good.size < need) return [`signed by ${good.size} rotation key(s) of v${prev.number}, which needs ${need} (section 6.1)`];
+    if (good.size < need) return [`signed by ${good.size} rotation key${good.size === 1 ? '' : 's'} of v${prev.number}, which needs ${need} (section 6.1)`];
     return [];
   }
 
@@ -427,7 +427,8 @@ export function describeVersion(v) {
   const k = v.keys || {};
   if (v.forkRecord) return 'fork record, carrying ' + v.carried.map((c) => `v${c.number}`).join(', ');
   if (k.ended) return 'ended' + (k.successor ? `, successor ${k.successor}` : '');
-  return `${arrayOf(k.keys).length} current key(s), threshold ${k.threshold}, ` +
-    `${arrayOf(k.next).length} rotation key(s), nextThreshold ${k.nextThreshold}` +
+  const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+  return `${count(arrayOf(k.keys).length, 'current key')}, threshold ${k.threshold}, ` +
+    `${count(arrayOf(k.next).length, 'rotation key')}, nextThreshold ${k.nextThreshold}` +
     (arrayOf(k.exposed).length ? `, exposes ${k.exposed.length}` : '');
 }

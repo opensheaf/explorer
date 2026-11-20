@@ -946,10 +946,15 @@ not UTF-8, or start with a byte order mark, are an error, as they are for
 
 An archive declaring the profile `website` shows on its home page the pin
 of every member of the latest signed version of its main catalogue, and
-gives each member it holds a landing page, `paper/<label>/`, that gives
-the full `sheaf:` URI of its line (appendix A.3); breaches are errors,
-and warnings for an archive that has a home page without declaring the
-profile.
+gives each member it holds a landing page that gives the full `sheaf:`
+URI of its line (appendix A.3); breaches are errors, and warnings for an
+archive that has a home page without declaring the profile. The address
+of a landing page is the archive's choice, distinct for each line; the
+one checked is the one opensheaf-py writes, `paper/<label>/`, or for a
+line without a label `paper/<name>/`, followed by `-<owner>` when the
+archive holds several lines of that name. The URI is in canonical form,
+`sheaf:<name>` for the originator's line (sections 12.1 and 12.2), or
+with its owner part, which a page written before 0.2 gives.
 
     // in app/verify.js:
       async presentation() {
@@ -977,9 +982,12 @@ profile.
           const pin = pins[pins.length - 1]?.pin || '';
           if (!page.includes(pin.slice(0, 32))) this.add(level, 'index.html', `does not show the pin of ${m?.name}` + note);
           if (!this.found.has(mid)) continue;
-          const landing = `paper/${a.labelOf(mid) || m.name}/index.html`;
+          const same = [...this.found.keys()].filter((i) => i.startsWith(`sheaf:${m.name}:`)).length;
+          const landing = `paper/${a.labelOf(mid) || (same <= 1 ? m.name : `${m.name}-${m.owner}`)}/index.html`;
           const text = await this.fetchOrNull(a.base + landing, LIMITS.page).catch((e) => { if (this.aborted(e)) throw e; return null; });
-          if (!text || !new TextDecoder().decode(text).includes(mid)) {
+          const words = text ? new TextDecoder().decode(text) : '';
+          const originator = this.found.get(mid).rec?.originator === m.owner;
+          if (!words.includes(mid) && !(originator && new RegExp(`sheaf:${m.name}(?![a-z0-9:/])`).test(words))) {
             this.add(level, landing, `no landing page giving the sheaf: URI of ${this.where(mid)} (appendix A.3)` + note);
           }
         }

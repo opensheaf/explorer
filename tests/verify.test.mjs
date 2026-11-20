@@ -138,11 +138,12 @@ test('the layout, the home page and the profile website', async () => {
 });
 
 test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
-  const url = `${ORIGIN}archive/owners/cf.json`;
+  const shard = (await fixture('archive/opensheaf.json')).owners[0].slice(0, 2);
+  const url = `${ORIGIN}archive/owners/${shard}.json`;
   const text = await (await diskFetch()(url)).text();
   for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
     const found = errors(await run('archive/', { patch: { [url]: change } }));
-    assert.ok(found.some((f) => /^owners\/cf\.json: not JSON: (starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+    assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: not JSON: `) && /(starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
   }
 });
 

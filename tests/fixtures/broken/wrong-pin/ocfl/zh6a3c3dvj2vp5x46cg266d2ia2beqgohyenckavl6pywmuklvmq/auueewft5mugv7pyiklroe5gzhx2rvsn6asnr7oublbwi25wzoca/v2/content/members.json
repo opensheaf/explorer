@@ -1,0 +1,64 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "catalogue",
+  "order": "issued-desc",
+  "members": [
+    {
+      "kind": "document",
+      "name": "khlv723z6m6a6nsjgahawr6scbxenkltcsgu3ilqoil3qatnmz4a",
+      "owner": "zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v4",
+      "inventorySha512": "c1d44cd0702f9204ee49c74f92744b99a10dae2015acc0c275e7336b3fb14cf74fea3d3945ea5f9704ad0fee0fb3e8f94412b31b43b25795d5ddeb8568b9fc0d",
+      "follow": "latest",
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "cczzz6o3qsqdxzsk6rv2uupirv5y7jsr4eiwkyqv25sayuauawdq",
+      "owner": "zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v2",
+      "inventorySha512": "0323f65524224d5f54b96b5173e0247c6d1a8ec109800b1e9b730ed7b7d35ae94dd5d3916323f1e651d3c657cdfef2961ac0c1394fa357245417e077fa026e72",
+      "follow": "latest",
+      "cite": {
+        "title": "Beta",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2023,
+        "issued": "2023-05-05"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "ctyzzv6hfufvoljfpgbdwwvjgehy54yzot3goakxbrpmocennjsa",
+      "owner": "zh6a3c3dvj2vp5x46cg266d2ia2beqgohyenckavl6pywmuklvmq",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v2",
+      "inventorySha512": "fe96697067479b150b523e61f46ae1c40858f8d69ff33f8d11284aa125d6bc208a8fb6b46e220d320abfc1bf2d25766c6fcedb14f6bef693edf851316aa22280",
+      "follow": "latest",
+      "cite": {
+        "title": "Gamma",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2022,
+        "issued": "2022-02-02"
+      }
+    }
+  ]
+}

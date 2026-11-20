@@ -1,0 +1,14 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+      "owner": "2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+      "id": "sheaf:2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba:2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+      "status": "active",
+      "originator": "2bcjklw6riafal4sdxc5ivfp5stbjlod372mw2se2o5nbcewccba",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"owner\",\n  \"created\": \"2026-11-20T17:06:45Z\",\n  \"nonce\": \"ac224f8a3e69f74f1114a9a459b711d1\",\n  \"keys\": [\n    \"did:key:z6Mkggf1Q3MsbJ9kBEaAdPqsSiRQxH1ofT8G9R21um2PXffS\"\n  ],\n  \"threshold\": 1,\n  \"next\": [\n    \"nbgskrnsmycee2efp567fa2aszu2zimaeobdtgthun4xqro3cc2a\",\n    \"dueselb3qeqwq7itdacntlratvnq3yx2d3vmgszjxdrpzzn3zflq\",\n    \"eregr3oqepnha2rthvx5geq5zafm6w7mx2aatdllv3mdyby6pqpa\"\n  ],\n  \"nextThreshold\": 2\n}\n"
+    }
+  ]
+}
