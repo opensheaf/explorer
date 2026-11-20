@@ -129,7 +129,7 @@ first keys and the digests of its first rotation keys, with their
 thresholds and the rules of section 6.1, and possibly a keeper and the
 data of extensions; a document's or a collection's originator, an owner
 name. Its numbers are integers as their text writes them, of at most
-2^53 in absolute value (chapter [10](10-http.md)): a threshold of `1.0`
+2^53 - 1 in absolute value (chapter [10](10-http.md)): a threshold of `1.0`
 is no threshold, as in opensheaf-py. The answer is the record, or an
 exception saying what is wrong, with the words of opensheaf-py.
 
@@ -210,7 +210,8 @@ final line feed (section 6.1). JCS was made from the JSON of JavaScript:
 strings are written as `JSON.stringify` writes them, and members are
 sorted by the UTF-16 code units of their names, which is how JavaScript
 compares strings. The files of OpenSheaf hold no fractional numbers, and
-integers only up to 2^53, which JCS writes as JavaScript does; a string
+integers only up to 2^53 - 1 in absolute value (section 2), which JCS
+writes as JavaScript does; a string
 with a lone surrogate has no JCS form, as opensheaf-py says.
 
     // in app/names.js:
@@ -218,7 +219,7 @@ with a lone surrogate has no JCS form, as opensheaf-py says.
       if (value === null || typeof value === 'boolean') return String(value);
       if (typeof value === 'number') {
         if (!Number.isInteger(value)) throw new Error('the canonical JSON of OpenSheaf has no fractional numbers');
-        if (Math.abs(value) > 2 ** 53) throw new Error(`the integer ${value} has no exact form in JCS`);
+        if (!Number.isSafeInteger(value)) throw new Error(`the integer ${value} has no exact form in JCS`);
         return String(value);
       }
       if (typeof value === 'string') {

@@ -50,7 +50,12 @@ Signature files
 
 A signature file has exactly eight fields, each of its form, its key the
 canonical `did:key` of an Ed25519 key, and its `keyLog` a version of the
-key log of its signer. A file that is not so is malformed.
+key log of its signer. A file that is not so is malformed. Its
+`signature` is the canonical base64 of 64 bytes (section 7.2): 86
+characters, the last of them `A`, `Q`, `g` or `w`, whose four bits that
+encode nothing are zero, then `==`. Another encoding of the same bytes is
+malformed too, so that the bytes of a signature file, which timestamps
+cover, are fixed by what it says.
 
     // in app/signatures.js:
     const FIELDS = {
@@ -61,7 +66,7 @@ key log of its signer. A file that is not so is malformed.
       signer: OWNER_NAME,
       key: DID_KEY,
       keyLog: /^sheaf:([a-z2-7]{51}[aq])\/v([1-9][0-9]*)\?sha512=([0-9a-f]{128})$/,
-      signature: /^[A-Za-z0-9+/]{86}==$/,
+      signature: /^[A-Za-z0-9+/]{85}[AQgw]==$/,
     };
 
     export function readSignatureFile(bytes) {

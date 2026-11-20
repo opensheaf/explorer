@@ -474,7 +474,7 @@ export function parseJson(bytes, url = '', { integers = false } = {}) {
 }
 
 const INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
-const EXACT = 2n ** 53n;
+const EXACT = 2n ** 53n - 1n;
 
 export function numberProblem(token) {
   if (!INTEGER.test(token)) return `the number ${token} is not an integer`;

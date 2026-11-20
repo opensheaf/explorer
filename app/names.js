@@ -129,7 +129,7 @@ export function jcs(value) {
   if (value === null || typeof value === 'boolean') return String(value);
   if (typeof value === 'number') {
     if (!Number.isInteger(value)) throw new Error('the canonical JSON of OpenSheaf has no fractional numbers');
-    if (Math.abs(value) > 2 ** 53) throw new Error(`the integer ${value} has no exact form in JCS`);
+    if (!Number.isSafeInteger(value)) throw new Error(`the integer ${value} has no exact form in JCS`);
     return String(value);
   }
   if (typeof value === 'string') {

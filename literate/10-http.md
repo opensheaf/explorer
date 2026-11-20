@@ -805,10 +805,11 @@ quotation mark that no backslash escapes.
 The files whose numbers count, genesis records and `keys.json` (their
 thresholds), are read with `integers`: every number in them must be an
 integer as its text writes it, without a fraction or an exponent, and of
-at most 2^53 in absolute value, the integers that JSON numbers and JCS
-represent exactly (section 2). The reference implementation reads
+at most 2^53 - 1 in absolute value, the integers that JSON numbers and JCS
+represent exactly, each by one number only (section 2; 2^53 + 1 is read
+as 2^53). The reference implementation reads
 `1.0` or `1e0` as a float, which is no threshold and has no canonical
-form, and `9007199254740993` as an integer too large for JCS; a JavaScript
+form, and `9007199254740992` as an integer too large for JCS; a JavaScript
 reader that took `JSON.parse` at its word would see the integers 1 and
 2^53, and accept what the reference refuses.
 
@@ -820,7 +821,7 @@ for the nesting above.
 
     // in decoding JSON:
     const INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
-    const EXACT = 2n ** 53n;
+    const EXACT = 2n ** 53n - 1n;
 
     export function numberProblem(token) {
       if (!INTEGER.test(token)) return `the number ${token} is not an integer`;

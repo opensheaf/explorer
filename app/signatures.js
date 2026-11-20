@@ -21,7 +21,7 @@ const FIELDS = {
   signer: OWNER_NAME,
   key: DID_KEY,
   keyLog: /^sheaf:([a-z2-7]{51}[aq])\/v([1-9][0-9]*)\?sha512=([0-9a-f]{128})$/,
-  signature: /^[A-Za-z0-9+/]{86}==$/,
+  signature: /^[A-Za-z0-9+/]{85}[AQgw]==$/,
 };
 
 export function readSignatureFile(bytes) {

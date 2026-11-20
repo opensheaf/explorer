@@ -101,7 +101,7 @@ test('genesis records that are not', async () => {
 
 test('thresholds that are not integers in their text', async () => {
   const text = new TextDecoder().decode(GENESIS_A);
-  for (const t of ['1.0', '1e0', '1E0', '9007199254740993']) {
+  for (const t of ['1.0', '1e0', '1E0', '9007199254740992', '9007199254740993']) {
     const changed = text.replace('"threshold": 1,', `"threshold": ${t},`);
     assert.notEqual(changed, text);
     await assert.rejects(readGenesis(utf8(changed)), /a genesis record is JSON in UTF-8 \(the (number|integer) /, t);
@@ -128,6 +128,8 @@ test('canonical JSON (RFC 8785)', () => {
   assert.equal(jcs({ b: [1, 'é', null], a: { d: true, c: '\u0001"' } }), '{"a":{"c":"\\u0001\\"","d":true},"b":[1,"é",null]}');
   assert.equal(jcs({ 'é': 1, z: 2, '😀': 3 }), '{"z":2,"é":1,"😀":3}');
   assert.throws(() => jcs({ x: 0.5 }), /fractional/);
+  assert.equal(jcs([2 ** 53 - 1, -(2 ** 53 - 1)]), '[9007199254740991,-9007199254740991]');
+  assert.throws(() => jcs(2 ** 53), /no exact form/);
   assert.throws(() => jcs('\ud800'), /lone surrogate/);
   assert.equal(jcs(ownerObject(A, KL1)),
     `{"format":"opensheaf-object/0.2","kind":"owner","name":"${A}","owner":"${A}","previous":"${KL1}","specification":"0.2","status":"active"}`);
@@ -332,7 +334,9 @@ test('the statuses of a signature file (section 7.3)', async () => {
   const loose = s.signature.slice(0, 85) + 'h==';
   assert.notEqual(loose, s.signature);
   assert.deepEqual(unbase64(loose), unbase64(s.signature));
-  assert.deepEqual(await status(signatureFile(s, { signature: loose }), file, { lookup: () => v2 }), [GOOD, '']);
+  assert.deepEqual(await status(signatureFile(s, { signature: loose }), file, { lookup: () => v2 }),
+    [INVALID, 'malformed: signature is not of its form']);
+  assert.match(s.signature, /[AQgw]==$/);
   assert.throws(() => readSignatureFile(signatureFile(s, { signer: 'tqr6lchnd2vk7ezskdc5zdxpaidpsiuduo5sqhiis3i55iautdka' })),
     /keyLog names the key log of another owner/);
 });
