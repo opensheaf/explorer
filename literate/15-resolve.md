@@ -1,231 +1,521 @@
-Resolving members
-=================
+Resolution: copies, pins and sheaf: URIs
+========================================
 
-A collection names its members by the pair (archive identifier, object
-identifier), with the address of the member's archive when the collection
-version was made, and pins each of them: an object version and the
-SHA-512 of its inventory (a catalogue), or a revision set, each
-revision with its pin and the document version it holds (a selection;
-section 10.2). Nothing is copied: to show a member, or to check it, the
-explorer *resolves* it, as section 6.4 says:
+A line is found by its name and owner, wherever it is held, never by a
+location (section 12): a `sheaf:` URI names a line, a version or a pin; a
+member of a collection names its line and pins a version, with `at`, the
+base URLs where copies may be found (section 8.2); a branch names its
+parent's line, with a hint, `parent.url` (section 9.1). Nothing found at
+a location is believed: every copy is checked (section 12.3), its name
+against its genesis record, its `object.json` against the line, its
+versions against the owner's signatures, and the resolver uses the latest
+signed version among the copies that agree.
 
-- it reads the discovery document at the member's archive URL and fetches
-  `<storageRoot><id>/<version>/inventory.json`;
-- if this fails, it tries the mirrors listed in the member, then those
-  listed in the archive's discovery document;
-- external copies (the files of a DOI record, a software archive
-  snapshot), which a client MAY also use, are not tried, as by opensheaf-py.
-
-"Any copy whose bytes match the pinned digest is acceptable: integrity
-comes from the pin, not from the place." Section 14 asks a verifier to
-report each pin as *verified*, *mismatch* (a copy was found and does not
-match), *unavailable* (no copy found) or *removed* (the object is
-tombstoned in its archive, section 11.3).
+This chapter gives the class `Resolver`, which does this over HTTP, as
+opensheaf-py's resolver does from folders and over HTTP (its chapter
+[20-resolution](https://opensheaf.org/opensheaf-py/20-resolution.html)),
+with the same statuses, so that a member `osheaf verify --remote` finds
+verified, the explorer finds verified. It differs in one respect:
+opensheaf-py copies every remote object it resolves, and checks the
+digest of every file on the way; a browser cannot download every PDF of
+every member of a collection to show it, so the explorer checks the
+inventories, checksum files, descriptions, genesis records and signature
+files of a copy, which is what pins and statuses rest on, and leaves the
+digests of content files to the verification of the archive that holds
+them (chapter [17](17-verify.md)).
 
 The module is `app/resolve.js`.
 
     // in app/resolve.js:
     import { Archive, baseOf } from './archive.js';
     import { LIMITS } from './http.js';
-    import { isVersion } from './paths.js';
-    import { titleOf, creatorsOf } from './versions.js';
+    import { isVersion, versionNumber } from './paths.js';
+    import { objectId, isNameOf, parseSheaf, readGenesis, isObject } from './names.js';
+    import { titleOf, creatorsOf, historyOf } from './versions.js';
+    import { SIGNED, VOUCHED, CONTESTED, UNCHECKED, UNSIGNED, INVALID } from './signatures.js';
 
-    <<the archives met while resolving>>
+Statuses of members
+-------------------
 
-    <<the pin presented for a member>>
+The status of a pin, as section 8.5 names it, from the status of the
+version pinned (section 7.3): a version signed or vouched for is
+*verified*, a contested one *contested*, an unchecked one *unchecked*,
+and one that is not a version *not a version*. The other statuses come
+from where copies were looked for: *mismatch* when a copy was found that
+does not hold the pin, *unavailable* when none was, *removed* when none
+was and an archive read holds a tombstone of the line.
 
-    <<a budget for walking collections>>
+    // in app/resolve.js:
+    export const MEMBER_STATUS = {
+      [SIGNED]: 'verified', [VOUCHED]: 'verified', [CONTESTED]: 'contested', [UNCHECKED]: 'unchecked',
+      [UNSIGNED]: 'not a version', [INVALID]: 'not a version',
+    };
 
-The archives met
-----------------
+A copy
+------
+
+A copy of a line is the object as one archive holds it (section 11),
+read with its statuses (chapter [14](14-archive.md)), against the key log
+the resolver has met: where it was found, the archive, the line read
+there, the digest and status of each version, and its latest signed
+version (0 when there is none). Two copies *agree* when they hold the
+same inventory file at the earlier of their latest signed versions
+(section 7.4).
+
+    // in app/resolve.js:
+    export class Copy {
+      constructor(where, archive, line) {
+        Object.assign(this, { where, archive, line, id: line.id });
+      }
+
+      get head() {
+        return this.line.versions.length;
+      }
+
+      get statuses() {
+        return this.line.statuses;
+      }
+
+      get latestSigned() {
+        return this.line.latest ? versionNumber(this.line.latest) : 0;
+      }
+
+      digest(n) {
+        return n > 0 && n <= this.line.versions.length ? this.line.versions[n - 1].digest : null;
+      }
+
+      status(n) {
+        return n > 0 && n <= this.statuses.length ? this.statuses[n - 1] : null;
+      }
+
+      find(digest) {
+        const k = this.line.versions.findIndex((v) => v.digest === digest);
+        return k < 0 ? null : k + 1;
+      }
+
+      obj(n) {
+        return this.line.versions[n - 1]?.obj ?? null;
+      }
+
+      agrees(other) {
+        const k = Math.min(this.latestSigned, other.latestSigned);
+        return k === 0 || this.digest(k) === other.digest(k);
+      }
+    }
+
+What a resolver found: a status (section 8.5), and when there is one,
+the copy, the version and its digest; with the copies seen.
+
+    // in app/resolve.js:
+    export function found(status, copy = null, version = null, digest = null, copies = [], log = null) {
+      return { status, copy, version, digest, copies, log, ok: status === 'verified' || status === 'contested' };
+    }
+
+The resolver
+------------
 
 A resolver keeps the archives it has opened, by base URL, so that the
-members of one archive (usually many) cost one discovery document. The
-archive being explored, if any, is known from the start: a member of it
-is resolved there, whatever address the member recorded, since it is the
-same archive and the explorer has just read its discovery document.
-
-Only archives opened are kept, not openings in progress: an opening is
-made with the signal of its caller, and a caller arriving while another's
-opening is aborted must not inherit the abort. Two callers opening the
-same archive at once still make one request, since the
-[HTTP client](10-http.md) shares a request in progress among its callers;
-an archive that fails to open is not kept, and is tried again.
+members of one archive (usually many) cost one discovery document, and
+the key logs it has met, by owner. The archive being explored, if any, is
+its home, which it reads first, as opensheaf-py reads the archive it
+runs in; an archive of another version than 0.2, or one that cannot be
+read, is noted, as are forks of lines and of key logs it meets. Notes
+are what `osheaf verify --remote` reports under the place `resolution`.
 
 A member resolved again must be resolved from the server, not from what
 the resolver and its HTTP client have kept: the curator who presses
 "Resolve again" has usually just fixed something. `again()` gives a
-resolver for the same archive explored, with no archive opened yet and
-an [HTTP client](10-http.md) of its own, whose cache is empty (it shares
-the pool and the page budget of the first). The archive explored is then
-read again too, when a member of it is resolved.
+resolver for the same home, with nothing kept and an
+[HTTP client](10-http.md) of its own, whose cache is empty (it shares the
+pool and the page budget of the first).
 
-    // in the archives met while resolving:
+    // in app/resolve.js:
     export class Resolver {
       constructor(http, home = null) {
         this.http = http;
         this.home = home;
         this.archives = new Map();
-        if (home) this.archives.set(home.base, home);
+        this.logs = new Map();
+        this.notes = [];
+        if (home) this.archives.set(home.base, Promise.resolve(home));
       }
 
       again() {
         const fresh = new Resolver(this.http.another());
-        fresh.home = this.home;
+        if (this.home) fresh.home = this.home;
         return fresh;
       }
 
-      async open(url, options = {}) {
-        const base = baseOf(url);
+      note(level, message) {
+        if (!this.notes.some((n) => n.level === level && n.message === message)) this.notes.push({ level, message });
+      }
+
+An archive is opened once; one that cannot be read, or is not of version
+0.2, counts as none, and is noted as unavailable, in the words of
+opensheaf-py.
+
+    // in app/resolve.js:
+      source(where, options = {}) {
+        const base = baseOf(where);
         if (!this.archives.has(base)) {
-          const archive = await Archive.open(this.http, base, options);
-          if (!this.archives.has(base)) this.archives.set(base, archive);
+          const opening = Archive.open(this.http, base, options).then((archive) => {
+            if (archive.old || archive.disc.specification !== '0.2') {
+              this.note('warning', `unavailable: ${where}: not an archive of specification 0.2`);
+              return null;
+            }
+            return archive;
+          }, (error) => {
+            if (error?.kind === 'aborted') {
+              this.archives.delete(base);
+              throw error;
+            }
+            this.note('warning', `unavailable: ${where}: ${error.kind === 'not-found' ? 'no discovery document opensheaf.json'
+              : error.kind === 'json' ? 'the discovery document is not JSON' : error.detail || error.message}`);
+            return null;
+          });
+          this.archives.set(base, opening);
         }
         return this.archives.get(base);
       }
 
-      <<confirm a pin at the sources of a member>>
-
-      <<describe a resolved member>>
-    }
-
-Confirming a pin
-----------------
-
-The sources are tried in the order of section 6.4, and the first one
-whose inventory matches the pin settles the question, as in `confirm` of
-opensheaf-py's
-[collections](https://opensheaf.org/opensheaf-py/20-collections.html).
-Four cases need care, as there:
-
-- the address of the member's archive may now serve another archive (a
-  domain changed hands): the archive identifier of its discovery document
-  must be the member's, or the source does not count;
-- an object taken down in its archive is listed among its tombstones, and
-  is *removed*, not unavailable;
-- the pinned object version must hold the document version a revision
-  states (section 14);
-- any failure to read (a network error, a missing file, an inventory
-  that disagrees with its own checksum file) makes a source unavailable,
-  not the member wrong: only bytes found and different from the pin are a
-  mismatch.
-
-A hostile member, or a hostile discovery document, may list hundreds of
-mirrors, each costing requests and perhaps a time limit; after the
-member's archive, at most `LIMITS.mirrors` mirrors are tried (section 15),
-and the problems say how many were left untried.
-
-The answer gives the status, the source that settled it (and whether it
-was a mirror, which a curator wants to know: the member's archive may be
-gone), the archive read there, and what went wrong at each source tried.
-
-    // in confirm a pin at the sources of a member:
-    async confirm(m, ver, pin, n = null, options = {}) {
-      const problems = [], errors = [];
-      if (!isVersion(ver) || typeof pin !== 'string') {
-        return { status: 'invalid', problems: ['the member has no valid pin'], errors };
+      places(where) {
+        const out = this.home ? [this.home.base] : [];
+        for (const w of where) if (typeof w === 'string' && w && !out.includes(baseOf(w))) out.push(baseOf(w));
+        return out;
       }
-      const own = this.home && m.archive === this.home.archiveId;
-      const sources = [];
-      const add = (u) => { if (typeof u === 'string' && u && !sources.includes(u)) sources.push(u); };
-      add(own ? this.home.base : m.archiveUrl);
-      (Array.isArray(m.mirrors) ? m.mirrors : []).forEach(add);
-      let mismatch = false;
-      const tried = () => Math.min(sources.length, 1 + LIMITS.mirrors);
-      for (let k = 0; k < tried(); k++) {
-        const src = sources[k];
-        try {
-          const r = await this.open(src, options);
-          if (k === 0) {
-            if (r.archiveId !== m.archive) {
-              problems.push(`${src} is now the archive ${r.archiveId}`);
-              continue;
-            }
-            r.mirrors().forEach(add);
-            if (r.tombstones().some((t) => t.id === m.id)) {
-              return { status: 'removed', source: src, archive: r, problems, errors };
-            }
-          }
-          if ((await r.pin(m.id, ver, options)) !== pin) {
-            mismatch = true;
-            problems.push(`${src}: the pin does not match`);
+
+Key logs met
+------------
+
+The key log of an owner is read in every archive the resolver looks in,
+and the copies are met (chapter [07](07-owners.md)): the longer one is
+used, and a fork between them is noted, and ends the owner for this
+reader. A key log is copied beside every copy of the lines it signs
+(section 6.5), so this finds it wherever a line is found.
+
+    // in app/resolve.js:
+      async keyLog(owner, where = [], options = {}) {
+        if (!this.logs.has(owner)) this.logs.set(owner, { log: null, met: new Set(), found: [] });
+        const entry = this.logs.get(owner);
+        for (const w of this.places(where)) {
+          if (entry.met.has(w)) continue;
+          entry.met.add(w);
+          const archive = await this.source(w, options);
+          if (!archive) continue;
+          let log;
+          try {
+            log = await archive.keyLog(owner, options);
+          } catch (error) {
+            if (error?.kind === 'aborted') throw error;
+            this.note('warning', `${w}: the key log of ${owner}: ${error.detail || error.message}`);
             continue;
           }
-          if (n !== null && n !== undefined) {
-            const inv = await r.inventory(m.id, ver, options);
-            const obj = await r.json(m.id, inv, ver, 'object.json', options);
-            if (obj?.documentVersion !== n) {
-              mismatch = true;
-              problems.push(`${src}: ${ver} does not hold document version ${n}`);
-              continue;
-            }
+          if (!log || log.owner !== owner) continue;
+          entry.found.push({ where: w, log });
+          const before = entry.log;
+          entry.log = before ? await before.meet(log) : log;
+          if (before && before.forkPoint === null && entry.log.forkPoint !== null) {
+            this.note('result', `a fork of the key log of ${owner} at v${entry.log.forkPoint}, met at ${w} (section 6.3)`);
           }
-          return { status: 'verified', source: src, viaMirror: k > 0, archive: r, problems, errors };
+        }
+        return entry.log;
+      }
+
+What a reader is told about an owner (section 12.3): an end, by an ending
+version or a fork, its successor, and the keys it exposes.
+
+    // in app/resolve.js:
+      ownerNotes(owner) {
+        const log = this.logs.get(owner)?.log;
+        if (!log) return [];
+        const out = [];
+        if (log.forkPoint) out.push(`owner ${owner} ended by a fork of its key log at v${log.forkPoint}`);
+        else if (log.ended) out.push(`owner ${owner} ended`);
+        if (log.successor) out.push(`owner ${owner}: successor ${log.successor} named by its ending version`);
+        for (const did of [...log.exposedKeys()].sort()) out.push(`owner ${owner}: exposed key ${did}`);
+        return out;
+      }
+
+Copies of a line
+----------------
+
+The copies of the line (name, owner) at the places given, after the home:
+an archive other than the home counts only if its discovery document
+lists the line; each copy found must be a copy of the line (below); and
+its statuses are judged against the key log met in every archive read so
+far, as opensheaf-py's `copies` does. A line taken down in an archive read
+and found elsewhere is noted (section 12.3).
+
+    // in app/resolve.js:
+      async copies(name, owner, where = [], options = {}) {
+        const id = objectId(name, owner);
+        const held = [];
+        for (const w of this.places(where)) {
+          const archive = await this.source(w, options);
+          if (!archive) continue;
+          if (archive !== this.home && !archive.objects().some((o) => o.id === id)) continue;
+          await this.keyLog(owner, archive === this.home ? [] : [w], options);
+          held.push({ w, archive });
+        }
+        const log = await this.keyLog(owner, [], options);
+        const out = [];
+        for (const { w, archive } of held) {
+          let line;
+          try {
+            line = await archive.line(id, { log, signal: options.signal });
+          } catch (error) {
+            if (error?.kind === 'aborted') throw error;
+            if (error?.kind !== 'not-found') this.note('warning', `${w}: ${id}: ${error.detail || error.message}`);
+            continue;
+          }
+          const problem = await this.identityProblem(archive, id, line, options);
+          if (problem) {
+            this.note('warning', `${w}: ${id}: not a copy of the line: ${problem}`);
+            continue;
+          }
+          out.push(new Copy(w, archive, line));
+        }
+        if (out.length && await this.tombstoned(id, where, options)) {
+          this.note('result', `${id}: taken down in an archive read, and found elsewhere (section 12.3)`);
+        }
+        return out;
+      }
+
+A copy is one of the line when its inventory names it, the name is a name
+of its genesis record (section 5.2), and every version's `object.json`
+records the line (section 12.3).
+
+    // in app/resolve.js:
+      async identityProblem(archive, id, line, options) {
+        if (line.inv.id !== id) return 'its inventory names another object';
+        const [, name, owner] = id.split(':');
+        let genesis = null;
+        try {
+          genesis = await archive.bytes(id, line.inv, 'v1', 'genesis.json', options);
         } catch (error) {
-          if (error.kind === 'aborted') throw error;
-          errors.push(error);
-          problems.push(`${src}: unavailable: ${error.detail || error.message}`);
+          if (error?.kind === 'aborted') throw error;
+        }
+        if (!genesis || !await isNameOf(name, genesis)) return 'the name is not a name of its genesis record (section 5.2)';
+        for (const v of line.versions) {
+          if (v.obj?.name !== name || v.obj?.owner !== owner) return `${v.ver}: object.json does not record the line`;
+        }
+        return null;
+      }
+
+      async tombstoned(id, where = [], options = {}) {
+        for (const w of this.places(where)) {
+          const archive = await this.source(w, options);
+          if (archive?.tombstones().some((t) => t.id === id)) return true;
+        }
+        return false;
+      }
+
+A pin
+-----
+
+The status of a pin (version, digest) of the line (name, owner), as
+section 8.5 defines it: the status of the version that holds the pin in a
+copy found; *mismatch* when copies were found and none holds it;
+*removed* or *unavailable* when none was found. A pin of a key log is
+verified when the key log met holds or carries that version (section
+12.3).
+
+    // in app/resolve.js:
+      async pin(name, owner, version, digest, where = [], options = {}) {
+        if (name === owner) {
+          const log = await this.keyLog(owner, where, options);
+          const v = log && isVersion(version) ? log.lookup(versionNumber(version), digest) : null;
+          if (v) return found('verified', null, version, digest, [], log);
+          return found(log ? 'mismatch' : 'unavailable', null, version, digest, [], log);
+        }
+        const copies = await this.copies(name, owner, where, options);
+        const n = isVersion(version) ? versionNumber(version) : 0;
+        for (const c of copies) {
+          if (n && c.digest(n) === digest) return found(MEMBER_STATUS[c.status(n)] || 'not a version', c, version, digest, copies);
+        }
+        if (copies.length) return found('mismatch', null, version, digest, copies);
+        return found(await this.tombstoned(objectId(name, owner), where, options) ? 'removed' : 'unavailable',
+                     null, version, digest, copies);
+      }
+
+The latest signed version
+-------------------------
+
+Since a copy that stops early looks complete, the resolver uses the
+latest signed version among the copies that agree (section 12.3); copies
+that are signed and do not agree with the one that goes furthest are a
+fork of the line, noted with the status of each side, and nothing is
+chosen. Without a signed copy, the line is *not a version* when copies
+were found, and otherwise *removed* or *unavailable*.
+
+    // in app/resolve.js:
+      async latest(name, owner, where = [], options = {}) {
+        const copies = await this.copies(name, owner, where, options);
+        const signed = copies.filter((c) => c.latestSigned).sort((a, b) => b.latestSigned - a.latestSigned);
+        if (!signed.length) {
+          const status = copies.length ? 'not a version'
+            : await this.tombstoned(objectId(name, owner), where, options) ? 'removed' : 'unavailable';
+          return found(status, null, null, null, copies);
+        }
+        const top = signed[0];
+        const forks = signed.filter((c) => !top.agrees(c));
+        for (const c of forks) {
+          this.note('result', `a fork of the line ${top.id}: the copy at ${c.where} (latest signed ` +
+            `v${c.latestSigned}) does not agree with the copy at ${top.where} (latest signed ` +
+            `v${top.latestSigned}) (section 7.4)`);
+        }
+        if (forks.length) return found('fork', null, null, null, copies);
+        return found('verified', top, `v${top.latestSigned}`, top.digest(top.latestSigned), copies);
+      }
+
+A document version of a line, without a digest, is the object version
+holding it that the history of the latest signed version lists (section
+12.1).
+
+    // in app/resolve.js:
+      async documentVersion(name, owner, n, where = [], options = {}) {
+        const latest = await this.latest(name, owner, where, options);
+        if (!latest.copy) return latest;
+        const c = latest.copy;
+        const objOf = (v) => c.line.objs.get(v) ?? null;
+        for (const h of historyOf(c.line.inv, objOf, latest.version)) {
+          if (objOf(h)?.documentVersion === n) {
+            const k = versionNumber(h);
+            return found(MEMBER_STATUS[c.status(k)] || 'not a version', c, h, c.digest(k), latest.copies);
+          }
+        }
+        this.note('warning', `${c.id}: no document version ${n} in the history of ${latest.version}`);
+        return found('unavailable', null, null, null, latest.copies);
+      }
+
+sheaf: URIs
+-----------
+
+A `sheaf:` URI is resolved at its `at` first, then at the places given
+(section 12.3), with short forms expanded among the lines of the archives
+read (section 12.2). It names a key log (`sheaf:<owner>`: its latest
+version, or a version), a line (its latest signed version), a document
+version, or a pin; `sheaf:<name>:*`, a work, is searched for in indexes
+(section 12.4), which the explorer does not do. The answer is the
+identifier of the line and what was found.
+
+    // in app/resolve.js:
+      async resolve(text, where = [], options = {}) {
+        const u = parseSheaf(text, { short: true, fold: true });
+        where = [...(u.at ? [u.at] : []), ...where];
+        if (u.owner === '*') throw new Error('a work, sheaf:<name>:*, is searched for (section 12.4), which the explorer does not do');
+        const [name, owner] = await this.expand(u, where, options);
+        if (name === owner) {
+          const id = objectId(owner, owner);
+          const log = await this.keyLog(owner, where, options);
+          if (!log) return { id, found: found('unavailable') };
+          const side = log.side();
+          if (u.version === null) {
+            const v = side[side.length - 1];
+            return { id, found: found('verified', null, `v${v.number}`, v.digest, [], log) };
+          }
+          if (u.sha512 === null) {
+            if (u.version > side.length) return { id, found: found('unavailable', null, null, null, [], log) };
+            return { id, found: found('verified', null, `v${u.version}`, side[u.version - 1].digest, [], log) };
+          }
+          return { id, found: await this.pin(owner, owner, `v${u.version}`, u.sha512, where, options) };
+        }
+        const id = objectId(name, owner);
+        if (u.version === null) return { id, found: await this.latest(name, owner, where, options) };
+        if (u.sha512 === null) return { id, found: await this.documentVersion(name, owner, u.version, where, options) };
+        const copies = await this.copies(name, owner, where, options);
+        for (const c of copies) {
+          const k = c.find(u.sha512);
+          if (k === null) continue;
+          const held = c.obj(k)?.documentVersion;
+          if (held !== u.version) {
+            this.note('warning', `${id}: the version pinned holds document version ${held}, not ${u.version}`);
+            return { id, found: found('mismatch', c, `v${k}`, u.sha512) };
+          }
+          return { id, found: found(MEMBER_STATUS[c.status(k)] || 'not a version', c, `v${k}`, u.sha512) };
+        }
+        const status = copies.length ? 'mismatch' : await this.tombstoned(id, where, options) ? 'removed' : 'unavailable';
+        return { id, found: found(status, null, null, u.sha512, copies) };
+      }
+
+The line a URI names, among the lines the archives read list: a complete
+URI with its owner part names its line; otherwise the candidates are the
+lines whose name and owner start with the parts given, without an owner
+part only the originators' lines (whose owner is the originator its
+genesis record names, or an owner's own key log). Exactly one candidate
+is needed; several are ambiguous, and listed (section 12.2).
+
+    // in app/resolve.js:
+      async expand(u, where, options = {}) {
+        if (u.isComplete() && u.owner !== null) return [u.name, u.owner];
+        const candidates = new Set();
+        for (const w of this.places(where)) {
+          const archive = await this.source(w, options);
+          if (!archive) continue;
+          for (const o of archive.objects()) {
+            const name = typeof o.name === 'string' ? o.name : '', owner = typeof o.owner === 'string' ? o.owner : '';
+            if (!u.matches(name, owner)) continue;
+            if (u.owner === null) {
+              if (o.kind === 'owner' ? name !== owner : await this.originator(archive, o.id, options) !== owner) continue;
+            }
+            candidates.add(`${name} ${owner}`);
+          }
+        }
+        if (candidates.size !== 1) {
+          const listed = [...candidates].sort().map((c) => `  sheaf:${c.replace(' ', ':')}`).join('\n');
+          throw new Error(`${u}: ` + (candidates.size ? 'ambiguous, the candidates are:\n' + listed
+            : 'no line of that name in the archives read'));
+        }
+        return [...candidates][0].split(' ');
+      }
+
+      async originator(archive, id, options = {}) {
+        try {
+          const inv = await archive.inventory(id, null, options);
+          const genesis = await archive.bytes(id, inv, 'v1', 'genesis.json', options);
+          return genesis ? (await readGenesis(genesis)).originator ?? null : null;
+        } catch (error) {
+          if (error?.kind === 'aborted') throw error;
+          return null;
         }
       }
-      if (sources.length > tried()) {
-        problems.push(`${sources.length - tried()} more mirror(s) not tried (at most ${LIMITS.mirrors} are tried)`);
+
+Describing what was found
+-------------------------
+
+A collection keeps a cached citation of each member (`cite`), which is
+not authoritative (section 8.2). Once a pin is resolved, the explorer
+shows the member as the copy found states it: the title and creators of
+the version presented, the document version it holds, and the status of
+the line, read from its latest signed version (section 13.1): a
+withdrawal in the member's line is shown, also one made after the version
+pinned (section 8.3). For a catalogue's member, the version presented is
+the current version read from the history of the version pinned (section
+8.3).
+
+    // in app/resolve.js:
+      async describe(result, { presentCurrent = false } = {}, options = {}) {
+        const c = result.copy;
+        if (!c) return null;
+        const objOf = (v) => c.line.objs.get(v) ?? null;
+        const shown = presentCurrent ? historyOf(c.line.inv, objOf, result.version).slice(-1)[0] || result.version : result.version;
+        const { obj, dc } = await c.archive.descriptions(c.id, c.line.inv, shown, options);
+        const latest = c.line.latest ? objOf(c.line.latest) : null;
+        return {
+          version: shown, title: titleOf(dc), creators: creatorsOf(dc), documentVersion: obj?.documentVersion ?? null,
+          status: latest?.status ?? null, withdrawal: latest?.withdrawal ?? null, archive: c.archive,
+        };
       }
-      return { status: mismatch ? 'mismatch' : 'unavailable', problems, errors };
-    }
-
-Describing a member
--------------------
-
-The collection keeps a cached citation of each member (`cite`), which is
-"not authoritative" (section 10.2). Once a member is resolved, the
-explorer shows its description as its archive states it: the title and
-creators of the version presented, and the status of the object, which
-belongs to the object whatever version is pinned (section 11.1): a
-withdrawal in the member's archive is shown, saying where it comes from.
-
-Finding the current version of a catalogue's member reads the
-`object.json` of each of its object versions, and a collection may have
-up to `LIMITS.pins` members: a hostile one, whose members each have
-thousands of versions, would make a page read millions of files. So the
-current version is looked for only in a member of at most
-`LIMITS.described` object versions; a larger one is described at the
-version pinned, and the answer says so (`limited`). The page budget of
-the [HTTP client](10-http.md) bounds the rest.
-
-    // in describe a resolved member:
-    async describe(m, archive, options = {}) {
-      const ver = presentedPin(m);
-      const inv = await archive.inventory(m.id, null, options);
-      let shown = ver, limited = false;
-      if (!Object.hasOwn(m, 'revisions')) {
-        if (Object.keys(inv.versions).length > LIMITS.described) limited = true;
-        else shown = (await archive.history(m.id, ver, options)).current;
-      }
-      const [{ dc, obj }, head] = await Promise.all([
-        archive.descriptions(m.id, inv, shown, options),
-        archive.json(m.id, inv, inv.head, 'object.json', options),
-      ]);
-      return {
-        version: shown, title: titleOf(dc), creators: creatorsOf(dc),
-        documentVersion: obj?.documentVersion ?? null,
-        status: head?.status || null, withdrawal: head?.withdrawal || null, limited,
-      };
     }
 
 The pin presented
 -----------------
 
 What is presented of a member is read at one of its pins: the last
-revision of a selection's member (the revision "presented as the
-selection's", section 10.2), or the single pin of a catalogue's member.
-For a selection, the version shown is that revision itself; for a
-catalogue, it is the current version of the member read from the history
-of the pinned version ("presentations show the current version of each
-member, read from the history of the pinned version", section 10.2),
-which `describe` above finds once the member is resolved. A member
-collection's own members are read at the pin presented.
+revision of a selection's member (the revision presented as the
+selection's, section 8.4), or the single pin of a catalogue's member.
 
-    // in the pin presented for a member:
+    // in app/resolve.js:
     export function presentedPin(m) {
       if (m && Object.hasOwn(m, 'revisions')) {
         const revs = Array.isArray(m.revisions) ? m.revisions : [];
@@ -237,19 +527,14 @@ collection's own members are read at the pin presented.
 A budget for walking collections
 --------------------------------
 
-Members may be collections, whose members may be collections, in any
-archive. Pins cannot form cycles (a pin fixes an inventory, which cannot
-contain its own digest), but a hostile archive can make a collection very
-deep or very wide. Section 14 asks verifiers to limit the depth and size
-of the collections they follow, and to report when they stop. A budget
-counts the pins resolved in one walk and refuses to go deeper than the
-depth limit. It counts pins rather than members, since each pin costs
-requests (a member of a selection may pin many revisions). The pages say
-when it stopped, and why. The pairs (archive,
-object, version) already walked are remembered, so that the same
-collection reached twice is not walked twice.
+A collection may have collections as members, in any archive, and those
+may have more: section 14.1 lets a verifier bound the depth it follows,
+and section 15.2 asks it to bound what it fetches. A walk through
+collections has a budget: a depth (levels of member collections opened)
+and a number of pins resolved; when either is spent, the walk stops and
+says why. A collection reached twice in one walk is shown once.
 
-    // in a budget for walking collections:
+    // in app/resolve.js:
     export class Budget {
       constructor({ depth = LIMITS.depth, pins = LIMITS.pins } = {}) {
         this.depth = depth;
@@ -274,8 +559,8 @@ collection reached twice is not walked twice.
         return `the limit of ${this.pins} pins resolved in one walk is reached`;
       }
 
-      first(archiveId, id, ver) {
-        const key = JSON.stringify([archiveId, id, ver]);
+      first(id, ver) {
+        const key = JSON.stringify([id, ver]);
         if (this.walked.has(key)) return false;
         this.walked.add(key);
         return true;
