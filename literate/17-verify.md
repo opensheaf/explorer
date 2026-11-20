@@ -22,7 +22,7 @@ when asked, since that downloads every file.
 The module is `app/verify.js`.
 
     // in app/verify.js:
-    import { sha512, pool, LIMITS } from './http.js';
+    import { sha512, pool, LIMITS, parseJson } from './http.js';
     import { Archive } from './archive.js';
     import { versionsOf, filesOf, documentVersionErrors, historyOf } from './versions.js';
     import { versionNumber, logicalPathProblem, OWNER_NAME_LAYOUT, HASHED_LAYOUT, LAYOUT_FILE } from './paths.js';
@@ -462,7 +462,7 @@ collections are then checked (14.5).
           if (genesis !== null) {
             try {
               rec = await readGenesis(genesis);
-              this.schema(`${place} genesis.json`, JSON.parse(new TextDecoder().decode(genesis)), 'genesis', 'error', { object: id });
+              this.schema(`${place} genesis.json`, parseJson(genesis, '', { integers: true }), 'genesis', 'error', { object: id });
             } catch (error) {
               this.add('error', place, `genesis.json: ${error.message}`, { object: id });
             }
@@ -881,7 +881,10 @@ and none in `owners/`; an entry the objects held do not justify is an
 error. A server lists no folders: the files read are those of the
 prefixes of the entries expected and of the tombstones, and, in `names/`,
 of the names `owners/` lists; an entry in another file is not seen.
-`owners/` is read first, for that.
+`owners/` is read first, for that. An index file is JSON as section 2 defines it,
+read as every other file is (chapter [10](10-http.md)): bytes that are
+not UTF-8, or start with a byte order mark, are an error, as they are for
+`osheaf verify`.
 
     // in app/verify.js:
       async indexes() {
@@ -924,7 +927,7 @@ of the names `owners/` lists; an entry in another file is not seen.
             try {
               const bytes = await this.fetchOrNull(a.base + place);
               if (bytes === null) continue;
-              data = JSON.parse(new TextDecoder().decode(bytes));
+              data = parseJson(bytes);
             } catch (error) {
               if (this.aborted(error)) throw error;
               this.add('error', place, `not JSON: ${error.message}`);

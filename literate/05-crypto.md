@@ -10,8 +10,9 @@ chapter gathers these primitives, so that the chapters on names, owners
 and signatures (the next three) state only the rules of the format.
 
 Digests come from the WebCrypto of the browser (`crypto.subtle`), as the
-SHA-512 digests of files already do (chapter [10](10-http.md)); so do
-Ed25519 signatures where the browser has them. Everything here works on
+SHA-512 digests of files already do (chapter [10](10-http.md)); Ed25519
+signatures are verified by a verifier of the explorer's own, below, in
+every browser. Everything here works on
 bytes (`Uint8Array`), and is asynchronous only where WebCrypto is.
 
 The module is `app/crypto.js`.
@@ -138,20 +139,31 @@ and a reader that accepted a signature that another rejects would see
 another line.
 
 **The choice.** The explorer makes these checks itself, in JavaScript,
-before any verification of the equation; and verifies the equation with
-the WebCrypto of the browser when it has Ed25519 (Chrome 137, Firefox
-129 and Safari 17 do, and Node 22), and otherwise with a small verifier of
-its own, below, of some sixty lines on `BigInt`. With the checks made
-first, what is left to the implementation is the equation
-`[S]B = R + [k]A` on canonical encodings of points that are not of small
-order; the cofactorless implementations of the browsers (BoringSSL,
-NSS's HACL*, CoreCrypto) and the verifier below then agree with libsodium
-on every case, which the tests check on the twelve vectors of
-ed25519-speccheck, with both. WebCrypto is used where it exists because it
-is native code, reviewed, and fast; the verifier below is there so that
-the explorer works in older browsers too, and to have one implementation
-whose every line can be read here. It works on public data only, so the
-timing of its arithmetic leaks nothing.
+before any verification of the equation; and verifies the equation with a
+small verifier of its own, below, of some sixty lines on `BigInt`, in
+every browser, even where WebCrypto has Ed25519 (Chrome 137, Firefox 129
+and Safari 17 do, and Node 22). With the checks made first, what is left
+is the equation `[S]B = R + [k]A` on canonical encodings of points that
+are not of small order, and the cofactorless implementations of the
+browsers (BoringSSL, NSS's HACL*, CoreCrypto) agree with libsodium there
+too, as far as the tests can tell (the twelve vectors of
+ed25519-speccheck, and points with a component of small order). But the
+verdict of the explorer is a statement about an archive, and it should not
+depend on the browser it is read in: a native implementation could change
+under it, in a release of a browser nobody here has read, and two readers
+would then see two lines. The verifier below is the same in every
+browser, and every line of it is here to be read.
+
+What it costs, measured on Node 26 (V8, as Chrome) on one hundred random
+signatures of 300-byte messages: 1.8 ms a signature, against 0.07 ms for
+WebCrypto. The 147 signature files of the fixture archives take a quarter
+of a second in all, and an archive of a few thousand signed versions a few
+seconds, next to the fetching of its files, which dominates. A verifier
+that ran WebCrypto first and the verifier below only when WebCrypto
+accepts would cost the same on the archives that matter, those whose
+signatures are good, so it would buy nothing; WebCrypto is kept only for
+the tests, which check on every case that the two agree. The verifier
+works on public data only, so the timing of its arithmetic leaks nothing.
 
 The constants: the prime p = 2^255 − 19 of the field, the order L of the
 group, and the y coordinates of the points of small order (0, 1, −1, the
@@ -190,40 +202,20 @@ less than p) and not of small order.
       return a < P && r < P && !SMALL_ORDER_Y.has(a) && !SMALL_ORDER_Y.has(r);
     }
 
-The verification itself: the checks, then the equation, by WebCrypto or
-by the verifier below. `engine` forces one of them (`'webcrypto'` or
-`'js'`), for the tests; otherwise WebCrypto is tried once, and the
-verifier below is used for good if the browser has no Ed25519. A key or a
-signature that WebCrypto refuses to read is a signature that does not
-verify.
+The verification itself: the checks, then the equation, by the verifier
+below. The tests pass `engine: 'webcrypto'` to verify the equation with
+WebCrypto instead, to compare the two; a key or a signature that WebCrypto
+refuses to read is then a signature that does not verify.
 
     // in app/crypto.js:
-    let webcrypto = null;
-
-    async function hasWebCryptoEd25519() {
-      if (webcrypto === null) {
-        webcrypto = (async () => {
-          try {
-            await subtle().importKey('raw', new Uint8Array(32).fill(1), { name: 'Ed25519' }, false, ['verify']);
-            return true;
-          } catch (error) {
-            return !(error?.name === 'NotSupportedError' || error instanceof TypeError);
-          }
-        })();
-      }
-      return webcrypto;
-    }
-
-    export async function verifyEd25519(publicKey, message, signature, { engine = null } = {}) {
+    export async function verifyEd25519(publicKey, message, signature, { engine = 'js' } = {}) {
       if (!strictlyAcceptable(publicKey, signature)) return false;
-      const useWebCrypto = engine === 'webcrypto' || (engine === null && await hasWebCryptoEd25519());
-      if (useWebCrypto) {
+      if (engine === 'webcrypto') {
         try {
           const key = await subtle().importKey('raw', publicKey, { name: 'Ed25519' }, false, ['verify']);
           return await subtle().verify({ name: 'Ed25519' }, key, signature, message);
-        } catch (error) {
-          if (engine !== null || error?.name !== 'NotSupportedError') return false;
-          webcrypto = Promise.resolve(false);
+        } catch {
+          return false;
         }
       }
       return verifyInJs(publicKey, message, signature);

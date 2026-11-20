@@ -111,6 +111,65 @@ the copy, the version and its digest; with the copies seen.
       return { status, copy, version, digest, copies, log, ok: status === 'verified' || status === 'contested' };
     }
 
+Local and private addresses
+---------------------------
+
+The locations a resolver tries are named by the data of archives: the
+`at` of a member, a parent's `url`, a mirror. A hostile archive could
+name addresses of the reader's own machine or network (a router's page,
+a development server, a printer), and have the explorer, running in the
+reader's browser and inside the reader's network, send requests there.
+Most such requests fail on CORS, and they carry no credentials, but they
+are still requests the reader never meant to make, and their timing tells
+the archive what answers. So the explorer does not fetch, from locations
+named in archive data, a host that is local or private: `localhost` and
+names under `.localhost` or `.local`, the loopback addresses (127/8,
+`::1`), the private ranges of RFC 1918 (10/8, 172.16/12, 192.168/16), the
+link-local ones (169.254/16, fe80::/10), 0/8 and `::`, and the unique
+local addresses fc00::/7 (also as IPv4-mapped IPv6 addresses). An archive
+that is itself on such a host, as one under development is, may name
+others: what is local to it is local to its reader. A name of the public
+DNS that resolves to a private address is not seen; a browser does not
+tell a page the address it connects to.
+
+`localKind` says what a host is, as the URL parser writes it (IPv4
+addresses in dotted decimal, IPv6 ones in brackets, in hexadecimal), or
+`null` for a public host.
+
+    // in app/resolve.js:
+    function ipv6Groups(text) {
+      const halves = text.split('::');
+      if (halves.length > 2) return null;
+      const groups = (s) => (s ? s.split(':').map((g) => parseInt(g, 16)) : []);
+      const head = groups(halves[0]), tail = halves.length === 2 ? groups(halves[1]) : [];
+      if (halves.length === 1 && head.length !== 8) return null;
+      const out = [...head, ...new Array(8 - head.length - tail.length).fill(0), ...tail];
+      return out.length === 8 && out.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? out : null;
+    }
+
+    function ipv4Kind([a, b]) {
+      if (a === 127) return 'a loopback address';
+      if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) return 'a private address';
+      if (a === 169 && b === 254) return 'a link-local address';
+      if (a === 0) return 'an address of this network';
+      return null;
+    }
+
+    export function localKind(hostname) {
+      const host = String(hostname).toLowerCase().replace(/\.$/, '');
+      if (host === 'localhost' || host.endsWith('.localhost')) return 'a loopback address';
+      if (host === 'local' || host.endsWith('.local')) return 'a name of the local network (.local)';
+      if (/^[0-9]+(\.[0-9]+){3}$/.test(host)) return ipv4Kind(host.split('.').map(Number));
+      if (!host.startsWith('[')) return null;
+      const g = ipv6Groups(host.slice(1, -1));
+      if (!g) return null;
+      if (g.slice(0, 5).every((x) => x === 0) && g[5] === 0xffff) return ipv4Kind([g[6] >> 8, g[6] & 255]);
+      if (g.slice(0, 7).every((x) => x === 0)) return g[7] === 1 ? 'a loopback address' : g[7] === 0 ? 'an address of this network' : null;
+      if ((g[0] & 0xfe00) === 0xfc00) return 'a unique local address';
+      if ((g[0] & 0xffc0) === 0xfe80) return 'a link-local address';
+      return null;
+    }
+
 The resolver
 ------------
 
@@ -156,12 +215,22 @@ opensheaf-py. The places a resolver looks in are the archive explored and
 the locations it is given (the `at` of a URI or of a member, a parent's
 `url`): hints, which a hostile collection may make many, each costing
 requests and perhaps a time limit; at most `LIMITS.mirrors` of them are
-tried, and the resolver notes how many were left (section 15.2).
+tried, and the resolver notes how many were left (section 15.2). A
+location on a local or private host is not fetched unless the home is on
+one too (above); it is noted as unavailable, with the reason, which the
+page of a collection shows under "What was met" and a verification under
+`resolution`.
 
     // in app/resolve.js:
       source(where, options = {}) {
         const base = baseOf(where);
         if (!this.archives.has(base)) {
+          const refused = this.refused(base);
+          if (refused) {
+            this.note('warning', `unavailable: ${where}: ${refused}`);
+            this.archives.set(base, Promise.resolve(null));
+            return this.archives.get(base);
+          }
           const opening = Archive.open(this.http, base, options).then((archive) => {
             if (archive.old || archive.disc.specification !== '0.2') {
               this.note('warning', `unavailable: ${where}: not an archive of specification 0.2`);
@@ -180,6 +249,14 @@ tried, and the resolver notes how many were left (section 15.2).
           this.archives.set(base, opening);
         }
         return this.archives.get(base);
+      }
+
+      refused(base) {
+        const kind = localKind(new URL(base).hostname);
+        if (!kind) return null;
+        if (this.home && localKind(new URL(this.home.base).hostname)) return null;
+        return `not fetched: ${new URL(base).hostname} is ${kind}, which the explorer fetches only for an archive ` +
+          'that is itself on a local or private host';
       }
 
       places(where) {

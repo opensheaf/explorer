@@ -55,6 +55,39 @@ export function found(status, copy = null, version = null, digest = null, copies
   return { status, copy, version, digest, copies, log, ok: status === 'verified' || status === 'contested' };
 }
 
+function ipv6Groups(text) {
+  const halves = text.split('::');
+  if (halves.length > 2) return null;
+  const groups = (s) => (s ? s.split(':').map((g) => parseInt(g, 16)) : []);
+  const head = groups(halves[0]), tail = halves.length === 2 ? groups(halves[1]) : [];
+  if (halves.length === 1 && head.length !== 8) return null;
+  const out = [...head, ...new Array(8 - head.length - tail.length).fill(0), ...tail];
+  return out.length === 8 && out.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? out : null;
+}
+
+function ipv4Kind([a, b]) {
+  if (a === 127) return 'a loopback address';
+  if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) return 'a private address';
+  if (a === 169 && b === 254) return 'a link-local address';
+  if (a === 0) return 'an address of this network';
+  return null;
+}
+
+export function localKind(hostname) {
+  const host = String(hostname).toLowerCase().replace(/\.$/, '');
+  if (host === 'localhost' || host.endsWith('.localhost')) return 'a loopback address';
+  if (host === 'local' || host.endsWith('.local')) return 'a name of the local network (.local)';
+  if (/^[0-9]+(\.[0-9]+){3}$/.test(host)) return ipv4Kind(host.split('.').map(Number));
+  if (!host.startsWith('[')) return null;
+  const g = ipv6Groups(host.slice(1, -1));
+  if (!g) return null;
+  if (g.slice(0, 5).every((x) => x === 0) && g[5] === 0xffff) return ipv4Kind([g[6] >> 8, g[6] & 255]);
+  if (g.slice(0, 7).every((x) => x === 0)) return g[7] === 1 ? 'a loopback address' : g[7] === 0 ? 'an address of this network' : null;
+  if ((g[0] & 0xfe00) === 0xfc00) return 'a unique local address';
+  if ((g[0] & 0xffc0) === 0xfe80) return 'a link-local address';
+  return null;
+}
+
 export class Resolver {
   constructor(http, home = null) {
     this.http = http;
@@ -78,6 +111,12 @@ export class Resolver {
   source(where, options = {}) {
     const base = baseOf(where);
     if (!this.archives.has(base)) {
+      const refused = this.refused(base);
+      if (refused) {
+        this.note('warning', `unavailable: ${where}: ${refused}`);
+        this.archives.set(base, Promise.resolve(null));
+        return this.archives.get(base);
+      }
       const opening = Archive.open(this.http, base, options).then((archive) => {
         if (archive.old || archive.disc.specification !== '0.2') {
           this.note('warning', `unavailable: ${where}: not an archive of specification 0.2`);
@@ -96,6 +135,14 @@ export class Resolver {
       this.archives.set(base, opening);
     }
     return this.archives.get(base);
+  }
+
+  refused(base) {
+    const kind = localKind(new URL(base).hostname);
+    if (!kind) return null;
+    if (this.home && localKind(new URL(this.home.base).hostname)) return null;
+    return `not fetched: ${new URL(base).hostname} is ${kind}, which the explorer fetches only for an archive ` +
+      'that is itself on a local or private host';
   }
 
   places(where) {

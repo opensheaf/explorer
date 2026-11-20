@@ -20,7 +20,7 @@ report the same problems.
 The module is `app/owners.js`.
 
     // in app/owners.js:
-    import { sha512 } from './http.js';
+    import { sha512, parseIntegers } from './http.js';
     import { sha256, base32, sameBytes, utf8 } from './crypto.js';
     import { readGenesis, nameOf, objectId, keyLogPin, keyDigest, keyRulesOfRecord, jcsBytes, isObject,
              OWNER_NAME, DID_KEY, GENESIS } from './names.js';
@@ -41,8 +41,9 @@ A version of a key log, as a reader holds it: its number, its files (a
 map from logical path to bytes), its inventory file and checksum file,
 and the files of its witness folder that the reader found. Its digest,
 the SHA-512 of its inventory file, is computed when it is made, since
-WebCrypto is asynchronous; `keys` is its `keys.json` read as JSON, or
-`null`. A version holding no `keys.json` and files under `forked/` is a
+WebCrypto is asynchronous; `keys` is its `keys.json` read as JSON whose
+numbers are all exact integers (chapter [10](10-http.md)), or `null`
+(opensheaf-py reads a threshold of `1.0` as a float, which breaks rule 1). A version holding no `keys.json` and files under `forked/` is a
 fork record (section 6.3), whose carried versions are read from those
 files.
 
@@ -60,7 +61,7 @@ files.
       }
 
       get keys() {
-        return jsonOrNull(this.files.get(KEYS));
+        return jsonOrNull(this.files.get(KEYS), { integers: true });
       }
 
       get forkRecord() {
@@ -68,10 +69,11 @@ files.
       }
     }
 
-    export function jsonOrNull(bytes) {
+    export function jsonOrNull(bytes, { integers = false } = {}) {
       if (!bytes) return null;
       try {
-        return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        return integers ? parseIntegers(text) : JSON.parse(text);
       } catch {
         return null;
       }
@@ -104,7 +106,7 @@ Its number is the head of its inventory.
         out.push({
           d, files: group, inventory, sidecar: group.get('inventory.json.sha512') || new Uint8Array(),
           digest: await sha512(inventory), number, isVersion: true, forkRecord: false,
-          keys: jsonOrNull(group.get('keys.json')),
+          keys: jsonOrNull(group.get('keys.json'), { integers: true }),
           witnesses: new Map([...group].filter(([n]) => !CARRIED_FILES.includes(n))),
         });
       }

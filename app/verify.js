@@ -1,5 +1,5 @@
 // Generated from literate/17-verify.md by opensheaf-literate: edit the document, not this file.
-import { sha512, pool, LIMITS } from './http.js';
+import { sha512, pool, LIMITS, parseJson } from './http.js';
 import { Archive } from './archive.js';
 import { versionsOf, filesOf, documentVersionErrors, historyOf } from './versions.js';
 import { versionNumber, logicalPathProblem, OWNER_NAME_LAYOUT, HASHED_LAYOUT, LAYOUT_FILE } from './paths.js';
@@ -342,7 +342,7 @@ class Verification {
       if (genesis !== null) {
         try {
           rec = await readGenesis(genesis);
-          this.schema(`${place} genesis.json`, JSON.parse(new TextDecoder().decode(genesis)), 'genesis', 'error', { object: id });
+          this.schema(`${place} genesis.json`, parseJson(genesis, '', { integers: true }), 'genesis', 'error', { object: id });
         } catch (error) {
           this.add('error', place, `genesis.json: ${error.message}`, { object: id });
         }
@@ -735,7 +735,7 @@ class Verification {
         try {
           const bytes = await this.fetchOrNull(a.base + place);
           if (bytes === null) continue;
-          data = JSON.parse(new TextDecoder().decode(bytes));
+          data = parseJson(bytes);
         } catch (error) {
           if (this.aborted(error)) throw error;
           this.add('error', place, `not JSON: ${error.message}`);

@@ -137,6 +137,15 @@ test('the layout, the home page and the profile website', async () => {
   assert.equal(report.findings.filter((f) => f.place === 'index.html' && f.level === 'warning').length, 3);
 });
 
+test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
+  const url = `${ORIGIN}archive/owners/cf.json`;
+  const text = await (await diskFetch()(url)).text();
+  for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
+    const found = errors(await run('archive/', { patch: { [url]: change } }));
+    assert.ok(found.some((f) => /^owners\/cf\.json: not JSON: (starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+  }
+});
+
 test('labels given twice, a tombstone of an object listed', async () => {
   const twice = (text) => {
     const disc = JSON.parse(text);

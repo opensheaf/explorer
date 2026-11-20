@@ -781,7 +781,7 @@ quotation mark that no backslash escapes.
       return most;
     }
 
-    export function parseJson(bytes, url = '') {
+    export function parseJson(bytes, url = '', { integers = false } = {}) {
       let text;
       try {
         text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
@@ -796,10 +796,79 @@ quotation mark that no backslash escapes.
         throw new FetchError('too-large', url, `is nested deeper than ${LIMITS.nesting} levels`);
       }
       try {
-        return JSON.parse(text);
+        return integers ? parseIntegers(text) : JSON.parse(text);
       } catch (error) {
         throw new FetchError('json', url, `is not JSON (${error.message})`);
       }
+    }
+
+The files whose numbers count, genesis records and `keys.json` (their
+thresholds), are read with `integers`: every number in them must be an
+integer as its text writes it, without a fraction or an exponent, and of
+at most 2^53 in absolute value, the integers that JSON numbers and JCS
+represent exactly (section 2). The reference implementation reads
+`1.0` or `1e0` as a float, which is no threshold and has no canonical
+form, and `9007199254740993` as an integer too large for JCS; a JavaScript
+reader that took `JSON.parse` at its word would see the integers 1 and
+2^53, and accept what the reference refuses.
+
+The text of a number is what decides, so it is read from the text:
+`JSON.parse` gives it to the reviver as `context.source` in the browsers
+that have this (Chrome 114, Firefox 135, Node 21), and elsewhere the
+number tokens are found in one pass over the text, outside strings, as
+for the nesting above.
+
+    // in decoding JSON:
+    const INTEGER = /^-?(?:0|[1-9][0-9]*)$/;
+    const EXACT = 2n ** 53n;
+
+    export function numberProblem(token) {
+      if (!INTEGER.test(token)) return `the number ${token} is not an integer`;
+      const n = BigInt(token);
+      return n > EXACT || n < -EXACT ? `the integer ${token} has no exact form in JSON (section 2)` : null;
+    }
+
+    export function numberTokens(text) {
+      const tokens = [];
+      let inString = false;
+      for (let k = 0; k < text.length; k++) {
+        const c = text[k];
+        if (inString) {
+          if (c === '\\') k++;
+          else if (c === '"') inString = false;
+        } else if (c === '"') inString = true;
+        else if (c === '-' || (c >= '0' && c <= '9')) {
+          let end = k;
+          while (end < text.length && /[-+.eE0-9]/.test(text[end])) end++;
+          tokens.push(text.slice(k, end));
+          k = end - 1;
+        }
+      }
+      return tokens;
+    }
+
+    const HAS_SOURCE = (() => {
+      try {
+        return JSON.parse('1', (key, value, context) => context?.source === '1') === true;
+      } catch {
+        return false;
+      }
+    })();
+
+    export function parseIntegers(text, { source = HAS_SOURCE } = {}) {
+      const check = (token) => {
+        const problem = numberProblem(token);
+        if (problem) throw new Error(problem);
+      };
+      if (!source) {
+        const value = JSON.parse(text);
+        numberTokens(text).forEach(check);
+        return value;
+      }
+      return JSON.parse(text, (key, value, context) => {
+        if (typeof value === 'number') check(context.source);
+        return value;
+      });
     }
 
 Digests

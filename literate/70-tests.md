@@ -638,7 +638,7 @@ for the time limits, which concern the body of an answer as it arrives.
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
     import { createServer } from 'node:http';
-    import { Http, LIMITS, parseJson, explain } from '../app/http.js';
+    import { Http, LIMITS, parseJson, parseIntegers, numberTokens, explain } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { summary } from '../app/summary.js';
     import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, folder } from './disk.mjs';
@@ -900,6 +900,31 @@ the brackets inside its strings; at the limit, it is read.
       assert.equal(parseJson(nested(LIMITS.nesting)).length, 1);
       assert.throws(() => parseJson(nested(LIMITS.nesting + 1)), { kind: 'too-large', detail: /nested/ });
       assert.throws(() => parseJson(nested(100_000)), { kind: 'too-large' });
+    });
+
+Integers only, where the numbers count: a fraction or an exponent is
+refused even when its value is an integer, and so is an integer that JSON
+numbers do not hold exactly; numbers inside strings are not numbers. Both
+ways of finding the text of a number are tried, the reviver's
+`context.source` (where the engine has it, as Node has) and the pass over
+the text.
+
+    // in tests of requests:
+    test('JSON whose numbers are all exact integers', () => {
+      const ways = [{ source: false }, ...(JSON.parse('1', (k, v, c) => c?.source === '1') ? [{ source: true }] : [])];
+      for (const way of ways) {
+        for (const text of ['{"t":1.0}', '{"t":1e0}', '[1E2]', '{"t":-1.5}', '{"t":9007199254740993}', '[-9007199254740993]', '[0.0]']) {
+          assert.throws(() => parseIntegers(text, way), /is not an integer|no exact form/, `${text} ${way.source}`);
+        }
+        for (const [text, value] of [['{"t":1}', { t: 1 }], ['[-0, 0, 9007199254740992, -9007199254740992]', [-0, 0, 2 ** 53, -(2 ** 53)]],
+                                     ['{"s":"1.0e5 \\" 2.5","n":[3]}', { s: '1.0e5 " 2.5', n: [3] }]]) {
+          assert.deepEqual(parseIntegers(text, way), value, `${text} ${way.source}`);
+        }
+        assert.throws(() => parseIntegers('{"t":01}', way), SyntaxError);
+      }
+      assert.deepEqual(numberTokens('{"a\\"1.5":[-2,3e1],"b":"7"}'), ['-2', '3e1']);
+      assert.throws(() => parseJson(new TextEncoder().encode('{"threshold":1.0}'), '', { integers: true }), { kind: 'json', detail: /1\.0 is not an integer/ });
+      assert.deepEqual(parseJson(new TextEncoder().encode('{"threshold":1.0}')), { threshold: 1 });
     });
 
 A declared size is not trusted with memory: a server declaring 400 MB
@@ -1709,7 +1734,9 @@ with an `ocfl_layout.json` in the owner-name layout; a home page that
 does not show the pins of the main catalogue, which is an error for an
 archive declaring the profile `website` and a warning otherwise; a key
 log without the signature files of its second version; a tombstone of an
-object listed; a label given twice.
+object listed; a label given twice; an index file that starts with a
+byte order mark, or holds bytes that are not UTF-8, which is not JSON for
+`osheaf verify` either.
 
     // in tests of the verification:
     test('an inventory copy with another head, or fewer versions', async () => {
@@ -1739,6 +1766,15 @@ object listed; a label given twice.
       const report = await run('archive/', { patch: { ...index, [`${ORIGIN}archive/opensheaf.json`]: noWebsite } });
       assert.deepEqual(errors(report), []);
       assert.equal(report.findings.filter((f) => f.place === 'index.html' && f.level === 'warning').length, 3);
+    });
+
+    test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
+      const url = `${ORIGIN}archive/owners/cf.json`;
+      const text = await (await diskFetch()(url)).text();
+      for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
+        const found = errors(await run('archive/', { patch: { [url]: change } }));
+        assert.ok(found.some((f) => /^owners\/cf\.json: not JSON: (starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+      }
     });
 
     test('labels given twice, a tombstone of an object listed', async () => {

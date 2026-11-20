@@ -46,8 +46,8 @@ A static, client-side web application that explores and verifies
 Plain ES modules, no framework, no build step, no dependency at run time
 (not even a CDN): digests from WebCrypto; Ed25519 signatures verified with
 the strict checks of section 7.2 made first (S < L, canonical key and R,
-neither of small order), then by WebCrypto where the browser has Ed25519,
-or by a small verifier of its own; the JSON Schemas of the specification
+neither of small order), then by a small cofactorless verifier of its own,
+the same in every browser; the JSON Schemas of the specification
 checked by a validator of its own. Remote data is untrusted and never
 inserted as HTML.
 

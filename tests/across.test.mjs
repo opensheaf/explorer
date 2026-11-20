@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Http, LIMITS } from '../app/http.js';
 import { Archive } from '../app/archive.js';
-import { Resolver, Copy } from '../app/resolve.js';
+import { Resolver, Copy, localKind } from '../app/resolve.js';
 import { verdict, levelOfVersion, level, CONFIRMED, UNCHECKED, INCONSISTENT } from '../app/branches.js';
 import { historyOf } from '../app/versions.js';
 import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, READING, idOf, DISCOVERY } from './disk.mjs';
@@ -117,6 +117,38 @@ test('the statuses of pins (section 8.5)', async () => {
   assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/no-key-log')])).status, 'unchecked');
   assert.equal((await r.pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/unsigned')])).status, 'verified');
   assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('nowhere')])).status, 'unavailable');
+});
+
+test('local and private hosts are fetched only from an archive on one', async () => {
+  const local = ['localhost', 'a.localhost', 'printer.local', 'printer.local.', '127.0.0.1', '10.1.2.3', '172.16.0.1',
+                 '172.31.255.255', '192.168.1.5', '169.254.169.254', '0.0.0.0', '[::1]', '[::]', '[fd12:3456::1]',
+                 '[fc00::]', '[fe80::1]', '[::ffff:7f00:1]', '[::ffff:c0a8:105]'];
+  const others = ['example.org', 'local.example.org', '172.32.0.1', '11.0.0.1', '192.169.0.1', '[2001:db8::1]', '[fe00::1]',
+                  '[::2]', '[::ffff:808:808]'];
+  for (const h of local) assert.ok(localKind(h), h);
+  for (const h of others) assert.equal(localKind(h), null, h);
+  assert.equal(localKind(new URL('https://2130706433/').hostname), 'a loopback address');
+  assert.equal(localKind(new URL('https://[::ffff:127.0.0.1]/').hostname), 'a loopback address');
+  const alpha = pinOf('archive', 'alpha');
+  const where = ['https://192.168.1.5/papers/', 'https://printer.local/', 'https://[::1]:8443/'];
+  for (const home of [await open('archive/'), null]) {
+    const log = [];
+    const r = new Resolver(new Http({ fetch: diskFetch({ log }) }), home);
+    if (home) home.http = r.http;
+    const before = log.length;
+    assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, where)).status, home ? 'verified' : 'unavailable');
+    assert.deepEqual(log.slice(before).filter((u) => !u.startsWith(ORIGIN)), []);
+    assert.ok(r.notes.some((n) => n.message === 'unavailable: https://192.168.1.5/papers/: not fetched: 192.168.1.5 is a private ' +
+      'address, which the explorer fetches only for an archive that is itself on a local or private host'), JSON.stringify(r.notes));
+    assert.ok(r.notes.some((n) => n.message.startsWith('unavailable: https://printer.local/: not fetched: printer.local is a name of the local network')));
+    assert.ok(r.notes.some((n) => n.message.startsWith('unavailable: https://[::1]:8443/: not fetched: [::1] is a loopback address')));
+  }
+  const log = [];
+  const onLocalhost = Object.assign(await open('broken/old/'), { base: 'http://localhost:8000/papers/' });
+  const r = new Resolver(new Http({ fetch: diskFetch({ log }) }), onLocalhost);
+  assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, where.slice(0, 1))).status, 'unavailable');
+  assert.ok(log.includes('https://192.168.1.5/papers/opensheaf.json'), log.join(' '));
+  assert.ok(!r.notes.some((n) => /not fetched/.test(n.message)));
 });
 
 test('a pin resolved again is read from the server again; locations are bounded', async () => {

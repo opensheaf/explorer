@@ -99,6 +99,20 @@ test('genesis records that are not', async () => {
   await assert.rejects(readGenesis(new Uint8Array([0xef, 0xbb, 0xbf, ...GENESIS_N])), /byte order mark/);
 });
 
+test('thresholds that are not integers in their text', async () => {
+  const text = new TextDecoder().decode(GENESIS_A);
+  for (const t of ['1.0', '1e0', '1E0', '9007199254740993']) {
+    const changed = text.replace('"threshold": 1,', `"threshold": ${t},`);
+    assert.notEqual(changed, text);
+    await assert.rejects(readGenesis(utf8(changed)), /a genesis record is JSON in UTF-8 \(the (number|integer) /, t);
+  }
+  const keys = (t) => new Version(2, new Map([['keys.json', utf8(`{"format":"opensheaf-keys/0.2","keys":["${K1}"],"threshold":${t},` +
+    `"next":["oxthfb6b4q3sqathmcpnciqggfxlr3aekgfg2tpm2lgrm2qnalha"],"nextThreshold":1}`)]]), new Uint8Array()).keys;
+  assert.equal(keys('1').threshold, 1);
+  assert.equal(keys('1.0'), null);
+  assert.equal(keys('1e0'), null);
+});
+
 test('did:key URIs and the digests of keys (sections 6.1 and 7.2)', async () => {
   const public3 = didKeyPublic(K3);
   assert.equal(public3.length, 32);
@@ -186,23 +200,6 @@ test('the edge cases of Ed25519, with both verifiers (section 7.2)', async () =>
   }
   assert.deepEqual(VECTORS.map(([, key, sig]) => strictlyAcceptable(bytes(key), bytes(sig))),
     [false, false, false, true, true, true, false, false, false, false, false, false]);
-});
-
-test('the signatures of appendix C (sections C.1, C.3 and C.8)', async () => {
-  for (const s of SIGNATURES) {
-    const msg = message(s.object, s.version, s.inventorySha512, s.keyLog);
-    const sig = unbase64(s.signature);
-    for (const engine of ['webcrypto', 'js']) {
-      assert.ok(await verifyEd25519(didKeyPublic(s.key), msg, sig, { engine }), `${s.file} ${engine}`);
-      const changed = sig.slice();
-      changed[10] ^= 1;
-      assert.ok(!await verifyEd25519(didKeyPublic(s.key), msg, changed, { engine }));
-      assert.ok(!await verifyEd25519(didKeyPublic(K1), msg, sig, { engine }));
-    }
-    assert.equal(await fileName(s.key), `signature-${s.file}.json`);
-  }
-  assert.equal(new TextDecoder().decode(message(PAPER_ID, 'v2', D2, `sheaf:${A}/v2?sha512=${KL2}`)),
-    `opensheaf-signature/0.2\nobject ${PAPER_ID}\nversion v2\ninventory ${D2}\nkeylog sheaf:${A}/v2?sha512=${KL2}\n`);
 });
 
 test('the computed first version (sections 6.1 and C.1)', async () => {
@@ -332,6 +329,78 @@ test('the statuses of a signature file (section 7.3)', async () => {
     [INVALID, 'its signer is not the owner of the line']);
   assert.deepEqual(await status(signatureFile(s, { inventorySha512: KL1 })), [INVALID, 'the signature does not verify']);
   assert.throws(() => readSignatureFile(signatureFile(s, { extra: 1 })), /exactly the fields/);
+  const loose = s.signature.slice(0, 85) + 'h==';
+  assert.notEqual(loose, s.signature);
+  assert.deepEqual(unbase64(loose), unbase64(s.signature));
+  assert.deepEqual(await status(signatureFile(s, { signature: loose }), file, { lookup: () => v2 }), [GOOD, '']);
   assert.throws(() => readSignatureFile(signatureFile(s, { signer: 'tqr6lchnd2vk7ezskdc5zdxpaidpsiuduo5sqhiis3i55iautdka' })),
     /keyLog names the key log of another owner/);
+});
+
+const MIXED = [
+  ['good', true,
+   'b381c70a1226a49d37d14a2f28e320faca0669bd1917fe37b13400f2fbda6be1',
+   '7e1768277342b3fa5e07391fa697f865ffb3b57005048712e29e2994eed5a7db' +
+   'fda846d52b178dfba8d8024a95b1a36d8e4384a49217b7814d393e23a68d1e0c'],
+  ['mixed A, k%8==0', true,
+   '8b4e59d6cc75cbec4a4714928c50a829800f8c5a100bb1152b8f3e01c4358a4b',
+   'f15f18fac77872ba75b95ab61ffd4e2acef7975513a2e5d87779c7be039ccd45' +
+   'd48c0501bf8b2d341b229e11f7f9ad0e18dcf75bc990fabb05db136c6f283c0a'],
+  ['mixed A, k%8!=0', false,
+   '8b4e59d6cc75cbec4a4714928c50a829800f8c5a100bb1152b8f3e01c4358a4b',
+   '78aeac38bf6e47831e87c649f4a75a24cd80679f364d5b52cfc36d237836657e' +
+   'b6e3a1c9c87d2e91ee53423f1c08da2d095ba1e34e8da2fda7e37fa38078a10d'],
+  ['mixed A (order4), k%4==0-ish', true,
+   '1c9b40eae3ed8505ff93426d56f39d8ba1afef58a7ff14c07cb337a49317f33f',
+   'c6f65e9234496623db52a7c824421289e0699cb6c154823226bf6da1ed629ab6' +
+   'b054866ae4ebfd798ea2a4541d887c56ba0eeb57ab8743f2a220ce341baa540c'],
+  ['R + T8 (cofactored only)', false,
+   'b381c70a1226a49d37d14a2f28e320faca0669bd1917fe37b13400f2fbda6be1',
+   '60796497920dfae3f4804659f9210b95f4a75130e24b87014eeb1423a2c40801' +
+   '2357b2efe2284192b5f6cd6b7ecfcbc623c258a4bb8c0c62d19b9869c791930e'],
+  ['S+L', false,
+   'b381c70a1226a49d37d14a2f28e320faca0669bd1917fe37b13400f2fbda6be1',
+   '7e1768277342b3fa5e07391fa697f865ffb3b57005048712e29e2994eed5a7db' +
+   'ea7c3c32467a9f537f75faec73ab82828e4384a49217b7814d393e23a68d1e1c'],
+  ['A=identity R=id S=0', false,
+   '0100000000000000000000000000000000000000000000000000000000000000',
+   '0100000000000000000000000000000000000000000000000000000000000000' +
+   '0000000000000000000000000000000000000000000000000000000000000000'],
+  ['A=y0 sign1 R=id S=0', false,
+   '0000000000000000000000000000000000000000000000000000000000000080',
+   '0100000000000000000000000000000000000000000000000000000000000000' +
+   '0000000000000000000000000000000000000000000000000000000000000000'],
+  ['A=T8 R=id S=0', false,
+   '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
+   '0100000000000000000000000000000000000000000000000000000000000000' +
+   '0000000000000000000000000000000000000000000000000000000000000000'],
+  ['noncanon R', false,
+   'b381c70a1226a49d37d14a2f28e320faca0669bd1917fe37b13400f2fbda6be1',
+   'eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f' +
+   'fda846d52b178dfba8d8024a95b1a36d8e4384a49217b7814d393e23a68d1e0c'],
+];
+
+test('points with a component of small order, as libsodium decides them (section 7.2)', async () => {
+  const msg = utf8('opensheaf audit');
+  for (const [name, good, key, sig] of MIXED) {
+    assert.equal(await verifyEd25519(bytes(key), msg, bytes(sig)), good, name);
+    assert.equal(await verifyEd25519(bytes(key), msg, bytes(sig), { engine: 'webcrypto' }), good, `${name}, WebCrypto`);
+  }
+});
+
+test('the signatures of appendix C (sections C.1, C.3 and C.8)', async () => {
+  for (const s of SIGNATURES) {
+    const msg = message(s.object, s.version, s.inventorySha512, s.keyLog);
+    const sig = unbase64(s.signature);
+    for (const engine of ['webcrypto', 'js']) {
+      assert.ok(await verifyEd25519(didKeyPublic(s.key), msg, sig, { engine }), `${s.file} ${engine}`);
+      const changed = sig.slice();
+      changed[10] ^= 1;
+      assert.ok(!await verifyEd25519(didKeyPublic(s.key), msg, changed, { engine }));
+      assert.ok(!await verifyEd25519(didKeyPublic(K1), msg, sig, { engine }));
+    }
+    assert.equal(await fileName(s.key), `signature-${s.file}.json`);
+  }
+  assert.equal(new TextDecoder().decode(message(PAPER_ID, 'v2', D2, `sheaf:${A}/v2?sha512=${KL2}`)),
+    `opensheaf-signature/0.2\nobject ${PAPER_ID}\nversion v2\ninventory ${D2}\nkeylog sheaf:${A}/v2?sha512=${KL2}\n`);
 });

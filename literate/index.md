@@ -44,8 +44,8 @@ The explorer does four things:
 
 It is plain JavaScript: ES modules that the browser loads as they are,
 with no framework, no build step and no library, not even from a CDN;
-digests come from the browser's WebCrypto, and so do Ed25519 signatures
-where the browser has them (with a small verifier of its own otherwise);
+digests come from the browser's WebCrypto, and Ed25519 signatures are
+verified by a small verifier of its own, the same in every browser;
 the JSON Schemas of the specification are checked by a validator of its
 own. Everything it reads is untrusted, and it never puts anything it
 reads into the page as HTML.

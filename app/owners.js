@@ -1,5 +1,5 @@
 // Generated from literate/07-owners.md by opensheaf-literate: edit the document, not this file.
-import { sha512 } from './http.js';
+import { sha512, parseIntegers } from './http.js';
 import { sha256, base32, sameBytes, utf8 } from './crypto.js';
 import { readGenesis, nameOf, objectId, keyLogPin, keyDigest, keyRulesOfRecord, jcsBytes, isObject,
          OWNER_NAME, DID_KEY, GENESIS } from './names.js';
@@ -26,7 +26,7 @@ export class Version {
   }
 
   get keys() {
-    return jsonOrNull(this.files.get(KEYS));
+    return jsonOrNull(this.files.get(KEYS), { integers: true });
   }
 
   get forkRecord() {
@@ -34,10 +34,11 @@ export class Version {
   }
 }
 
-export function jsonOrNull(bytes) {
+export function jsonOrNull(bytes, { integers = false } = {}) {
   if (!bytes) return null;
   try {
-    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return integers ? parseIntegers(text) : JSON.parse(text);
   } catch {
     return null;
   }
@@ -64,7 +65,7 @@ async function carriedOf(files) {
     out.push({
       d, files: group, inventory, sidecar: group.get('inventory.json.sha512') || new Uint8Array(),
       digest: await sha512(inventory), number, isVersion: true, forkRecord: false,
-      keys: jsonOrNull(group.get('keys.json')),
+      keys: jsonOrNull(group.get('keys.json'), { integers: true }),
       witnesses: new Map([...group].filter(([n]) => !CARRIED_FILES.includes(n))),
     });
   }

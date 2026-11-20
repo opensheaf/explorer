@@ -112,32 +112,14 @@ export function strictlyAcceptable(publicKey, signature) {
   return a < P && r < P && !SMALL_ORDER_Y.has(a) && !SMALL_ORDER_Y.has(r);
 }
 
-let webcrypto = null;
-
-async function hasWebCryptoEd25519() {
-  if (webcrypto === null) {
-    webcrypto = (async () => {
-      try {
-        await subtle().importKey('raw', new Uint8Array(32).fill(1), { name: 'Ed25519' }, false, ['verify']);
-        return true;
-      } catch (error) {
-        return !(error?.name === 'NotSupportedError' || error instanceof TypeError);
-      }
-    })();
-  }
-  return webcrypto;
-}
-
-export async function verifyEd25519(publicKey, message, signature, { engine = null } = {}) {
+export async function verifyEd25519(publicKey, message, signature, { engine = 'js' } = {}) {
   if (!strictlyAcceptable(publicKey, signature)) return false;
-  const useWebCrypto = engine === 'webcrypto' || (engine === null && await hasWebCryptoEd25519());
-  if (useWebCrypto) {
+  if (engine === 'webcrypto') {
     try {
       const key = await subtle().importKey('raw', publicKey, { name: 'Ed25519' }, false, ['verify']);
       return await subtle().verify({ name: 'Ed25519' }, key, signature, message);
-    } catch (error) {
-      if (engine !== null || error?.name !== 'NotSupportedError') return false;
-      webcrypto = Promise.resolve(false);
+    } catch {
+      return false;
     }
   }
   return verifyInJs(publicKey, message, signature);

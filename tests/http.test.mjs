@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { Http, LIMITS, parseJson, explain } from '../app/http.js';
+import { Http, LIMITS, parseJson, parseIntegers, numberTokens, explain } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { summary } from '../app/summary.js';
 import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, folder } from './disk.mjs';
@@ -212,6 +212,23 @@ test('JSON nested too deeply', () => {
   assert.equal(parseJson(nested(LIMITS.nesting)).length, 1);
   assert.throws(() => parseJson(nested(LIMITS.nesting + 1)), { kind: 'too-large', detail: /nested/ });
   assert.throws(() => parseJson(nested(100_000)), { kind: 'too-large' });
+});
+
+test('JSON whose numbers are all exact integers', () => {
+  const ways = [{ source: false }, ...(JSON.parse('1', (k, v, c) => c?.source === '1') ? [{ source: true }] : [])];
+  for (const way of ways) {
+    for (const text of ['{"t":1.0}', '{"t":1e0}', '[1E2]', '{"t":-1.5}', '{"t":9007199254740993}', '[-9007199254740993]', '[0.0]']) {
+      assert.throws(() => parseIntegers(text, way), /is not an integer|no exact form/, `${text} ${way.source}`);
+    }
+    for (const [text, value] of [['{"t":1}', { t: 1 }], ['[-0, 0, 9007199254740992, -9007199254740992]', [-0, 0, 2 ** 53, -(2 ** 53)]],
+                                 ['{"s":"1.0e5 \\" 2.5","n":[3]}', { s: '1.0e5 " 2.5', n: [3] }]]) {
+      assert.deepEqual(parseIntegers(text, way), value, `${text} ${way.source}`);
+    }
+    assert.throws(() => parseIntegers('{"t":01}', way), SyntaxError);
+  }
+  assert.deepEqual(numberTokens('{"a\\"1.5":[-2,3e1],"b":"7"}'), ['-2', '3e1']);
+  assert.throws(() => parseJson(new TextEncoder().encode('{"threshold":1.0}'), '', { integers: true }), { kind: 'json', detail: /1\.0 is not an integer/ });
+  assert.deepEqual(parseJson(new TextEncoder().encode('{"threshold":1.0}')), { threshold: 1 });
 });
 
 test('a declared size does not allocate memory before the bytes arrive', async () => {
