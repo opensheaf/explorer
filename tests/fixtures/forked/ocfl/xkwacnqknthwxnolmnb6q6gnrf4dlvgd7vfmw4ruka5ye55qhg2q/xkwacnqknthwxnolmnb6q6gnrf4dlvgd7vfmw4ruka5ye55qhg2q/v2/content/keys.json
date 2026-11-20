@@ -1,0 +1,13 @@
+{
+  "format": "opensheaf-keys/0.2",
+  "keys": [
+    "did:key:z6MkmKpiwKuMirtSBKCyWqsuMyWmRtkertNtKLn4rDbMRxJi"
+  ],
+  "threshold": 1,
+  "next": [
+    "tawmqgcpma6y45mxh3rlays5lotxfb4icpcsh3jm6yoxy2xb7bhq",
+    "wnos4ihezwhke46eney6u7rkszw7jcqolnw6o7afhdkeetypq2ua",
+    "p62vorrepm4sbncb6flgk7qye4ridm3clrtjwjegyxjna7sm2ppa"
+  ],
+  "nextThreshold": 2
+}

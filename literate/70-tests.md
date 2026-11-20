@@ -1,208 +1,376 @@
 The tests
 =========
 
-The modules that do not touch the page (reading archives, the validator,
-the rules, the verification) run in Node as they run in the browser, and
-are tested there with Node's own test runner, `node --test`, which needs
-nothing installed: Node provides `fetch`, `Response` and WebCrypto as the
-browser does. The pages are checked by hand, in a browser, against the
+The modules that do not touch the page (reading archives, names, key
+logs and signatures, the validator, the rules, resolution and the
+verification) run in Node as they run in the browser, and are tested
+there with Node's own test runner, `node --test`, which needs nothing
+installed: Node provides `fetch`, `Response` and WebCrypto, Ed25519
+included, as the browser does. The pages are tested on an imitation of
+the document (below), and checked by hand, in a browser, against the
 example archives of the templates and against a real archive (see the
 [README](https://github.com/opensheaf/explorer#testing)).
 
 The tests read *fixture archives*, small OpenSheaf archives made with
 `osheaf` and kept in the repository, from the disk, through a `fetch`
-that maps addresses to files. They check that the explorer finds no
-problem where `osheaf verify` finds none, and that it finds, in the same
-words, the problems `osheaf verify` finds in broken copies of them.
+that maps addresses to files. With each archive is kept what
+`osheaf verify` found in it, as JSON; the tests check that the explorer
+finds the same findings, error for error, warning for warning and result
+for result, except for what cannot be found over HTTP, which they name.
+The tests of names, keys and signatures against appendix C of the
+specification are in [their own chapter](71-tests-identity.md), and those
+of resolution across archives in [another](72-tests-across.md).
 
 The fixtures
 ------------
 
-Two archives are made, by a script that needs `osheaf` and is run by hand
-when the fixtures must change (the result is kept, so the tests need
-neither Python nor opensheaf-py). The first archive, `archive/`, holds
-three documents that go through the unusual workflows of section 7.3: a
-document with a version found later (which writes the history) and a
-notice; a document deposited without its sources, then completed; and a
-withdrawn document; its main collection, and a selection vetting two
-revisions. The second, `other/`, holds an accepted copy of a version of
-the first archive's document, a mirror of another, and a main collection
-that pins objects of both archives. The second archive refers to the
-first by its address, so the first is served on `127.0.0.1:8765` while
-the second is made; the tests read both under that address, from the
-disk.
+Three archives are made, by a script that needs `osheaf` (opensheaf-py on
+version 0.2 of the specification) and is run by hand when the fixtures
+must change; the result is kept, so the tests need neither Python nor
+opensheaf-py. Their base URLs are under `https://fixtures.example.org/`,
+which `osheaf` is told to read from the folder of the fixtures
+(`OPENSHEAF_LOCATIONS`), and which the tests read from the disk.
+
+- `archive/`, in the owner-name layout, has one owner and its key log;
+  a document with a version found later (which writes the history) and a
+  notice; a document deposited without its sources, then completed; a
+  withdrawn document; a document taken down, of which a tombstone is
+  left; a draft; its main catalogue, and a selection vetting two
+  revisions; its indexes and its website.
+- `forked/` has an owner whose key log forks: a twin of the archive
+  signs another version 2 of the key log with other rotation keys, and
+  `osheaf owner pull` appends a fork record; a document signed before the
+  fork point is signed, one signed after it contested (section 7.3).
+- `other/`, in the hashed layout, has an owner that exposes its first
+  key, so that a document signed with it alone is contested, and its main
+  catalogue, which pins it, too; a document whose first version is only
+  vouched for (its signature file is removed, its second version is
+  signed); an accepted copy of a version of `archive/`'s first document, a
+  branch listed by a selection; a mirror of another document of
+  `archive/`; and a catalogue of lines of the three archives, one of them
+  followed.
+
+Keys are made by `osheaf` itself, predictably: opensheaf-py makes the keys
+of its tests from labels given in `OSHEAF_TEST_KEYS`, and refuses to do so
+outside its tests, which it recognises by `PYTEST_CURRENT_TEST`; the script
+sets both, with labels of its own for every command, and keeps the current
+keys in a folder of its own, never in the system's credential store. The
+names of works and owners still differ from one run to the next, since
+genesis records have random nonces and dates, and the tests read them from
+the fixtures, never write them.
 
     # in tests/fixtures/make.sh:
     #!/bin/sh
-    # Build the fixture archives of the tests with osheaf (opensheaf-py):
+    # Build the fixture archives of the tests with osheaf (opensheaf-py, specification 0.2):
     #   sh tests/fixtures/make.sh
     set -e
     cd "$(dirname "$0")"
-    rm -rf archive other broken src
-    mkdir src
-    PORT=8765
-    URL=http://127.0.0.1:$PORT
-    python3 -m http.server $PORT --bind 127.0.0.1 >/dev/null 2>&1 &
-    SERVER=$!
-    trap 'kill $SERVER' EXIT
-    sleep 1
+    HERE=$(pwd)
+    URL=https://fixtures.example.org
+    rm -rf archive other forked broken verify work
+    mkdir -p work/config work/keys work/src verify
+    <<the keys and the places of the fixtures>>
     <<the files of the fixture documents>>
     <<the first fixture archive>>
+    <<an owner whose key log forks>>
     <<the second fixture archive>>
-    rm -rf src archive/paper archive/templates archive/sitemap.xml archive/style.css \
-      other/paper other/templates other/sitemap.xml other/style.css
+    rm -rf archive/templates archive/owner archive/style.css archive/sitemap.xml archive/.nojekyll \
+      forked/templates forked/owner forked/style.css forked/sitemap.xml forked/.nojekyll \
+      other/templates other/owner other/style.css other/sitemap.xml other/.nojekyll
     python3 break.py
+    <<what osheaf verify finds in the fixtures>>
+    rm -rf work
+
+The keys go to a folder of the script (`OPENSHEAF_KEY_STORE=file`, under
+`XDG_CONFIG_HOME`), and the rotation keys are exported there unencrypted;
+both are deleted at the end. The function `osheaf` gives each command
+labels of its own, from a counter kept in a file, since a command run in
+`$(...)` runs in a subshell.
+
+    # in the keys and the places of the fixtures:
+    export XDG_CONFIG_HOME="$HERE/work/config" OPENSHEAF_KEY_STORE=file
+    export OPENSHEAF_LOCATIONS="$URL/=$HERE/"
+    export PYTEST_CURRENT_TEST="explorer fixtures (tests/fixtures/make.sh)"
+    unset OPENSHEAF_SIGNING_KEY OPENSHEAF_PASSPHRASE
+    echo 0 > work/runs
+    osheaf() {
+      run=$(($(cat work/runs) + 1))
+      echo $run > work/runs
+      OSHEAF_TEST_KEYS=$(for k in 1 2 3 4 5 6 7 8; do printf 'explorer fixture %s %s,' $run $k; done) \
+        command osheaf "$@"
+    }
+    init() {
+      osheaf init "$1" --name "$2" --base-url "$URL/$1/" --curator "Example, Ada" --new-owner \
+        --export "work/keys/$1" --no-passphrase --yes $3
+    }
+    rk() {   # rk FOLDER N: the file of the Nth rotation key exported in FOLDER
+      ls work/keys/$1/rotation-*.txt | sed -n "$2p"
+    }
+    uri() {  # uri ARCHIVE LABEL [DOCUMENT-VERSION]: the sheaf: URI of a line, with its at
+      python3 - "$@" <<'PY'
+    import json, sys, urllib.parse
+    archive, label = sys.argv[1], sys.argv[2]
+    o = next(o for o in json.load(open(f"{archive}/opensheaf.json"))["objects"] if o.get("label") == label)
+    v = f"/v{sys.argv[3]}" if len(sys.argv) > 3 else ""
+    print(f"sheaf:{o['name']}:{o['owner']}{v}?at=" + urllib.parse.quote(f"https://fixtures.example.org/{archive}/", safe=""))
+    PY
+    }
 
 The documents are stand-ins: a line of LaTeX and a line pretending to be
 a PDF, enough for the tools, which copy files byte for byte.
 
     # in the files of the fixture documents:
-    for f in alpha-1 alpha-2 alpha-0 beta-1 gamma-1; do
-      printf '%s\n' "\\documentclass{article}\\begin{document}$f\\end{document}" > src/$f.tex
-      printf '%s\n' "%PDF-1.4 (a stand-in for the PDF of $f)" > src/$f.pdf
+    src=work/src
+    for f in alpha-1 alpha-2 alpha-0 beta-1 gamma-1 delta-1 eps-1 zeta-1 zeta-2; do
+      printf '%s\n' "\\documentclass{article}\\begin{document}$f\\end{document}" > $src/$f.tex
+      printf '%s\n' "%PDF-1.4 (a stand-in for the PDF of $f)" > $src/$f.pdf
     done
 
-The first archive: `alpha` has versions 1 and 2, a notice about version
-1, and a version found later, placed after version 1 in the history;
-`beta` is deposited without its sources and completed; `gamma` is
-withdrawn. Its title and abstract have mathematics. The selection
-`reading` vets two revisions of `alpha` and the current version of
-`beta`.
+The first archive. `alpha` has two versions, a notice about the first,
+and a version found later, placed after the first (`--after 1`), which
+writes the history; `beta` is deposited without its sources and
+completed; `gamma` is withdrawn; `delta` is taken down. The main
+catalogue follows the archive's documents; the selection `reading` vets
+two revisions of `alpha` and one of `beta`; `notes` is a draft.
 
     # in the first fixture archive:
+    init archive "A fixture archive"
     A="osheaf --root archive"
-    osheaf init archive --archive-id tag:example.org,2026:fixture --name "A fixture archive" \
-      --base-url $URL/archive/ --curator "Example, Ada"
-    $A deposit alpha src/alpha-1.tex --pdf src/alpha-1.pdf --title 'Alpha: $\alpha$-stable laws' \
+    $A deposit alpha $src/alpha-1.tex --pdf $src/alpha-1.pdf --new --title 'Alpha: $\alpha$-stable laws' \
       --author "Example, Ada|University of Nowhere" --available 2024-01-10 --rights cc-by-4.0 \
       --abstract 'We study $\alpha$-stable laws on $\mathbb{R}^d$.'
-    $A deposit alpha src/alpha-2.tex --pdf src/alpha-2.pdf --title 'Alpha: $\alpha$-stable laws' \
+    $A deposit alpha $src/alpha-2.tex --pdf $src/alpha-2.pdf --title 'Alpha: $\alpha$-stable laws' \
       --author "Example, Ada|University of Nowhere" --available 2024-03-01 --changes "Second version." --stage AM
     $A notice alpha --about 1 --text "Lemma 2 of version 1 is wrong as stated; corrected in version 2."
-    $A deposit alpha src/alpha-0.tex --pdf src/alpha-0.pdf --title 'Alpha: $\alpha$-stable laws' \
+    $A deposit alpha $src/alpha-0.tex --pdf $src/alpha-0.pdf --title 'Alpha: $\alpha$-stable laws' \
       --author "Example, Ada|University of Nowhere" --created 2024-02-01 --after 1 \
       --changes "The submitted manuscript, found later."
-    $A deposit beta --pdf src/beta-1.pdf --no-source "Only the PDF was kept." --title "Beta" \
+    $A deposit beta --pdf $src/beta-1.pdf --new --no-source "Only the PDF was kept." --title "Beta" \
       --author "Example, Ada" --available 2023-05-05 --rights cc-by-4.0
-    $A complete beta --version 1 --source src/beta-1.tex
-    $A deposit gamma src/gamma-1.tex --pdf src/gamma-1.pdf --title "Gamma" --author "Example, Ada" \
+    $A complete beta --version 1 --source $src/beta-1.tex
+    $A deposit gamma $src/gamma-1.tex --pdf $src/gamma-1.pdf --new --title "Gamma" --author "Example, Ada" \
       --available 2022-02-02 --rights cc-by-4.0
     $A withdraw gamma --reason "Withdrawn for the tests."
+    $A deposit delta $src/delta-1.tex --pdf $src/delta-1.pdf --new --title "Delta" --author "Example, Ada" \
+      --available 2022-03-03 --rights cc-by-4.0
+    $A takedown delta --reason "Taken down for the tests." --yes
     $A collect
-    cat > src/reading.yaml <<YAML
+    cat > $src/reading.yaml <<YAML
     title: A reading list
     description: The versions read.
     type: selection
     members:
-      - {archive: ., id: alpha, revisions: [1, 2]}
-      - {archive: ., id: beta}
+      - {label: alpha, revisions: [1, 2]}
+      - {label: beta}
     YAML
-    $A collection sync reading --from src/reading.yaml
+    $A collection sync reading --from $src/reading.yaml
+    $A draft new notes --pdf $src/eps-1.pdf --no-source "A draft." --title "Notes" --author "Example, Ada"
     $A index
-    $A verify
 
-The second archive accepts version 2 of `alpha` as a document of its own
-(section 10.5), mirrors `beta` (section 10.4), and keeps a catalogue of objects of both archives: `alpha` followed, `gamma` at an
-earlier version than its head, the first archive's selection, and its own
-accepted copy.
+An owner whose key log forks (section 6.3). The archive `forked` deposits
+`before`, signed against the first version of its key log; a copy of it,
+its twin, is made; both then sign a second version of the key log with
+two of the three rotation keys of the first, not the same two, and
+`forked` deposits `after`, signed against its own second version. When
+`forked` meets the twin's key log (`osheaf owner pull`), it appends a fork
+record carrying the twin's second version: the owner has ended at its
+fork point, version 2, and `after` is contested.
+
+    # in an owner whose key log forks:
+    init forked "A forked owner"
+    F="osheaf --root forked"
+    $F deposit before --pdf $src/zeta-1.pdf --new --no-source "x" --title "Signed before the fork" \
+      --author "Example, Ada" --rights cc-by-4.0
+    cp -R forked work/twin
+    $F owner rotate --rotation-key "$(rk forked 1)" --rotation-key "$(rk forked 2)" \
+      --export work/keys/forked-2 --no-passphrase --yes
+    $F deposit after --pdf $src/zeta-2.pdf --new --no-source "x" --title "Signed after the fork point" \
+      --author "Example, Ada" --rights cc-by-4.0
+    osheaf --root work/twin owner rotate --rotation-key "$(rk forked 1)" --rotation-key "$(rk forked 3)" \
+      --export work/keys/twin-2 --no-passphrase --yes
+    OWNER_F=$(python3 -c 'import json; print(json.load(open("forked/osheaf.json"))["owner"])')
+    $F owner pull "work/twin/ocfl/$OWNER_F/$OWNER_F"
+    $F index
+
+The second archive, in the hashed layout, with a curated main catalogue.
+Its owner deposits `exposed` and `vouched`, both signed with its first
+key, and lists `exposed` in its main catalogue; then makes a new key and
+exposes the first (section 6.3), so that `exposed` and the two versions
+of the main catalogue are contested; then deposits a second version of
+`vouched`, signed with the new key, which `osheaf` asks to acknowledge
+(`--i-know`, section 7.3). The signature file of the first version of
+`vouched` is then removed: that version is no longer signed directly, but
+vouched for by the second. The archive keeps an accepted copy of
+`alpha`'s version 2 in its selection `issue`, a mirror of `beta`, and a
+catalogue, `shelf`, of lines of the three archives: `alpha`, followed;
+`gamma` at its document version 1; the selection `reading`; the accepted
+copy; and `before` of `forked`.
 
     # in the second fixture archive:
+    init other "Another fixture archive" "--layout hashed --curated"
     O="osheaf --root other"
-    osheaf init other --archive-id tag:example.org,2026:other --name "Another fixture archive" \
-      --base-url $URL/other/ --curator "Example, Ada" --curated
-    $O accept $URL/archive/ alpha --version v2 --as alpha-copy --stage VoR
-    $O mirror $URL/archive/ beta
-    cat > src/shelf.yaml <<YAML
+    $O deposit exposed --pdf $src/eps-1.pdf --new --no-source "x" --title "Signed with a key exposed later" \
+      --author "Example, Ada" --rights cc-by-4.0
+    $O deposit vouched --pdf $src/zeta-1.pdf --new --no-source "x" --title "Vouched for" \
+      --author "Example, Ada" --rights cc-by-4.0
+    $O collection add main "$(uri other exposed)"
+    FIRST=$($O owner show | sed -n 's/^current key //p' | head -1)
+    SECOND=$($O key new | head -1)
+    $O owner expose "$FIRST" --add "$SECOND" --rotation-key "$(rk other 1)" --rotation-key "$(rk other 2)" \
+      --export work/keys/other-2 --no-passphrase --yes
+    $O deposit vouched --pdf $src/zeta-2.pdf --no-source "x" --title "Vouched for" --author "Example, Ada" --i-know
+    VOUCHED=$(python3 -c 'import json; print(next(o["id"] for o in json.load(open("other/opensheaf.json"))["objects"] if o.get("label") == "vouched"))')
+    rm -r "other/ocfl/$(python3 -c "
+    import hashlib, sys
+    i = sys.argv[1]; h = hashlib.sha256(i.encode()).hexdigest(); e = i.replace(':', '%3a')
+    print(f'{h[0:3]}/{h[3:6]}/{h[6:9]}/{e[:100]}-{h}')" "$VOUCHED")/extensions/opensheaf-witnesses/v1"
+    $O collection new issue --type selection --title "Issue 1"
+    $O accept "$(uri archive alpha 2)" --selection issue --label alpha-accepted
+    $O mirror "$(uri archive beta)"
+    cat > $src/shelf.yaml <<YAML
     title: A shelf
-    description: Objects of two archives, kept whole.
+    description: Lines of three archives, kept whole.
     type: catalogue
     members:
-      - {archive: $URL/archive/, id: alpha}
-      - {archive: $URL/archive/, id: gamma, version: v1}
-      - {archive: $URL/archive/, id: reading}
-      - {archive: ., id: alpha-copy}
+      - {uri: '$(uri archive alpha)', follow: yes}
+      - '$(uri archive gamma 1)'
+      - '$(uri archive reading)'
+      - {label: alpha-accepted}
+      - '$(uri forked before)'
     YAML
-    $O collection sync --from src/shelf.yaml
+    $O collection sync shelf --from $src/shelf.yaml
     $O index
-    $O verify --remote
 
-### Broken copies
+What `osheaf verify` finds in each fixture, kept as JSON beside them:
+the three archives pass (no errors), the broken copies (below) do not.
+`osheaf verify --json` may print a warning before the JSON (a main
+catalogue without a signed version, in `other/`), which is left out. The
+archives with members or parents elsewhere are verified with `--remote`,
+as the tests verify them.
 
-Broken copies of the first archive each break one rule, as damage or
-tampering would. A careful tamperer updates the digests too: a changed
-file is re-digested in every inventory of its object (the manifest and the
-fixity block), with their checksum files and the discovery document, so
-that only the rule broken, and the pins of the collections that pinned
-the old inventories, show. The copies are made by a Python script,
-`tests/fixtures/break.py`, which `make.sh` runs.
+    # in what osheaf verify finds in the fixtures:
+    for a in archive forked other; do
+      osheaf --root $a verify --remote
+      osheaf --root $a verify --remote --json | sed -n '/^\[/,$p' > verify/$a.json
+    done
+    for b in broken/*; do
+      remote=; [ "$(basename $b)" = unchecked-branch ] && remote=--remote
+      osheaf --root $b verify $remote --json | sed -n '/^\[/,$p' > verify/broken-$(basename $b).json || true
+    done
+
+The broken copies
+-----------------
+
+Each broken copy breaks one rule, as a damaged or tampered archive would:
+
+- `changed-file`: a file of a version changed (its digest no longer that
+  of the manifest);
+- `stale`: the discovery document gives an old head;
+- `previous`: an `object.json` whose `previous` is not the digest of the
+  version before (section 4.3);
+- `gap`: a document version renumbered, breaking the numbering;
+- `dropped-notice`: a later version without the notice of an earlier one;
+- `wrong-pin`: a selection pinning a digest that is not the inventory's;
+- `unsigned`: a version whose signature file is gone, so that it is not a
+  version of its line, and the main catalogue pins it;
+- `bad-signature`: a signature that does not verify;
+- `no-key-log`: the archive without the key log of its owner;
+- `key-log`: a key log whose second version lost its signature files;
+- `unchecked-branch`: `other/` without the key log of the parent's owner,
+  so that the branch point of the accepted copy is unchecked;
+- `old`: the discovery document of an archive of version 0.1.
+
+Changing a file of an object version means changing the digests of its
+inventories, their checksum files and the discovery document, as a
+tamperer covering its tracks would; the signatures, which sign the
+inventories, then no longer hold, and the copies show what follows.
 
     # in tests/fixtures/break.py:
     #!/usr/bin/env python3
-    """Make broken copies of the fixture archive, for the tests:
+    """Make broken copies of the fixture archives, for the tests:
 
         python3 tests/fixtures/break.py
 
     Each copy breaks one rule, as a damaged or tampered archive would."""
+    import base64
     import hashlib
     import json
     import shutil
     from pathlib import Path
 
     HERE = Path(__file__).resolve().parent
-    SOURCE = HERE / "archive"
 
+    <<finding the files of a fixture>>
 
     <<rewriting a file of a fixture with its digests>>
 
-
     <<the broken copies>>
+    print("broken copies written in", HERE / "broken")
 
-A file is found by its logical path through the root inventory, changed,
-and the digests of the old bytes replaced by those of the new ones in
-every inventory of the object; the checksum files and the entry of the
-discovery document follow.
+A copy of a fixture archive, and in it the folder of an object, by its
+label, in the owner-name layout; the folder of the archive's owner; the
+folder of any object in the hashed layout; and the content path of a
+logical path.
 
-    # in rewriting a file of a fixture with its digests:
-    def sha(data):
-        return hashlib.sha512(data).hexdigest()
-
-
-    def copy(name):
+    # in finding the files of a fixture:
+    def copy(name, source="archive"):
         target = HERE / "broken" / name
         shutil.rmtree(target, ignore_errors=True)
-        shutil.copytree(SOURCE, target)
+        shutil.copytree(HERE / source, target)
         return target
 
 
-    def logical(obj_dir, ver, path):
+    def obj_dir(root, label):
+        """The folder of the object labelled LABEL (owner-name layout), and its identifier."""
+        disc = json.loads((root / "opensheaf.json").read_text())
+        o = next(o for o in disc["objects"] if o.get("label") == label)
+        return root / "ocfl" / o["owner"] / o["name"], o["id"]
+
+
+    def owner_dir(root):
+        owner = json.loads((root / "osheaf.json").read_text())["owner"]
+        return root / "ocfl" / owner / owner
+
+
+    def hashed_dir(root, obj_id):
+        """The folder of OBJ_ID in the hashed layout (a line's identifier is always shortened)."""
+        h = hashlib.sha256(obj_id.encode()).hexdigest()
+        return root / "ocfl" / h[0:3] / h[3:6] / h[6:9] / (obj_id.replace(":", "%3a")[:100] + "-" + h)
+
+
+    def logical(d, ver, path):
         """The content path of a logical path of an object version."""
-        inv = json.loads((obj_dir / "inventory.json").read_text())
+        inv = json.loads((d / "inventory.json").read_text())
         for dig, paths in inv["versions"][ver]["state"].items():
             if path in paths:
                 return inv["manifest"][dig][0]
         raise KeyError(path)
 
+Rewriting a file of a version, with the digests that name it, and editing
+the discovery document.
 
-    def rewrite(root, obj_id, ver, path, change):
+    # in rewriting a file of a fixture with its digests:
+    def rewrite(root, label, ver, path, change):
         """Change a file of an object version, re-digesting its inventories, their
-        checksum files and the discovery document."""
-        obj_dir = root / "ocfl" / obj_id
-        cp = obj_dir / logical(obj_dir, ver, path)
+        checksum files and the discovery document (the signatures, which sign the
+        inventories, are left as they were)."""
+        d, obj_id = obj_dir(root, label)
+        cp = d / logical(d, ver, path)
         old = cp.read_bytes()
         new = change(old)
         cp.write_bytes(new)
-        for inv in [obj_dir / "inventory.json", *obj_dir.glob("v*/inventory.json")]:
+        for inv in [d / "inventory.json", *d.glob("v*/inventory.json")]:
             text = inv.read_text()
             for algorithm in (hashlib.sha512, hashlib.sha256, hashlib.md5):  # the manifest and the fixity block
                 text = text.replace(algorithm(old).hexdigest(), algorithm(new).hexdigest())
             inv.write_text(text)
-            side = inv.with_name("inventory.json.sha512")
-            side.write_text(f"{sha(inv.read_bytes())} inventory.json\n")
-        disc = json.loads((root / "opensheaf.json").read_text())
-        for o in disc["objects"]:
-            if o["id"] == obj_id:
-                o["inventorySha512"] = sha((obj_dir / "inventory.json").read_bytes())
-        (root / "opensheaf.json").write_text(json.dumps(disc, indent=2) + "\n")
+            inv.with_name("inventory.json.sha512").write_text(f"{sha(inv.read_bytes())}  inventory.json\n")
+        edit_discovery(root, lambda disc: [o.update(inventorySha512=sha((d / "inventory.json").read_bytes()))
+                                           for o in disc["objects"] if o["id"] == obj_id])
+
+
+    def sha(data):
+        return hashlib.sha512(data).hexdigest()
 
 
     def edit_json(edit):
@@ -212,77 +380,99 @@ discovery document follow.
             return (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode()
         return change
 
-The copies: a file changed on the server, its inventory left alone (only
-the digests show it); a wrong pin in the selection; a gap in the
-numbering of the document versions; a notice dropped by a later version;
-a stale discovery document.
+
+    def edit_discovery(root, edit):
+        disc = json.loads((root / "opensheaf.json").read_text())
+        edit(disc)
+        (root / "opensheaf.json").write_text(json.dumps(disc, indent=2) + "\n")
+
+The copies themselves, in the order of the list above.
 
     # in the broken copies:
     root = copy("changed-file")
-    obj_dir = root / "ocfl" / "alpha"
-    pdf = obj_dir / logical(obj_dir, "v1", "paper.pdf")
+    d, _ = obj_dir(root, "alpha")
+    pdf = d / logical(d, "v1", "paper.pdf")
     pdf.write_bytes(pdf.read_bytes() + b"tampered\n")
 
-    root = copy("wrong-pin")
-    def wrong_pin(mem):
-        mem["members"][0]["revisions"][0]["inventorySha512"] = "0" * 128
-    rewrite(root, "reading", "v1", "members.json", edit_json(wrong_pin))
+    root = copy("stale")
+    edit_discovery(root, lambda disc: next(o for o in disc["objects"] if o.get("label") == "beta").update(head="v1"))
+
+    root = copy("previous")
+    rewrite(root, "alpha", "v2", "object.json", edit_json(lambda obj: obj.update(previous="0" * 128)))
 
     root = copy("gap")
-    def renumber(obj):
-        obj["documentVersion"] = 3
-    def renumber_dc(dc):
-        dc["version"] = "3"
-    rewrite(root, "alpha", "v2", "object.json", edit_json(renumber))
-    rewrite(root, "alpha", "v2", "datacite.json", edit_json(renumber_dc))
+    rewrite(root, "alpha", "v2", "object.json", edit_json(lambda obj: obj.update(documentVersion=3)))
+    rewrite(root, "alpha", "v2", "datacite.json", edit_json(lambda dc: dc.update(version="3")))
 
     root = copy("dropped-notice")
-    def drop(obj):
-        obj.pop("notices", None)
-    rewrite(root, "alpha", "v4", "object.json", edit_json(drop))
+    rewrite(root, "alpha", "v4", "object.json", edit_json(lambda obj: obj.pop("notices", None)))
 
-    root = copy("stale")
-    disc = json.loads((root / "opensheaf.json").read_text())
-    for o in disc["objects"]:
-        if o["id"] == "beta":
-            o["head"] = "v1"
-    (root / "opensheaf.json").write_text(json.dumps(disc, indent=2) + "\n")
-    print("broken copies written in", HERE / "broken")
+    root = copy("wrong-pin")
+    rewrite(root, "reading", "v1", "members.json",
+            edit_json(lambda mem: mem["members"][0]["revisions"][0].update(inventorySha512="0" * 128)))
 
-`osheaf verify` reports, on these copies (leaving out the messages of its
-independent OCFL validator):
+    root = copy("unsigned")
+    d, _ = obj_dir(root, "beta")
+    shutil.rmtree(d / "extensions" / "opensheaf-witnesses" / "v2")
 
-```
-broken/changed-file:   ocfl/alpha: digest mismatch for v1/content/paper.pdf
-broken/wrong-pin:      ocfl/reading: v1 member alpha v1: mismatch
-broken/gap:            ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)
-                       ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)
-                       ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps
-                       ocfl/alpha: v4 has other files than document version 3
-                       ocfl/collection-main: v2 member alpha v4: mismatch
-                       ocfl/reading: v1 member alpha v3: mismatch
-broken/dropped-notice: ocfl/alpha: v4 drops or changes an earlier notice
-                       ocfl/collection-main: v2 member alpha v4: mismatch
-broken/stale:          opensheaf.json: stale entry for beta
-```
+    root = copy("bad-signature")
+    d, _ = obj_dir(root, "alpha")
+    for f in (d / "extensions" / "opensheaf-witnesses" / "v4").glob("signature-*.json"):
+        sig = json.loads(f.read_text())
+        raw = bytearray(base64.b64decode(sig["signature"]))
+        raw[0] ^= 1
+        sig["signature"] = base64.b64encode(bytes(raw)).decode()
+        f.write_text(json.dumps(sig, indent=2) + "\n")
 
-The tests below expect exactly these lines from the explorer.
+    root = copy("no-key-log")
+    shutil.rmtree(owner_dir(root))
+
+    root = copy("key-log", "forked")
+    shutil.rmtree(owner_dir(root) / "extensions" / "opensheaf-witnesses" / "v2")
+
+    root = copy("unchecked-branch", "other")
+    archive_owner = json.loads((HERE / "archive" / "osheaf.json").read_text())["owner"]
+    key_log_id = f"sheaf:{archive_owner}:{archive_owner}"
+    gone = hashed_dir(root, key_log_id)
+    shutil.rmtree(gone)
+    for d in (gone.parent, gone.parent.parent, gone.parent.parent.parent):
+        if not any(d.iterdir()):
+            d.rmdir()
+    edit_discovery(root, lambda disc: disc.update(objects=[o for o in disc["objects"] if o["id"] != key_log_id]))
+
+    root = HERE / "broken" / "old"
+    shutil.rmtree(root, ignore_errors=True)
+    root.mkdir(parents=True)
+    (root / "opensheaf.json").write_text(json.dumps({
+        "format": "opensheaf-archive/0.1", "specification": "0.1", "archiveId": "tag:example.org,2026:old",
+        "name": "An archive of specification 0.1", "storageRoot": "ocfl/",
+        "storageLayout": "0002-flat-direct-storage-layout", "profiles": [], "objects": []}, indent=2) + "\n")
+    (root / "osheaf.json").write_text(json.dumps({"archiveId": "tag:example.org,2026:old", "name": "Old"}) + "\n")
 
 Reading fixtures from the disk
 ------------------------------
 
 The tests give the HTTP client a `fetch` that answers addresses under
-`http://127.0.0.1:8765/` with the files under `tests/fixtures/`, a 404 for
-missing files, and a network error for any other address, as a browser
-would for a server that is down. A list of the addresses requested can be
-kept, to check that nothing is fetched outside the storage root, and
-prefixes can be made to fail, to simulate an archive that disappeared.
+`https://fixtures.example.org/` with the files under `tests/fixtures/`, a
+404 for missing files, and a network error for any other address, as a
+browser would for a server that is down. A path is decoded before it is
+read, so that the folder `sheaf%3a...` of the hashed layout is read from
+the address `sheaf%253a...`; it is joined to the folder of the fixtures
+as a path, not as a URL, which would decode it a second time. A list of
+the addresses requested can be kept, to check that nothing is fetched
+outside the storage root, and prefixes can be made to fail, to simulate
+an archive that disappeared. `osheaf` is the findings `osheaf verify`
+kept for a fixture; `idOf` the identifier of a line of a fixture archive
+by its label (the identifiers change each time the fixtures are made),
+with those the tests use most, and `folder` the address of an object of
+an archive in the owner-name layout.
 
     // in tests/disk.mjs:
     import { readFile } from 'node:fs/promises';
+    import { fileURLToPath } from 'node:url';
 
-    export const ORIGIN = 'http://127.0.0.1:8765/';
-    const FIXTURES = new URL('./fixtures/', import.meta.url);
+    export const ORIGIN = 'https://fixtures.example.org/';
+    const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
 
     export function diskFetch({ log = [], down = [] } = {}) {
       return async (url, init = {}) => {
@@ -292,7 +482,7 @@ prefixes can be made to fail, to simulate an archive that disappeared.
         }
         const path = decodeURIComponent(new URL(url).pathname).slice(1);
         try {
-          const bytes = await readFile(new URL(path, FIXTURES));
+          const bytes = await readFile(FIXTURES + path);
           const headers = { 'content-length': String(bytes.length) };
           return new Response(init.method === 'HEAD' ? null : bytes, { status: 200, headers });
         } catch {
@@ -306,27 +496,50 @@ prefixes can be made to fail, to simulate an archive that disappeared.
       return loadSchemas(async (url) => JSON.parse(await readFile(url, 'utf-8')));
     }
 
+    export async function osheaf(name) {
+      return JSON.parse(await readFile(`${FIXTURES}verify/${name}.json`, 'utf-8'));
+    }
+
+    export async function fixture(path) {
+      return JSON.parse(await readFile(FIXTURES + path, 'utf-8'));
+    }
+
+    export function labelled(disc, label) {
+      return disc.objects.find((o) => o.label === label);
+    }
+
+    export const DISCOVERY = {};
+    for (const a of ['archive', 'other', 'forked']) DISCOVERY[a] = await fixture(`${a}/opensheaf.json`);
+
+    export function idOf(label, archive = 'archive') {
+      return labelled(DISCOVERY[archive], label).id;
+    }
+
+    export const ALPHA = idOf('alpha'), BETA = idOf('beta'), GAMMA = idOf('gamma'), MAIN = idOf('main'), READING = idOf('reading');
+    export const OWNER = DISCOVERY.archive.owners[0];
+
+    export function folder(id, archive = 'archive') {
+      const [, name, owner] = id.split(':');
+      return `${ORIGIN}${archive}/ocfl/${owner}/${name}/`;
+    }
+
 The validator
 -------------
 
 The validator is tested on the files of the fixtures, which must be
 valid, and on files broken in the ways the schemas forbid: a missing
-property, a pattern, a format, a `const`, an `if`/`then`, a `not`, an
-`anyOf`, `dependentRequired`, `propertyNames`, `uniqueItems`.
+property, a pattern, a format, an `enum`, a `const`, an `if`/`then`, a
+`not`, an `anyOf`, `dependentRequired`, `propertyNames`, `uniqueItems`.
 
     // in tests/schema.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { readFile } from 'node:fs/promises';
     import { validate, FORMATS, same } from '../app/schema.js';
-    import { readSchemas } from './disk.mjs';
+    import { readSchemas, fixture, folder, ALPHA, READING, idOf } from './disk.mjs';
 
     const schemas = await readSchemas();
-    const object = schemas['opensheaf-object/0.1'];
-    const collection = schemas['opensheaf-collection/0.1'];
-    const archive = schemas['opensheaf-archive/0.1'];
-    const fixture = async (path) => JSON.parse(await readFile(new URL(`./fixtures/${path}`, import.meta.url), 'utf-8'));
-    const messages = (schema, data) => validate(schema, data).map((e) => `${e.path}: ${e.message}`);
+    const messages = (format, data) => validate(schemas[`opensheaf-${format}/0.2`], data).map((e) => `${e.path}: ${e.message}`);
+    const file = (id, path, archive = 'archive') => fixture(folder(id, archive).replace(/^https:\/\/[^/]+\//, '') + path);
 
     <<tests of the validator>>
 
@@ -334,17 +547,19 @@ The tests themselves:
 
     // in tests of the validator:
     test('the files of the fixtures are valid', async () => {
-      assert.deepEqual(messages(archive, await fixture('archive/opensheaf.json')), []);
-      assert.deepEqual(messages(archive, await fixture('other/opensheaf.json')), []);
-      assert.deepEqual(messages(object, await fixture('archive/ocfl/alpha/v4/content/object.json')), []);
-      assert.deepEqual(messages(collection, await fixture('archive/ocfl/reading/v1/content/members.json')), []);
+      for (const a of ['archive', 'other', 'forked']) assert.deepEqual(messages('archive', await fixture(`${a}/opensheaf.json`)), []);
+      assert.deepEqual(messages('object', await file(ALPHA, 'v4/content/object.json')), []);
+      assert.deepEqual(messages('collection', await file(READING, 'v1/content/members.json')), []);
+      assert.deepEqual(messages('genesis', await file(ALPHA, 'v1/content/genesis.json')), []);
+      const forked = idOf('before', 'forked').split(':')[2];
+      assert.deepEqual(messages('keys', await file(`sheaf:${forked}:${forked}`, 'v2/content/keys.json', 'forked')), []);
     });
 
     test('formats are assertions', () => {
       assert.ok(FORMATS.date('2024-02-29'));
       assert.ok(!FORMATS.date('2023-02-29'));
       assert.ok(!FORMATS.date('2024-2-1'));
-      assert.ok(FORMATS.uri('tag:opensheaf.org,2026:mgubi'));
+      assert.ok(FORMATS.uri('https://orcid.org/0000-0002-1234-5677'));
       assert.ok(FORMATS.uri('https://mgubi.org/papers/'));
       assert.ok(!FORMATS.uri('ocfl/'));
       assert.ok(!FORMATS.uri('https://example.org/a b'));
@@ -356,42 +571,55 @@ The tests themselves:
       const disc = await fixture('archive/opensheaf.json');
       delete disc.name;
       disc.objects[0].head = 'v01';
-      disc.archiveId = 'not a uri';
+      disc.storageLayout = 'flat';
       disc.profiles = ['website', 'website'];
-      assert.deepEqual(messages(archive, disc).sort(), [
-        '/archiveId: "not a uri" is not a valid uri',
+      assert.deepEqual(messages('archive', disc).sort(), [
         '/objects/0/head: "v01" does not match ^v[1-9][0-9]*$',
         '/profiles: has repeated items',
+        '/storageLayout: "flat" is not one of ["opensheaf-owner-name-storage-layout","0003-hash-and-id-...',
         ': "name" is a required property',
       ]);
     });
 
-    test('object.json: kinds, notes, withdrawal, extensions', async () => {
-      const obj = await fixture('archive/ocfl/alpha/v4/content/object.json');
-      assert.deepEqual(messages(object, { ...obj, kind: 'collection' }), [
-        ': must not have mainSource, sourceFormat, sourcesMissing, renditions, toolchain, changes, stage, history, notices',
+    test('object.json: kinds, notes, withdrawal, extensions, previous', async () => {
+      const obj = await file(ALPHA, 'v4/content/object.json');
+      assert.deepEqual(messages('object', { ...obj, kind: 'collection' }), [
+        ': must not have mainSource, sourceFormat, sourcesMissing, renditions, toolchain, changes, stage, history, notices, licence',
       ]);
-      assert.deepEqual(messages(object, { ...obj, status: 'withdrawn' }), [': "withdrawal" is a required property']);
-      assert.deepEqual(messages(object, { ...obj, changes: { path: 'x.md' } }), ['/changes: "mediaType" is required with "path"']);
-      assert.match(messages(object, { ...obj, changes: {} })[0], /satisfies none of the alternatives/);
-      assert.deepEqual(messages(object, { ...obj, extensions: { 'not a uri': {} } }), ['/extensions/not a uri: the name "not a uri" is not a valid uri']);
-      assert.deepEqual(messages(object, { ...obj, renditions: [{ path: '../x.pdf', mediaType: 'application/pdf' }] }),
-        ['/renditions/0/path: "../x.pdf" does not match ^(?!/)(?!(?:.*/)?\\.{1,2}(?:/|$)).+$']);
+      assert.deepEqual(messages('object', { ...obj, status: 'withdrawn' }), [': "withdrawal" is a required property']);
+      assert.deepEqual(messages('object', { ...obj, changes: { path: 'x.md' } }), ['/changes: "mediaType" is required with "path"']);
+      assert.match(messages('object', { ...obj, changes: {} })[0], /satisfies none of the alternatives/);
+      assert.deepEqual(messages('object', { ...obj, extensions: { 'not a uri': {} } }), ['/extensions/not a uri: the name "not a uri" is not a valid uri']);
+      assert.deepEqual(messages('object', { ...obj, previous: 'xyz' }), ['/previous: "xyz" does not match ^[0-9a-f]{128}$']);
     });
 
-    test('members.json: catalogues and selections', async () => {
-      const mem = await fixture('archive/ocfl/reading/v1/content/members.json');
+    test('members.json: catalogues and selections, members by line', async () => {
+      const mem = await file(READING, 'v1/content/members.json');
       const bad = structuredClone(mem);
       bad.members[0].version = 'v1';
-      assert.deepEqual(messages(collection, bad), ['/members/0: must not have version, inventorySha512, follow']);
+      assert.deepEqual(messages('collection', bad), ['/members/0: must not have version, inventorySha512, follow']);
       bad.type = 'catalogue';
-      assert.deepEqual(messages(collection, bad).sort(), [
+      assert.deepEqual(messages('collection', bad).sort(), [
         '/members/0: "inventorySha512" is a required property',
         '/members/0: must not have revisions',
         '/members/1: "inventorySha512" is a required property',
         '/members/1: "version" is a required property',
         '/members/1: must not have revisions',
       ]);
+      const noAt = structuredClone(mem);
+      delete noAt.members[0].at;
+      assert.deepEqual(messages('collection', noAt), ['/members/0: "at" is a required property']);
+    });
+
+    test('the keywords the schemas of 0.2 add: maximum, maxItems, minProperties, oneOf', () => {
+      const schema = { type: 'object', minProperties: 1, properties: {
+        n: { type: 'integer', maximum: 15 }, l: { type: 'array', maxItems: 1 },
+        o: { oneOf: [{ type: 'string' }, { type: 'string', pattern: '^a' }] } } };
+      assert.deepEqual(validate(schema, {}).map((e) => e.message), ['has fewer than 1 properties']);
+      assert.deepEqual(validate(schema, { n: 16, l: [1, 2], o: 'ab' }).map((e) => `${e.path}: ${e.message}`), [
+        '/n: 16 is greater than 15', '/l: has more than 1 items', '/o: satisfies 2 of the alternatives, and should satisfy one',
+      ]);
+      assert.deepEqual(validate(schema, { o: 'b' }), []);
     });
 
     test('JSON values are compared whatever the order of keys', () => {
@@ -413,7 +641,7 @@ for the time limits, which concern the body of an answer as it arrives.
     import { Http, LIMITS, parseJson, explain } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { summary } from '../app/summary.js';
-    import { diskFetch, ORIGIN } from './disk.mjs';
+    import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, folder } from './disk.mjs';
 
     function slowFetch(ms, { log = [] } = {}) {
       const disk = diskFetch({ log });
@@ -475,14 +703,14 @@ The same holds for summaries, which the pages load with their signals.
       const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map() };
       const page1 = new AbortController();
       ctx.signal = page1.signal;
-      const a = summary(ctx, 'alpha');
+      const a = summary(ctx, ALPHA);
       await new Promise((resolve) => setTimeout(resolve, 10));
       page1.abort();
       ctx.signal = new AbortController().signal;
-      const s = await summary(ctx, 'alpha');
-      assert.equal(s.id, 'alpha');
+      const s = await summary(ctx, ALPHA);
+      assert.equal(s.id, ALPHA);
       await assert.rejects(a, { kind: 'aborted' });
-      assert.equal(await summary(ctx, 'alpha'), s);
+      assert.equal(await summary(ctx, ALPHA), s);
     });
 
 The summaries kept are bounded too: past the limit, the least recently
@@ -494,14 +722,14 @@ waiting for.
       const http = new Http({ fetch: slowFetch(5) });
       const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map(),
                     signal: new AbortController().signal, summaryLimit: 1 };
-      await summary(ctx, 'alpha');
-      const beta = summary(ctx, 'beta');
-      const gamma = summary(ctx, 'gamma');
-      assert.deepEqual([...ctx.summaries.keys()], ['beta', 'gamma']);
+      await summary(ctx, ALPHA);
+      const beta = summary(ctx, BETA);
+      const gamma = summary(ctx, GAMMA);
+      assert.deepEqual([...ctx.summaries.keys()], [BETA, GAMMA]);
       await Promise.all([beta, gamma]);
-      await summary(ctx, 'beta');
-      await summary(ctx, 'alpha');
-      assert.deepEqual([...ctx.summaries.keys()], ['alpha']);
+      await summary(ctx, BETA);
+      await summary(ctx, ALPHA);
+      assert.deepEqual([...ctx.summaries.keys()], [ALPHA]);
     });
 
 The answers kept are bounded: past the limit, the least recently used
@@ -509,12 +737,12 @@ are forgotten.
 
     // in tests of requests:
     test('the answers kept are bounded', async () => {
-      const http = new Http({ fetch: diskFetch(), cacheLimit: 10_000 });   // the inventories are 4 to 10 kB
-      const url = (id) => `${ORIGIN}archive/ocfl/${id}/inventory.json`;
-      for (const id of ['alpha', 'beta', 'gamma']) await http.cached(url(id));
-      assert.ok(http.cacheBytes <= 10_000);
-      assert.ok(!http.cache.has(url('alpha')));
-      assert.ok(http.cache.has(url('beta')) && http.cache.has(url('gamma')));
+      const http = new Http({ fetch: diskFetch(), cacheLimit: 12_000 });   // the inventories are 5 to 11 kB
+      const url = (id) => `${folder(id)}inventory.json`;
+      for (const id of [ALPHA, BETA, GAMMA]) await http.cached(url(id));
+      assert.ok(http.cacheBytes <= 12_000);
+      assert.ok(!http.cache.has(url(ALPHA)));
+      assert.ok(http.cache.has(url(BETA)) && http.cache.has(url(GAMMA)));
     });
 
 The time limits: a server that sends a body slowly but steadily, for
@@ -726,20 +954,30 @@ none, as the verification is.
       assert.match(explain({ kind: 'budget' }), /one page/);
     });
 
-Untrusted names
----------------
+Untrusted names and layouts
+---------------------------
+
+Logical paths, content paths and addresses, as chapter
+[11](11-paths.md) checks and builds them; addresses typed by a reader;
+identifiers; and the paths of objects in the two layouts of section 3.2,
+the hashed one on the example of appendix C, whose path is given there in
+full.
 
     // in tests/paths.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { logicalPathProblem, contentPathProblem, under, isObjectId, isVersion } from '../app/paths.js';
+    import { logicalPathProblem, contentPathProblem, under, isObjectId, isVersion, pathOf, HASHED_LAYOUT } from '../app/paths.js';
     import { baseOf, withScheme } from '../app/archive.js';
 
-    test('logical paths (sections 7.1 and 15)', () => {
+    const A = '56wo6cdpjsxk7ddgnqfp2quipfghukhtmvjuahvwzko7m4tkz3pa';
+    const N = 'zzgdggwlldcrw4bdeuvntiaobtw2kge6bc4go737pfekhfc5oz4q';
+
+    test('logical paths (section 4.1)', () => {
       assert.equal(logicalPathProblem('figures/walk.pdf'), null);
-      assert.equal(logicalPathProblem('/etc/passwd'), 'begins with /');
-      assert.equal(logicalPathProblem('a/../b'), 'has a . or .. segment');
-      assert.equal(logicalPathProblem('./a'), 'has a . or .. segment');
+      assert.equal(logicalPathProblem('/etc/passwd'), 'has an empty, . or .. segment');
+      assert.equal(logicalPathProblem('a/'), 'has an empty, . or .. segment');
+      assert.equal(logicalPathProblem('a/../b'), 'has an empty, . or .. segment');
+      assert.equal(logicalPathProblem('a\\b'), 'has a \\');
       assert.equal(logicalPathProblem('café.tex'), 'is not in Unicode normalisation form C');
       assert.equal(logicalPathProblem('café.tex'), null);
     });
@@ -754,9 +992,10 @@ Untrusted names
 
     test('addresses are built under the root, encoded', () => {
       const root = 'https://example.org/papers/ocfl/';
-      assert.equal(under(root, ['alpha', 'v1', 'inventory.json']), root + 'alpha/v1/inventory.json');
-      assert.equal(under(root, ['alpha', '0=ocfl_object_1.1']), root + 'alpha/0=ocfl_object_1.1');
+      assert.equal(under(root, [A, N, 'v1', 'inventory.json']), `${root}${A}/${N}/v1/inventory.json`);
+      assert.equal(under(root, ['x', '0=ocfl_object_1.1']), root + 'x/0=ocfl_object_1.1');
       assert.equal(under(root, ['a', 'notes #2?.pdf']), root + 'a/notes%20%232%3F.pdf');
+      assert.equal(under(root, ['946', 'sheaf%3az']), root + '946/sheaf%253az');
       assert.throws(() => under(root, ['..', 'x']), /segment/);
       assert.throws(() => under(root, ['a/b']), /has a \//);
       assert.throws(() => under(root, ['a\\b']), /backslash/);
@@ -777,11 +1016,24 @@ Untrusted names
     });
 
     test('identifiers and versions', () => {
-      assert.ok(isObjectId('kpz-reloaded'));
-      assert.ok(!isObjectId('KPZ'));
-      assert.ok(!isObjectId('a'.repeat(65)));
+      assert.ok(isObjectId(`sheaf:${N}:${A}`));
+      assert.ok(isObjectId('sheaf:draft:notes'));
+      assert.ok(!isObjectId(`sheaf:${N}:aajozkubvmxu37pbu2lumdl37llv4ntkazd6j2es54zn23fkiknb`), 'an owner name is a name of algorithm 0');
+      assert.ok(!isObjectId('kpz-reloaded'), 'an identifier of 0.1');
+      assert.ok(!isObjectId(`sheaf:${N.toUpperCase()}:${A}`));
+      assert.ok(!isObjectId('sheaf:draft:' + 'a'.repeat(65)));
       assert.ok(isVersion('v12'));
       assert.ok(!isVersion('v012'));
+    });
+
+    test('the paths of the two layouts (section 3.2, appendix C)', async () => {
+      assert.deepEqual(await pathOf(`sheaf:${N}:${A}`), [A, N]);
+      assert.deepEqual(await pathOf(`sheaf:${A}:${A}`), [A, A]);
+      assert.deepEqual(await pathOf('sheaf:draft:notes'), ['draft', 'notes']);
+      assert.equal((await pathOf(`sheaf:${N}:${A}`, HASHED_LAYOUT)).join('/'),
+        '946/75e/b2e/sheaf%3azzgdggwlldcrw4bdeuvntiaobtw2kge6bc4go737pfekhfc5oz4q%3a56wo6cdpjsxk7ddgnqfp2quipfghukhtmvjua-' +
+        '94675eb2e27de7146a912666db928784432a4c206a6b390da5a0ed7d15975580');
+      await assert.rejects(pathOf('alpha'), /not the identifier of a line or of a draft/);
     });
 
 Document versions
@@ -915,13 +1167,13 @@ Names chosen by archives
 Everything an archive names (digests, logical paths, types, LaTeX
 commands, properties) may be the name of a property every JavaScript
 object inherits; none of them may be mistaken for one. The inventories
-are made in the test; the gaps in the numbering of versions give one
-message, naming the last version.
+and members are made in the test.
 
     // in tests/names.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { inventoryFindings } from '../app/rules.js';
+    import { memberErrors } from '../app/rules.js';
+    import { contentPath } from '../app/versions.js';
     import { readableMath } from '../app/text.js';
     import { validate } from '../app/schema.js';
     import { readSchemas } from './disk.mjs';
@@ -930,14 +1182,9 @@ message, naming the last version.
       head: versions[versions.length - 1], versions: Object.fromEntries(versions.map((v) => [v, { state: {} }])) });
 
     test('a digest of the state named like an inherited property', () => {
-      const inv = inventory(['v1']);
-      inv.versions.v1.state = { toString: ['a.tex'] };
-      assert.deepEqual(inventoryFindings('x', inv).map((f) => f.message), ['a digest of the state is not in the manifest']);
-    });
-
-    test('a gap in the versions is one problem', () => {
-      const inv = inventory(['v1', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10']);
-      assert.deepEqual(inventoryFindings('x', inv).map((f) => f.message), ['the versions are not v1 to v10 without gaps']);
+      const inv = { manifest: {}, versions: { v1: { state: { toString: ['a.tex'] } } } };
+      assert.equal(contentPath(inv, 'v1', 'a.tex'), null);
+      assert.deepEqual(memberErrors('selection', JSON.parse('{"__proto__": {"version": "v1"}, "revisions": [{"documentVersion": 1, "version": "v1", "inventorySha512": "x"}]}')), []);
     });
 
     test('LaTeX commands named like inherited properties are left as they are', () => {
@@ -971,7 +1218,7 @@ the forms that are meant still read as they should.
       assert.deepEqual(validate(schema, JSON.parse('{"constructor": 1}')).map((e) => `${e.path}: ${e.message}`),
         [': "toString" is a required property', '/constructor: 1 is not of type string']);
       const schemas = await readSchemas();
-      assert.ok(validate(schemas['opensheaf-collection/0.1'], { format: 'opensheaf-collection/0.1', type: 'constructor', members: [] }).length);
+      assert.ok(validate(schemas['opensheaf-collection/0.2'], { format: 'opensheaf-collection/0.2', type: 'constructor', members: [] }).length);
     });
 
 Pages left before they are drawn
@@ -988,7 +1235,7 @@ on fixtures served slowly, so that the reader can leave in the middle.
     // in tests/pages.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
+    import { diskFetch, readSchemas, ORIGIN, ALPHA, BETA, idOf, folder } from './disk.mjs';
 
     <<a small imitation of the document>>
 
@@ -1115,13 +1362,13 @@ beforehand, as they are after the archive page.
       const { ctx, main, go } = await session();
       go();
       const { summary } = await import('../app/summary.js');
-      await summary(ctx, 'alpha');
-      await summary(ctx, 'beta');
+      await summary(ctx, ALPHA);
+      await summary(ctx, BETA);
       go();
-      const left = showObject(ctx, main, 'alpha', 'v1');
+      const left = showObject(ctx, main, ALPHA, 'v1');
       await wait(5);
       go();
-      const shown = showObject(ctx, main, 'beta');
+      const shown = showObject(ctx, main, BETA);
       await Promise.all([left, shown]);
       assert.deepEqual(main.all('code').map((c) => c.textContent).filter((t) => t === 'alpha' || t === 'beta'), ['beta']);
       assert.equal(main.all('h1').length, 1);
@@ -1129,11 +1376,10 @@ beforehand, as they are after the archive page.
 
 A collection page whose pins are being resolved stops when it is left:
 no address is fetched after the reader has gone, even though the new
-page has a live signal of its own. The catalogue of the second fixture
-archive is used: its members are in the first archive, so resolving them
-reads that archive (members of the archive of the page are confirmed from
-files already read), and one of them is the collection `reading`, which
-the check opens in turn. The reader leaves after fifteen files have been
+page has a live signal of its own. The catalogue `shelf` of the second
+fixture archive is used: most of its members are in the first archive, so
+resolving them reads that archive, and one of them is the collection
+`reading`, which the check opens in turn. The reader leaves after fifteen files have been
 read, while that collection is being opened: leaving earlier would only
 cancel what is in flight, and the member lists would have nothing more to
 fetch, wrong signal or not (the page as it was before this test fetched
@@ -1143,7 +1389,7 @@ fourteen files after the reader had gone).
     test('the pins of a collection page left are not resolved further', async () => {
       const { ctx, main, log, go } = await session('other/');
       go();
-      await showCollection(ctx, main, 'collection-main');
+      await showCollection(ctx, main, idOf('shelf', 'other'));
       const run = main.all('button').find((b) => b.textContent === 'Resolve and check all pins');
       const resolving = run.listeners.click[0]();
       const started = log.length;
@@ -1167,7 +1413,7 @@ what the reader is doing.
 The page of the first fixture archive reads, for `alpha`, whose head has
 `history`, only what its row shows: the inventory, the `object.json` of
 the head, and the descriptions of the current version (`v3`); not the
-`object.json` of the other object versions.
+`object.json` of the other object versions, nor its signatures.
 
     // in tests of pages that grow:
     test('the page of an archive reads only what its rows show', async () => {
@@ -1177,7 +1423,7 @@ the head, and the descriptions of the current version (`v3`); not the
       const status = () => main.all('p').find((p) => p.className === 'muted small').textContent;
       for (let t = 0; /descriptions read|^$/.test(status()) && t < 3000; t++) await wait(1);
       await wait(20);
-      const alpha = log.filter((u) => u.includes('/ocfl/alpha/')).map((u) => u.split('/ocfl/alpha/')[1]).sort();
+      const alpha = log.filter((u) => u.startsWith(folder(ALPHA))).map((u) => u.slice(folder(ALPHA).length)).sort();
       assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json']);
       const row = main.all('li').find((li) => li.all('code').some((c) => c.textContent === 'alpha'));
       assert.match(row.textContent, /version 2 · head v4/);
@@ -1204,8 +1450,9 @@ as each row is completed.
           reject(Object.assign(new Error('gone'), { kind: 'missing' }));
         }, 1));
       };
-      const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/', archiveId: 'synthetic',
-                        disc: { objects }, objects: () => objects, tombstones: () => [], inventory: read, history: read };
+      const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/',
+                        disc: { objects }, objects: () => objects, tombstones: () => [], owners: () => [], drafts: () => [],
+                        inventory: read, history: read };
       const ctx = { archive, summaries: new Map(), signal: new AbortController().signal };
       const main = new FakeElement('main');
       const normalize = String.prototype.normalize;
@@ -1259,27 +1506,37 @@ run.
 Verification
 ------------
 
-The verification of the fixtures: the two archives verify, with the
-digests of every file, the members of other archives resolved and the
-accepted copy compared with its source; nothing is fetched outside the
-storage roots, the discovery documents and the index pages; the broken
-copies give the problems that `osheaf verify` gives; an archive that
-has disappeared makes the members that pin it unavailable, and leaves
-its accepted copy unchecked, with a note; a second verification reads
-the archive again; and the checks that go beyond opensheaf-py's, or
-follow the specification where it does not (the inventory copies, the
-index page of the profile `website`), find what they should.
+The verification of the fixtures is compared with `osheaf verify`,
+finding by finding: the three archives, with the digests of every file
+and the members of other archives resolved, and every broken copy, give
+exactly the findings `osheaf verify` gave, errors, warnings and results,
+in the same words and at the same places. Three kinds of findings are
+left out of the comparison, which the explorer cannot make over HTTP, and
+which the page of the verification lists as not checked:
+
+- what an OCFL validator says (`osheaf verify` runs one, the explorer
+  makes the checks of chapter [17](17-verify.md) only);
+- entries of index files the explorer has no reason to read (a server
+  lists no folders, so it reads the files of the prefixes it expects);
+- the statuses of signature files the explorer cannot name: without the
+  key log of the owner, the names of the signature files are unknown;
+  `osheaf verify` lists the folder and judges them unchecked, the explorer
+  says unchecked of the versions.
+
+Then: nothing is fetched outside the storage roots, the discovery
+documents, the indexes and the website; an archive that has disappeared
+makes the members that pin it unavailable, and the parent line of a
+branch unavailable; a second verification reads the archive again; and
+cases the fixtures do not hold, made by changing a file as it is served.
 
     // in tests/verify.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { readFile } from 'node:fs/promises';
     import { createHash } from 'node:crypto';
-    import { Http, LIMITS } from '../app/http.js';
+    import { Http } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { verify } from '../app/verify.js';
-    import { Resolver } from '../app/resolve.js';
-    import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
+    import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, idOf } from './disk.mjs';
 
     const schemas = await readSchemas();
 
@@ -1291,72 +1548,74 @@ index page of the profile `website`), find what they should.
 
     const errors = (report) => report.findings.filter((f) => f.level === 'error').map((f) => f.text).sort();
 
-Some tests change a file or two of a fixture on the way, rather than
-keeping another broken copy: `patch` maps addresses to new contents (a
-string, or a function of the old one), or to `null` for a file that is
-missing.
-
-    // in tests/verify.test.mjs:
-    function patched(fetch, patch) {
-      return async (url, init = {}) => {
-        if (!Object.hasOwn(patch, url)) return fetch(url, init);
-        const change = patch[url];
-        if (change === null) return new Response('not found', { status: 404 });
-        const text = typeof change === 'function' ? change(await (await fetch(url, init)).text()) : change;
-        return new Response(init.method === 'HEAD' ? null : text, { status: 200 });
-      };
-    }
-
-    const inventoryOf = async (path) => JSON.parse(await readFile(new URL(`./fixtures/${path}`, import.meta.url), 'utf-8'));
-    const digestOf = (text) => createHash('sha512').update(text).digest('hex');
+    <<serving a changed file>>
 
     <<tests of the verification>>
 
-The tests themselves:
+The comparison. The findings of `osheaf verify` are written `severity:
+place: message`, and so are the explorer's; those `osheaf verify` alone
+can find are left out, as said above (the explorer may find some of
+them: an entry of an index file it read), and each fixture is compared
+both ways.
 
     // in tests of the verification:
-    test('the fixture archives verify', async () => {
+    const beyondHttp = (f) => /^error: [^:]*: OCFL validator: |^error: ocfl: the OCFL validator rejects/.test(f) ||
+      / an entry the storage root does not justify: /.test(f) ||
+      /^warning: .*: signature-[a-z2-7]{16}\.json: unchecked: /.test(f);
+
+    async function compare(name, path, options) {
+      const report = await run(path, options);
+      const ours = report.findings.map((f) => `${f.level}: ${f.text}`).sort();
+      const theirs = (await osheaf(name)).map((x) => `${x.severity}: ${x.place}: ${x.message}`).sort();
+      assert.deepEqual(ours.filter((f) => !theirs.includes(f)), [], `${name}: found by the explorer alone`);
+      assert.deepEqual(theirs.filter((f) => !beyondHttp(f) && !ours.includes(f)), [], `${name}: found by osheaf verify alone`);
+      return report;
+    }
+
+    test('the fixture archives verify as osheaf verify says', async () => {
       const log = [];
-      const report = await run('archive/', { digests: true, log });
+      const report = await compare('archive', 'archive/', { digests: true, log });
       assert.deepEqual(errors(report), []);
-      assert.equal(report.stats.objects, 5);
+      assert.equal(report.stats.objects, 7);
       assert.ok(report.stats.files > 20);
-      const allowed = (url) => url.startsWith(ORIGIN + 'archive/ocfl/') || url === ORIGIN + 'archive/opensheaf.json' ||
-        url === ORIGIN + 'archive/index.html';
+      const allowed = (url) => /^https:\/\/fixtures\.example\.org\/archive\/(ocfl\/|opensheaf\.json$|index\.html$|paper\/|names\/|owners\/|sha512\/)/.test(url);
       assert.deepEqual(log.filter((url) => !allowed(url)), []);
-      assert.deepEqual(errors(await run('other/', { digests: true })), []);
+      for (const a of ['forked', 'other']) assert.deepEqual(errors(await compare(a, `${a}/`, { digests: true })), []);
     });
 
-    test('the broken copies give the problems osheaf verify gives', async () => {
+    test('the broken copies give the findings osheaf verify gives', async () => {
+      const broken = ['bad-signature', 'changed-file', 'dropped-notice', 'gap', 'key-log', 'no-key-log', 'old',
+                      'previous', 'stale', 'unchecked-branch', 'unsigned', 'wrong-pin'];
+      for (const b of broken) {
+        const report = await compare(`broken-${b}`, `broken/${b}/`, { digests: true, remote: b === 'unchecked-branch' });
+        assert.ok(errors(report).length > 0, `${b} passes`);
+      }
+    });
+
+The findings of a few broken copies, in full, as a reader would read
+them: they are what the comparison checks, but a change of `osheaf verify`
+and the explorer together would go unseen by it.
+
+    // in tests of the verification:
+    test('what the broken copies break', async () => {
+      assert.deepEqual(errors(await run('broken/old/')), ['archive: specification 0.1: rebuild (section 16.1)']);
+      assert.deepEqual(errors(await run('broken/stale/')),
+        ['opensheaf.json: the entry of beta is stale: head v1 instead of v2']);
       assert.deepEqual(errors(await run('broken/changed-file/', { digests: true })),
-        ['ocfl/alpha: digest mismatch for v1/content/paper.pdf']);
-      assert.deepEqual(errors(await run('broken/changed-file/')), []);
-      assert.deepEqual(errors(await run('broken/wrong-pin/')), ['ocfl/reading: v1 member alpha v1: mismatch']);
-      assert.deepEqual(errors(await run('broken/gap/')), [
-        'ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)',
-        'ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)',
-        'ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps',
-        'ocfl/alpha: v4 has other files than document version 3',
-        'ocfl/collection-main: v2 member alpha v4: mismatch',
-        'ocfl/reading: v1 member alpha v3: mismatch',
-      ]);
-      assert.deepEqual(errors(await run('broken/dropped-notice/')), [
-        'ocfl/alpha: v4 drops or changes an earlier notice',
-        'ocfl/collection-main: v2 member alpha v4: mismatch',
-      ]);
-      assert.deepEqual(errors(await run('broken/stale/')), ['opensheaf.json: stale entry for beta']);
+        ['alpha: v1/content/paper.pdf does not have the digest of the manifest']);
+      assert.ok(errors(await run('broken/previous/')).includes('alpha v2: previous is not the digest of the inventory of v1 (section 4.3)'));
+      assert.ok(errors(await run('broken/unsigned/')).includes('main v2 member beta v2: not a version: a collection pins only signed versions (section 8.5)'));
+      const noLog = await run('broken/no-key-log/');
+      assert.ok(errors(noLog).includes(`alpha: the key log of its owner ${ALPHA.split(':')[2]} is not in the storage root (section 6.5)`));
+      const branch = await run('broken/unchecked-branch/');
+      assert.ok(branch.findings.some((f) => f.level === 'warning' && f.place === 'alpha-accepted v1' && /^unchecked branch point: /.test(f.message)));
+      assert.ok(branch.findings.some((f) => f.level === 'result' && f.message.endsWith(': unchecked (section 9.3)')));
     });
 
-    test('an archive that disappeared', async () => {
-      const report = await run('other/', { down: [ORIGIN + 'archive/'] });
-      assert.deepEqual(errors(report).map((e) => e.replace(/: unavailable: .*/, ': unavailable')), [
-        `collection-main: member alpha v4: ${ORIGIN}archive/: unavailable`,
-        `collection-main: member gamma v1: ${ORIGIN}archive/: unavailable`,
-        `collection-main: member reading v1: ${ORIGIN}archive/: unavailable`,
-      ]);
-      assert.ok(report.findings.some((f) => f.level === 'info' && /source of the accepted copy is unavailable/.test(f.message)));
-    });
+The archive explored is read afresh by each verification, which counts
+its own requests, and is not held to the budget of a page.
 
+    // in tests of the verification:
     test('a verification reads the archive afresh, and counts its own requests', async () => {
       const log = [];
       const http = new Http({ fetch: diskFetch({ log }) });
@@ -1371,11 +1630,6 @@ The tests themselves:
       assert.ok(first.bytesRead > 0);
     });
 
-A verification is not held to the budget of a page: here the explorer's
-client may make one request, which opens the archive, and the
-verification still finds nothing wrong.
-
-    // in tests of the verification:
     test('a verification is not held to the budget of a page', async () => {
       const http = new Http({ fetch: diskFetch(), budget: { requests: 1, bytes: 2 ** 20 } });
       const archive = await Archive.open(http, ORIGIN + 'archive/');
@@ -1384,109 +1638,84 @@ verification still finds nothing wrong.
       assert.ok(report.requests > 1);
     });
 
-A member resolved again is resolved from the server, not from the answers
-kept: here the member's archive disappears after a first resolution,
-which a resolver read afresh sees, and the first does not.
+An archive that has disappeared: the members of `shelf` held there are
+unavailable, as is the parent line of the accepted copy, and the
+resolution says why.
 
     // in tests of the verification:
-    test('a member resolved again is read from the server again', async () => {
-      const down = [];
-      const http = new Http({ fetch: diskFetch({ down }) });
-      const text = await readFile(new URL('./fixtures/archive/ocfl/alpha/v1/inventory.json', import.meta.url), 'utf-8');
-      const m = { archive: 'tag:example.org,2026:fixture', archiveUrl: ORIGIN + 'archive/', id: 'alpha' };
-      const resolver = new Resolver(http);
-      assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
-      down.push(ORIGIN + 'archive/');
-      assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
-      assert.equal((await resolver.again().confirm(m, 'v1', digestOf(text))).status, 'unavailable');
+    test('an archive that disappeared', async () => {
+      const report = await run('other/', { down: [ORIGIN + 'archive/'] });
+      const shelf = report.findings.filter((f) => f.place.startsWith('shelf v1 member') && f.level === 'warning');
+      assert.deepEqual(shelf.map((f) => f.message), ['unavailable (section 8.5)', 'unavailable (section 8.5)', 'unavailable (section 8.5)']);
+      assert.ok(report.findings.some((f) => f.message === "the parent's line: unavailable"));
+      assert.ok(report.findings.some((f) => f.place === 'resolution' && f.message.startsWith(`unavailable: ${ORIGIN}archive/`)));
+      assert.deepEqual(errors(report), []);
     });
 
-A member of a catalogue with more object versions than the explorer
-reads to find its current version is described at its pin, without
-reading the `object.json` of every version.
+Cases the fixtures do not hold are made by changing a file as it is
+served: `patch` maps an address to its new content (a string, or a
+function of the old one), or to `null` for a file that is missing.
 
-    // in tests of the verification:
-    test('a member of many versions is described at its pin', async () => {
-      const log = [];
-      const http = new Http({ fetch: diskFetch({ log }) });
-      const archive = await Archive.open(http, ORIGIN + 'archive/');
-      const m = { archive: archive.archiveId, id: 'alpha', version: 'v1' };
-      const saved = LIMITS.described;
-      LIMITS.described = 2;
-      let d;
-      try {
-        d = await new Resolver(http, archive).describe(m, archive);
-      } finally {
-        LIMITS.described = saved;
-      }
-      assert.equal(d.version, 'v1');
-      assert.ok(d.limited);
-      assert.equal(log.filter((url) => url.endsWith('/object.json')).length, 2);
-    });
+    // in serving a changed file:
+    function patched(fetch, patch) {
+      return async (url, init = {}) => {
+        if (!Object.hasOwn(patch, url)) return fetch(url, init);
+        const change = patch[url];
+        if (change === null) return new Response('not found', { status: 404 });
+        const text = typeof change === 'function' ? change(await (await fetch(url, init)).text()) : change;
+        return new Response(init.method === 'HEAD' ? null : text, { status: 200 });
+      };
+    }
 
-The copy of the inventory in a version folder must be the inventory as of
-that version: here the copy of `v2` of `alpha` is given the head `v1`, and
-then made to forget `v2`, its checksum file following.
+    const digestOf = (text) => createHash('sha512').update(text).digest('hex');
+
+An inventory copy with another head, or fewer versions; a storage root
+with an `ocfl_layout.json` in the owner-name layout; a home page that
+does not show the pins of the main catalogue, which is an error for an
+archive declaring the profile `website` and a warning otherwise; a key
+log without the signature files of its second version; a tombstone of an
+object listed; a label given twice.
 
     // in tests of the verification:
     test('an inventory copy with another head, or fewer versions', async () => {
-      const url = `${ORIGIN}archive/ocfl/alpha/v2/inventory.json`;
-      const copy = await inventoryOf('archive/ocfl/alpha/v2/inventory.json');
+      const url = `${folder(ALPHA)}v2/inventory.json`;
+      const copy = JSON.parse(await (await diskFetch()(url)).text());
       copy.head = 'v1';
       let text = JSON.stringify(copy);
-      assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })),
-        ['ocfl/alpha: v2 the inventory copy has the head v1']);
+      const patch = { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` };
+      const found = errors(await run('archive/', { patch }));
+      assert.ok(found.includes('alpha v2: the inventory copy has the head v1'));
       delete copy.versions.v2;
       text = JSON.stringify(copy);
-      assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })), [
-        'ocfl/alpha: v2 the inventory copy does not record exactly the versions v1 to v2',
-        'ocfl/alpha: v2 the inventory copy has the head v1',
-      ]);
+      const fewer = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+      assert.ok(fewer.includes('alpha v2: the inventory copy does not record exactly the versions v1 to v2'));
     });
 
-When the `object.json` of a mirror's head cannot be read, the problem is
-that file, not the listing of the mirror.
-
-    // in tests of the verification:
-    test('a mirror whose head cannot be read', async () => {
-      const report = await run('other/', { remote: false, patch: { [`${ORIGIN}other/ocfl/beta/v2/content/object.json`]: null } });
-      assert.deepEqual(errors(report), ['ocfl/beta: v2 cannot read object.json: HTTP 404']);
-    });
-
-The index page is required, and checked, for the profile `website`
-(appendix C); for an archive without it, a pin missing from the index is
-a note. The storage root, missing or with another layout, is one problem.
-
-    // in tests of the verification:
-    test('the index page and the profile website; the storage root', async () => {
+    test('the layout, the home page and the profile website', async () => {
+      assert.deepEqual(errors(await run('archive/', { patch: { [`${ORIGIN}archive/ocfl/ocfl_layout.json`]: '{}' } })),
+        ['ocfl: ocfl_layout.json names only registered layouts: the owner-name layout has none (section 3.2)']);
       const index = { [`${ORIGIN}archive/index.html`]: '<html></html>' };
       assert.deepEqual(errors(await run('archive/', { patch: index })), [
-        'index.html does not show the pin of alpha',
-        'index.html does not show the pin of beta',
-        'index.html does not show the pin of gamma',
-      ]);
+        'index.html: does not show the pin of ' + ALPHA.split(':')[1],
+        'index.html: does not show the pin of ' + BETA.split(':')[1],
+        'index.html: does not show the pin of ' + idOf('gamma').split(':')[1],
+      ].sort());
       const noWebsite = (text) => JSON.stringify({ ...JSON.parse(text), profiles: [] });
       const report = await run('archive/', { patch: { ...index, [`${ORIGIN}archive/opensheaf.json`]: noWebsite } });
       assert.deepEqual(errors(report), []);
-      assert.equal(report.findings.filter((f) => f.where === 'index.html' && f.level === 'info').length, 3);
-      const layout = (text) => JSON.stringify({ ...JSON.parse(text), storageLayout: 'another' });
-      assert.deepEqual(errors(await run('archive/', { patch: {
-        [`${ORIGIN}archive/opensheaf.json`]: layout, [`${ORIGIN}archive/ocfl/0=ocfl_1.1`]: null } })).filter((e) => /storage root/.test(e)),
-        ['opensheaf.json: storage root missing or with another layout']);
+      assert.equal(report.findings.filter((f) => f.place === 'index.html' && f.level === 'warning').length, 3);
     });
 
-A member listing many mirrors has only a few of them tried.
-
-    // in tests of the verification:
-    test('at most five mirrors are tried for a pin', async () => {
-      const log = [];
-      const http = new Http({ fetch: diskFetch({ log }) });
-      const mirrors = Array.from({ length: 20 }, (_, k) => `https://mirror${k}.example.org/`);
-      const m = { archive: 'tag:example.org,2026:gone', archiveUrl: 'https://gone.example.org/', id: 'alpha', mirrors };
-      const result = await new Resolver(http).confirm(m, 'v1', '0'.repeat(128));
-      assert.equal(result.status, 'unavailable');
-      assert.equal(log.length, 6);
-      assert.match(result.problems[result.problems.length - 1], /15 more mirror\(s\) not tried/);
+    test('labels given twice, a tombstone of an object listed', async () => {
+      const twice = (text) => {
+        const disc = JSON.parse(text);
+        disc.objects.find((o) => o.label === 'beta').label = 'alpha';
+        disc.tombstones[0].id = ALPHA;
+        return JSON.stringify(disc);
+      };
+      const found = errors(await run('archive/', { patch: { [`${ORIGIN}archive/opensheaf.json`]: twice } }));
+      assert.ok(found.includes('opensheaf.json: the label alpha is given twice (section 3.1)'));
+      assert.ok(found.includes(`opensheaf.json: ${ALPHA} has a tombstone, and is an object of the archive (section 13.3)`));
     });
 
     test('cancelling keeps what was found', async () => {
@@ -1504,9 +1733,9 @@ A command
 The same verification can be run from the command line, against any
 archive, which is how its results were compared with `osheaf verify` on
 the example archives of the templates and on a real archive. It prints
-the problems as `osheaf verify` does, then `OK` or their number; with
-`--all`, the warnings and notes too, and with `--digests`, it also checks
-the digest of every file.
+the errors as `osheaf verify` does, then `OK` or their number; with
+`--all`, the warnings and results too, and with `--digests`, it also
+checks the digest of every file.
 
 ```
 node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [--all]
@@ -1535,8 +1764,8 @@ node tests/verify-url.mjs https://mgubi.org/papers/ [--digests] [--no-remote] [-
     });
     process.stderr.write('\n');
     for (const f of report.findings) {
-      if (f.level === 'error') console.log(f.text);
-      else if (args.includes('--all')) console.log(`(${f.level}) ${f.text}`);
+      if (f.level === 'error') console.log(`error: ${f.text}`);
+      else if (args.includes('--all')) console.log(`${f.level}: ${f.text}`);
       if (f.errors && args.includes('--all')) for (const e of f.errors) console.log(`    ${explain(e)}`);
     }
     const n = report.counts().error;

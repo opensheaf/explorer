@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { Http, LIMITS, parseJson, explain } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { summary } from '../app/summary.js';
-import { diskFetch, ORIGIN } from './disk.mjs';
+import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, folder } from './disk.mjs';
 
 function slowFetch(ms, { log = [] } = {}) {
   const disk = diskFetch({ log });
@@ -57,37 +57,37 @@ test('a summary loading for a page left is not handed to the next page', async (
   const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map() };
   const page1 = new AbortController();
   ctx.signal = page1.signal;
-  const a = summary(ctx, 'alpha');
+  const a = summary(ctx, ALPHA);
   await new Promise((resolve) => setTimeout(resolve, 10));
   page1.abort();
   ctx.signal = new AbortController().signal;
-  const s = await summary(ctx, 'alpha');
-  assert.equal(s.id, 'alpha');
+  const s = await summary(ctx, ALPHA);
+  assert.equal(s.id, ALPHA);
   await assert.rejects(a, { kind: 'aborted' });
-  assert.equal(await summary(ctx, 'alpha'), s);
+  assert.equal(await summary(ctx, ALPHA), s);
 });
 
 test('the summaries kept are bounded, and those loading are kept', async () => {
   const http = new Http({ fetch: slowFetch(5) });
   const ctx = { archive: await Archive.open(http, ORIGIN + 'archive/'), summaries: new Map(),
                 signal: new AbortController().signal, summaryLimit: 1 };
-  await summary(ctx, 'alpha');
-  const beta = summary(ctx, 'beta');
-  const gamma = summary(ctx, 'gamma');
-  assert.deepEqual([...ctx.summaries.keys()], ['beta', 'gamma']);
+  await summary(ctx, ALPHA);
+  const beta = summary(ctx, BETA);
+  const gamma = summary(ctx, GAMMA);
+  assert.deepEqual([...ctx.summaries.keys()], [BETA, GAMMA]);
   await Promise.all([beta, gamma]);
-  await summary(ctx, 'beta');
-  await summary(ctx, 'alpha');
-  assert.deepEqual([...ctx.summaries.keys()], ['alpha']);
+  await summary(ctx, BETA);
+  await summary(ctx, ALPHA);
+  assert.deepEqual([...ctx.summaries.keys()], [ALPHA]);
 });
 
 test('the answers kept are bounded', async () => {
-  const http = new Http({ fetch: diskFetch(), cacheLimit: 10_000 });   // the inventories are 4 to 10 kB
-  const url = (id) => `${ORIGIN}archive/ocfl/${id}/inventory.json`;
-  for (const id of ['alpha', 'beta', 'gamma']) await http.cached(url(id));
-  assert.ok(http.cacheBytes <= 10_000);
-  assert.ok(!http.cache.has(url('alpha')));
-  assert.ok(http.cache.has(url('beta')) && http.cache.has(url('gamma')));
+  const http = new Http({ fetch: diskFetch(), cacheLimit: 12_000 });   // the inventories are 5 to 11 kB
+  const url = (id) => `${folder(id)}inventory.json`;
+  for (const id of [ALPHA, BETA, GAMMA]) await http.cached(url(id));
+  assert.ok(http.cacheBytes <= 12_000);
+  assert.ok(!http.cache.has(url(ALPHA)));
+  assert.ok(http.cache.has(url(BETA)) && http.cache.has(url(GAMMA)));
 });
 
 test('a slow, steady body is read; a stalled one times out', async () => {

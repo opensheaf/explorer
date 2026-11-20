@@ -1,0 +1,10 @@
+{
+  "format": "opensheaf-archive/0.1",
+  "specification": "0.1",
+  "archiveId": "tag:example.org,2026:old",
+  "name": "An archive of specification 0.1",
+  "storageRoot": "ocfl/",
+  "storageLayout": "0002-flat-direct-storage-layout",
+  "profiles": [],
+  "objects": []
+}

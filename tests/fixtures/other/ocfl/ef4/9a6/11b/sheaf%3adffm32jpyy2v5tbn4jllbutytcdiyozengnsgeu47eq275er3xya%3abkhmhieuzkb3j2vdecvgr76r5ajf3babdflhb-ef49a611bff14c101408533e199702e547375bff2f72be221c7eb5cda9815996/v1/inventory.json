@@ -1,0 +1,74 @@
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "e6063aa13a9d07386c2d6646a3213641": [
+        "v1/content/datacite.json"
+      ],
+      "9f20d2d54d228d5ee3647f24257d6fc0": [
+        "v1/content/genesis.json"
+      ],
+      "5fa0f6b909fdac391acc761ff224ffb1": [
+        "v1/content/members.json"
+      ],
+      "70404b0b2904d438ef63ef3e4ffe2f1f": [
+        "v1/content/object.json"
+      ]
+    },
+    "sha256": {
+      "618b21726386fdc253c37ab5311d4bfe2444cb475f8f2b04e7314df883e9929f": [
+        "v1/content/datacite.json"
+      ],
+      "5e90c273209c409598b6a508852eca167b34a3f2a4672c585d99bdf3b647ebbb": [
+        "v1/content/genesis.json"
+      ],
+      "ef4653675dd4b5d89a7b6f361058d953b7ea2862ac535bf88a1f9d5621f685ab": [
+        "v1/content/members.json"
+      ],
+      "5c22d07e1131a83bee5fc1853fc606336569638421f0023f1c6a064e13fbc708": [
+        "v1/content/object.json"
+      ]
+    }
+  },
+  "head": "v1",
+  "id": "sheaf:dffm32jpyy2v5tbn4jllbutytcdiyozengnsgeu47eq275er3xya:bkhmhieuzkb3j2vdecvgr76r5ajf3babdflhbvg7q65aqfgposja",
+  "manifest": {
+    "9529169f6a177a76d902272a4574129b87477d7f80705be6c6412aaa207eebaba3c11d40fa468c6d3eeeb7859bc6bb7aed8c9601d9f43e7cd68baab6fe299333": [
+      "v1/content/datacite.json"
+    ],
+    "a54a639fd3bbc11e4b6d7ff9437ce7d832f9e51369d019765a90e19757edb78a088cf0033113e68ca33dfa85bfa0cc602c2685b6d2206e9e1e458e2cccafcf4b": [
+      "v1/content/genesis.json"
+    ],
+    "841664cbd0671d55ba91d21a24f06e70c1005a297af7fadee8e9f6a0bd5dca245d22028e7815e9962c1cd1291113f8c1847f22a271b7f33590c7154f5b2a1ccf": [
+      "v1/content/members.json"
+    ],
+    "9536a4c3dfe84e88ef74988c40eebbebfd583951b9c25c0d7d3a31f2fe523892a5ba9416f0f83b2feaec0342d448a237c84f9d3fdc530d17809403e3c7f0527f": [
+      "v1/content/object.json"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-20T00:03:57Z",
+      "state": {
+        "9529169f6a177a76d902272a4574129b87477d7f80705be6c6412aaa207eebaba3c11d40fa468c6d3eeeb7859bc6bb7aed8c9601d9f43e7cd68baab6fe299333": [
+          "datacite.json"
+        ],
+        "a54a639fd3bbc11e4b6d7ff9437ce7d832f9e51369d019765a90e19757edb78a088cf0033113e68ca33dfa85bfa0cc602c2685b6d2206e9e1e458e2cccafcf4b": [
+          "genesis.json"
+        ],
+        "841664cbd0671d55ba91d21a24f06e70c1005a297af7fadee8e9f6a0bd5dca245d22028e7815e9962c1cd1291113f8c1847f22a271b7f33590c7154f5b2a1ccf": [
+          "members.json"
+        ],
+        "9536a4c3dfe84e88ef74988c40eebbebfd583951b9c25c0d7d3a31f2fe523892a5ba9416f0f83b2feaec0342d448a237c84f9d3fdc530d17809403e3c7f0527f": [
+          "object.json"
+        ]
+      },
+      "message": "Collection version 1: 0 documents",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/other/"
+      }
+    }
+  }
+}

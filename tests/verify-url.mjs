@@ -21,8 +21,8 @@ const report = await verify(archive, {
 });
 process.stderr.write('\n');
 for (const f of report.findings) {
-  if (f.level === 'error') console.log(f.text);
-  else if (args.includes('--all')) console.log(`(${f.level}) ${f.text}`);
+  if (f.level === 'error') console.log(`error: ${f.text}`);
+  else if (args.includes('--all')) console.log(`${f.level}: ${f.text}`);
   if (f.errors && args.includes('--all')) for (const e of f.errors) console.log(`    ${explain(e)}`);
 }
 const n = report.counts().error;

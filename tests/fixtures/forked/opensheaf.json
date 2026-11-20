@@ -1,0 +1,62 @@
+{
+  "format": "opensheaf-archive/0.2",
+  "specification": "0.2",
+  "name": "A forked owner",
+  "contact": "https://fixtures.example.org/forked/",
+  "storageRoot": "ocfl/",
+  "storageLayout": "opensheaf-owner-name-storage-layout",
+  "mainCollection": "sheaf:zttdqnybmjjcx6io2ibllz5emz3s6zyo653nffrmvu4xlm2sw6ka:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+  "profiles": [
+    "website"
+  ],
+  "extensions": [],
+  "owners": [
+    "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q"
+  ],
+  "indexes": {
+    "names": 2,
+    "owners": 2,
+    "sha512": 2
+  },
+  "objects": [
+    {
+      "id": "sheaf:47z46isklpw5f23exwxfxk6iyz26bu5k23zzrxah2j52be2pql3a:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "kind": "document",
+      "name": "47z46isklpw5f23exwxfxk6iyz26bu5k23zzrxah2j52be2pql3a",
+      "owner": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "head": "v1",
+      "inventorySha512": "b3cd2db2cc4df28866b47526ae921c8e86f06387152927a99dcee9acd6c354538724a55086344fb36fbf3a6307d791e6832195fa49a20f3d2a20e3c939d346e5",
+      "status": "active",
+      "label": "after"
+    },
+    {
+      "id": "sheaf:f7q7auuoe5s4joii4pmg3bqtsjqsorjhltcruyqlvcyzhb4p6noq:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "kind": "document",
+      "name": "f7q7auuoe5s4joii4pmg3bqtsjqsorjhltcruyqlvcyzhb4p6noq",
+      "owner": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "head": "v1",
+      "inventorySha512": "0c4ce9e5a85d5f82783bcb967b2a901a643706d635ea2892291fe83ba092f7bd999edfcad81087d8f5598b4db9f9f7c41a14a83b731b06bc83a14f3c35768592",
+      "status": "active",
+      "label": "before"
+    },
+    {
+      "id": "sheaf:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "kind": "owner",
+      "name": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "owner": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "head": "v3",
+      "inventorySha512": "f8073f384408c39640863f005fd642f0a461d34e20100c712e9495d89692b394778a7516cdedcf443cb715f36086fb96b5b5643560d9a7d38f5a24f0983a85ff",
+      "status": "active"
+    },
+    {
+      "id": "sheaf:zttdqnybmjjcx6io2ibllz5emz3s6zyo653nffrmvu4xlm2sw6ka:xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "kind": "collection",
+      "name": "zttdqnybmjjcx6io2ibllz5emz3s6zyo653nffrmvu4xlm2sw6ka",
+      "owner": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+      "head": "v1",
+      "inventorySha512": "555527751aec91ddd73430fd33cc0e8cf94198d6c6befb1e168805d6db3da58f5a0958e48eeb265ad3ab438e14f15edba431680def9e87109c393e3a1935f282",
+      "status": "active",
+      "label": "main"
+    }
+  ]
+}

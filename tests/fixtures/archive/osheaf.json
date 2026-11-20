@@ -1,12 +1,13 @@
 {
-  "archiveId": "tag:example.org,2026:fixture",
+  "owner": "cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq",
   "name": "A fixture archive",
-  "contact": "http://127.0.0.1:8765/archive/",
-  "baseUrl": "http://127.0.0.1:8765/archive/",
+  "contact": "https://fixtures.example.org/archive/",
+  "baseUrl": "https://fixtures.example.org/archive/",
   "profiles": [
     "website"
   ],
-  "mainCollection": "collection-main",
+  "storageLayout": "opensheaf-owner-name-storage-layout",
+  "mainCollection": "main",
   "curator": {
     "name": "Example, Ada",
     "givenName": "Ada",
@@ -15,7 +16,7 @@
   },
   "depositor": {
     "name": "Ada Example",
-    "address": "http://127.0.0.1:8765/archive/"
+    "address": "https://fixtures.example.org/archive/"
   },
   "index": {
     "html": {

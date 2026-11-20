@@ -1,0 +1,42 @@
+{
+  "titles": [
+    {
+      "title": "Notes"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Example, Ada",
+      "nameType": "Personal",
+      "familyName": "Example",
+      "givenName": "Ada"
+    }
+  ],
+  "publisher": {
+    "name": "A fixture archive"
+  },
+  "publicationYear": 2026,
+  "types": {
+    "resourceTypeGeneral": "Preprint"
+  },
+  "version": "1",
+  "dates": [
+    {
+      "date": "2026-11-20",
+      "dateType": "Issued"
+    },
+    {
+      "date": "2026-11-20",
+      "dateType": "Available"
+    }
+  ],
+  "language": "en",
+  "formats": [
+    "application/pdf"
+  ],
+  "rightsList": [
+    {
+      "rights": "All rights reserved"
+    }
+  ]
+}

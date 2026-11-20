@@ -1,12 +1,13 @@
 {
-  "archiveId": "tag:example.org,2026:other",
+  "owner": "bkhmhieuzkb3j2vdecvgr76r5ajf3babdflhbvg7q65aqfgposja",
   "name": "Another fixture archive",
-  "contact": "http://127.0.0.1:8765/other/",
-  "baseUrl": "http://127.0.0.1:8765/other/",
+  "contact": "https://fixtures.example.org/other/",
+  "baseUrl": "https://fixtures.example.org/other/",
   "profiles": [
     "website"
   ],
-  "mainCollection": "collection-main",
+  "storageLayout": "0003-hash-and-id-n-tuple-storage-layout",
+  "mainCollection": "main",
   "curator": {
     "name": "Example, Ada",
     "givenName": "Ada",
@@ -15,11 +16,16 @@
   },
   "depositor": {
     "name": "Ada Example",
-    "address": "http://127.0.0.1:8765/other/"
+    "address": "https://fixtures.example.org/other/"
   },
   "index": {
     "html": {
       "templates": "templates"
     }
+  },
+  "mirrors": {
+    "sheaf:gjvv4sn7aq7f7md642gxmkrhei3h3cc7n5ojhu6ya66yyew33aza:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq": [
+      "https://fixtures.example.org/archive/"
+    ]
   }
 }
