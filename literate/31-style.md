@@ -172,7 +172,9 @@ The page
 
 An identifier copied on a click ([the elements](20-dom.md)) is underlined
 with a dotted rule when the pointer rests on it, and says "copied" for a
-moment.
+moment. A link that is only an identifier (an owner, the originator, the
+curator) is underlined the same way, under the pointer only, so that
+identifiers look alike on a page.
 
     /* in the page: */
     * { box-sizing: border-box; }
@@ -192,6 +194,7 @@ moment.
                 font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
     code { overflow-wrap: anywhere; }
     code.copy { border-bottom: 1px dotted transparent; }
+    a:has(> code:only-child):not(:hover):not(:focus-visible) { text-decoration-color: transparent; }
     code.copy:hover, code.copy:focus-visible { border-bottom-color: var(--text); outline: none; }
     code.copy.copied::after { content: " copied"; font-family: var(--sans); font-size: 0.85em; color: var(--ok); }
     .muted { color: var(--muted); }
