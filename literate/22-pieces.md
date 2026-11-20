@@ -99,7 +99,7 @@ tone: `ok`, `bad`, `warn`, or neutral.
 Notes, JSON and errors
 ----------------------
 
-A note (section 9) has a text, a file of the content, or both; the text
+A note (section 4.3) has a text, a file of the content, or both; the text
 is shown with its mathematics, the file as a link, which the page gives
 as a function from logical paths to addresses (the file is in the same
 object version as the note).
@@ -244,7 +244,8 @@ objects of five versions each. A *row summary* reads only what the row
 shows, when that is enough to know the current version: the inventory,
 the `object.json` of the head and, when it has `history`, the
 descriptions of the last entry of that history, which is the current
-version (section 7.3). Without `history`, the current version is the
+version (section 4.2): the row reads the head, not the signatures, which
+the page of the object reads. Without `history`, the current version is the
 last object version of the highest document version, which only the
 `object.json` of every version tells; the row summary is then the whole
 summary, read as before. A whole summary already known is used as it is.

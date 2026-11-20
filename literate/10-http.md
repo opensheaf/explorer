@@ -5,11 +5,11 @@ Everything the explorer knows about an archive it reads over HTTP, with
 the `fetch` of the browser: the discovery document, the inventories, the
 two descriptions of every object version, the member lists, and, when
 asked, the content files. An OpenSheaf archive is a folder of static
-files (section 5), so every request is a plain GET of a file, and the
+files (section 3), so every request is a plain GET of a file, and the
 explorer never writes anything anywhere.
 
 What it reads comes from servers it does not control, and is untrusted
-(section 15). This chapter is the one place where requests are made, and
+(section 15.2). This chapter is the one place where requests are made, and
 so the place where the rules for them are kept: only `http:` and `https:`
 addresses, never cookies, a limit on the size of every answer, time
 limits on every request, and a limit on the requests in flight at once, so
@@ -44,7 +44,7 @@ Limits
 ------
 
 Section 15 asks verifiers to limit the size of the files they fetch, and
-section 14 to limit the depth and size of the collections they follow. The
+section 14.1 lets them bound the depth of the chains and collections they follow. The
 limits are gathered here, so that they are stated once. JSON files are
 small: the inventory of an object with many versions and files is a few
 hundred kilobytes, so sixteen megabytes leave a wide margin while still
@@ -116,7 +116,7 @@ explain the failure, and the address it concerns. The kinds are:
   collection made from a local folder may record, cannot be read by a web
   page);
 - `unsafe`: an address that would be built from an identifier or a path
-  breaking the rules of sections 6.3 and 7.1, refused before any request
+  breaking the rules of sections 3.2 and 4.1, refused before any request
   (see [untrusted names](11-paths.md));
 - `not-found`, `forbidden` (403), `busy` (429 or 5xx, still so after
   two more tries) and `http`: the server answered with an error status;
@@ -174,7 +174,7 @@ busy, not as broken.
         case 'cors':
           return 'The server answered, but without the header Access-Control-Allow-Origin, so the ' +
             'browser does not let this page read the answer. OpenSheaf archives should allow ' +
-            'cross-origin requests (section 5 of the specification); GitHub Pages does. Otherwise, ' +
+            'cross-origin requests (section 3 of the specification); GitHub Pages does. Otherwise, ' +
             'copy the explorer into the archive’s own site (for instance as explorer/ next to ' +
             'opensheaf.json): served from there, it reads the archive without cross-origin requests. ' +
             'The file may also simply be missing: a server that answers 404 without the header looks ' +
@@ -216,7 +216,7 @@ busy, not as broken.
             'to pages served over https: or from localhost.';
         case 'unsafe':
           return 'The archive names a file with an identifier or a path that breaks the rules of ' +
-            'sections 6.3 and 7.1; the explorer does not fetch it (section 15).';
+            'sections 3.2 and 4.1; the explorer does not fetch it (section 15.2).';
         default:
           return '';
       }
@@ -806,11 +806,11 @@ quotation mark that no backslash escapes.
 Digests
 -------
 
-Integrity rests on SHA-512 digests (section 13.1): of every file, in the
+Integrity rests on SHA-512 digests (section 7.6): of every file, in the
 inventories, and of every inventory, in its checksum file and in the pins
 of collections. The browser computes them with WebCrypto, which needs no
 library, and is available to pages served over `https:` or from
-`localhost`. Digests are written in lowercase hexadecimal (section 6.1).
+`localhost`. Digests are written in lowercase hexadecimal (section 2).
 
     // in the SHA-512 digest of bytes:
     export async function sha512(bytes) {

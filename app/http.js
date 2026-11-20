@@ -35,7 +35,7 @@ export function explain(error) {
     case 'cors':
       return 'The server answered, but without the header Access-Control-Allow-Origin, so the ' +
         'browser does not let this page read the answer. OpenSheaf archives should allow ' +
-        'cross-origin requests (section 5 of the specification); GitHub Pages does. Otherwise, ' +
+        'cross-origin requests (section 3 of the specification); GitHub Pages does. Otherwise, ' +
         'copy the explorer into the archive’s own site (for instance as explorer/ next to ' +
         'opensheaf.json): served from there, it reads the archive without cross-origin requests. ' +
         'The file may also simply be missing: a server that answers 404 without the header looks ' +
@@ -77,7 +77,7 @@ export function explain(error) {
         'to pages served over https: or from localhost.';
     case 'unsafe':
       return 'The archive names a file with an identifier or a path that breaks the rules of ' +
-        'sections 6.3 and 7.1; the explorer does not fetch it (section 15).';
+        'sections 3.2 and 4.1; the explorer does not fetch it (section 15.2).';
     default:
       return '';
   }

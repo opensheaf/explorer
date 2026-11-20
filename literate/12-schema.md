@@ -33,7 +33,7 @@ Comparing JSON values
 ---------------------
 
 `const`, `enum` and `uniqueItems` compare JSON values, and so does the
-verification (a notice must be kept "unchanged", section 7.3). Two values
+verification (a notice must be kept "unchanged", section 4.2). Two values
 are the same if they have the same canonical text: the JSON text with the
 keys of every object sorted, so that the order in which a file writes its
 keys does not matter, as it does not for Python's dictionaries, which
@@ -73,7 +73,7 @@ URIs, are rejected.
 A difference with `osheaf verify` is worth stating. `jsonschema` checks a
 format only if a package for it is installed: dates always, URIs only with
 the package `rfc3987`, which `opensheaf-py` does not require. The explorer
-always checks all three, as section 14 asks; an archive whose URIs are
+always checks all three, as section 14.2 asks; an archive whose URIs are
 malformed fails here and may pass there.
 
     // in the formats checked as assertions:

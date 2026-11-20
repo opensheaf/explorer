@@ -3,8 +3,9 @@ Mathematics as plain text
 
 Titles and abstracts are plain text in which mathematics may be written in
 LaTeX between single dollar signs (`$\Phi^4_3$`), a literal dollar sign
-being written `\$` (section 8). "Presentations render it, and readers that
-do not are left with readable LaTeX." The explorer does not load a
+being written `\$` (section 4.4), using only the commands of LaTeX
+with `amsmath` and `amssymb`, which common renderers display; a reader
+without a renderer is left with readable LaTeX. The explorer does not load a
 renderer such as MathJax (it loads nothing from elsewhere), so it makes
 the LaTeX a little more readable instead: Greek letters and common symbols
 become their Unicode characters, `\mathbb{R}` becomes ℝ, simple
