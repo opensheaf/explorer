@@ -406,12 +406,8 @@ class Verification {
           "originator's line and its branches may share one (section 5.4)");
       }
     }
-    const kept = new Map();
     for (const [id, o] of this.found) {
-      if (o.kind === 'collection' && this.statuses.has(id)) {
-        await this.members(id, o);
-        await this.acceptedCopies(id, o, kept);
-      }
+      if (o.kind === 'collection' && this.statuses.has(id)) await this.members(id, o);
     }
   }
 
@@ -574,26 +570,6 @@ class Verification {
       this.add('result', who, 'removed: a tombstone in this archive (section 13.3)', context);
     } else {
       this.add('warning', who, 'not held in this archive: not resolved (osheaf verify --remote resolves it, section 14.5)', context);
-    }
-  }
-
-  async acceptedCopies(id, o, kept) {
-    const a = this.archive;
-    const mem = await a.json(id, o.inv, o.inv.head, 'members.json', this.options).catch(() => null);
-    if (mem?.type !== 'selection') return;
-    const owner = id.split(':')[2];
-    for (const m of Array.isArray(mem.members) ? mem.members : []) {
-      const mid = objectId(m?.name, m?.owner);
-      if (m?.owner !== owner || !this.found.has(mid)) continue;
-      const held = this.found.get(mid);
-      if (!isObject(held.head) || !('parent' in held.head)) continue;
-      const key = `${owner} ${held.genesis ? await nameOf(held.genesis) : mid}`;
-      if (!kept.has(key)) kept.set(key, id);
-      const other = kept.get(key);
-      if (other !== id) {
-        this.add('error', this.where(id), `keeps an accepted copy of the document that ${this.where(other)}, a selection ` +
-          'of the same owner, keeps: selections keeping copies of one document have different owners (section 9.6)', { object: id });
-      }
     }
   }
 

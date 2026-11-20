@@ -526,12 +526,8 @@ collections are then checked (14.5).
               "originator's line and its branches may share one (section 5.4)");
           }
         }
-        const kept = new Map();
         for (const [id, o] of this.found) {
-          if (o.kind === 'collection' && this.statuses.has(id)) {
-            await this.members(id, o);
-            await this.acceptedCopies(id, o, kept);
-          }
+          if (o.kind === 'collection' && this.statuses.has(id)) await this.members(id, o);
         }
       }
 
@@ -727,30 +723,12 @@ holds its tombstone.
         }
       }
 
-Selections of one owner keeping accepted copies of the same document
-must be one selection (section 9.6): two selections of the same owner
-whose members are that owner's branches of the same work are an error.
-
-    // in app/verify.js:
-      async acceptedCopies(id, o, kept) {
-        const a = this.archive;
-        const mem = await a.json(id, o.inv, o.inv.head, 'members.json', this.options).catch(() => null);
-        if (mem?.type !== 'selection') return;
-        const owner = id.split(':')[2];
-        for (const m of Array.isArray(mem.members) ? mem.members : []) {
-          const mid = objectId(m?.name, m?.owner);
-          if (m?.owner !== owner || !this.found.has(mid)) continue;
-          const held = this.found.get(mid);
-          if (!isObject(held.head) || !('parent' in held.head)) continue;
-          const key = `${owner} ${held.genesis ? await nameOf(held.genesis) : mid}`;
-          if (!kept.has(key)) kept.set(key, id);
-          const other = kept.get(key);
-          if (other !== id) {
-            this.add('error', this.where(id), `keeps an accepted copy of the document that ${this.where(other)}, a selection ` +
-              'of the same owner, keeps: selections keeping copies of one document have different owners (section 9.6)', { object: id });
-          }
-        }
-      }
+Selections of one owner (the issues of a journal) share its accepted copy
+of a document, which each of them may list (section 9.6): an owner has
+one line of a name, so the accepted copies of one document kept by
+selections of one owner are one line, and those kept by selections of
+different owners are different lines. Nothing is checked: the rule of
+section 9.6 holds by the identifiers themselves.
 
 The archive as a whole (14.6)
 -----------------------------
