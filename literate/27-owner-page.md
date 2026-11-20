@@ -5,7 +5,7 @@ An owner is a keyed identity, named by its owner name, whose key log is
 the line of its owner object, `sheaf:<owner>:<owner>` (section 6). The
 page of an owner shows what a reader needs to weigh what it signs: its
 genesis record (when and with which keys it was created, and its keeper,
-section 6.6), every version of its key log with what it did and whether
+as a link, section 6.6), every version of its key log with what it did and whether
 it is a version of the key log, the current keys of its latest version,
 the keys it has exposed (section 6.3), whether it has ended, by an ending
 version or by a fork of its key log, with its fork point and its
@@ -17,7 +17,7 @@ early looks complete, which the page says.
 The module is `app/view-owner.js`.
 
     // in app/view-owner.js:
-    import { h, append, digest, timestamp, plural, copyable } from './dom.js';
+    import { h, append, digest, timestamp, plural, copyable, external } from './dom.js';
     import { facts, chip, verdictChip, section, jsonView, errorBox, loading, pages, ref } from './ui.js';
     import { objectId, OWNER_NAME } from './names.js';
     import { describeVersion, jsonOrNull } from './owners.js';
@@ -58,7 +58,7 @@ key log the archive does not hold, is said so.
           ['Owner name', h('code', {}, owner)],
           ['Key log', [copyable(`sheaf:${owner}`), ' ', h('span', { class: 'muted' }, `(${plural(log.versions.length, 'version')} held)`)]],
           ['Created', String(genesis.created ?? '?')],
-          ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => h('div', {}, String(k))) : null],
+          ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => h('div', {}, external(String(k)))) : null],
           ['Current keys', latest ? latest.keys.keys.map((k) => h('div', {}, h('code', {}, String(k)))) : null],
           ['Threshold', latest ? `${latest.keys.threshold} of ${latest.keys.keys.length} current keys sign a version of a line` : null],
           ['Rotation keys', latest ? `${latest.keys.nextThreshold} of ${latest.keys.next.length} sign the next version of the key log` : null],
