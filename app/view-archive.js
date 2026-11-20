@@ -1,9 +1,10 @@
 // Generated from literate/23-archive-page.md by opensheaf-literate: edit the document, not this file.
 import { h, append, external, plural } from './dom.js';
 import { rich, plain } from './text.js';
-import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere } from './ui.js';
-import { summary, rowSummary } from './summary.js';
+import { facts, chip, statusChip, section, jsonView, errorBox, pages, elsewhere, ref } from './ui.js';
+import { rowSummary } from './summary.js';
 import { memberPins } from './versions.js';
+import { objectId, isObject } from './names.js';
 import { LIMITS } from './http.js';
 
 function archiveFacts(a) {
@@ -12,24 +13,26 @@ function archiveFacts(a) {
   const tombstones = a.tombstones();
   return h('div', {},
     facts([
-      ['Archive identifier', h('code', {}, String(d.archiveId ?? '?'))],
       ['Base URL', external(a.base)],
-      ['Storage root', external(a.root)],
+      ['Storage root', [external(a.root), h('span', { class: 'muted' }, ` (${String(d.storageLayout ?? '?')})`)]],
       ['Contact', typeof d.contact === 'string' ? external(d.contact) : null],
       ['Specification', `${d.specification ?? '?'} (format ${d.format ?? '?'})`],
       ['Profiles', list(d.profiles).length ? list(d.profiles).map((p) => chip(String(p))) : 'none'],
-      ['Main collection', typeof d.mainCollection === 'string'
-        ? h('a', { href: pages.collection(d.mainCollection) }, d.mainCollection) : null],
-      ['Mirrors', list(d.mirrors).map((m) => h('div', {}, h('a', { href: elsewhere(m) }, m)))],
+      ['Main catalogue', typeof d.mainCollection === 'string'
+        ? h('a', { href: pages.collection(ref(a, d.mainCollection)) }, ref(a, d.mainCollection)) : null],
+      ['Owners', a.owners().map((o) => h('div', {}, h('a', { href: pages.owner(o) }, h('code', {}, o))))],
+      ['Indexes', isObject(d.indexes) ? Object.keys(d.indexes).map((k) => chip(`${k}/`)) : null],
       ['Feed', typeof d.feed === 'string' ? external(d.feed) : null],
-      ['Keys', list(d.keys).map((k) => h('div', {}, String(k?.type ?? '?'), ': ',
-        k?.url ? external(k.url) : h('code', {}, String(k?.fingerprint ?? '')))) ],
       ['Extensions', list(d.extensions).map((e) => h('div', {}, external(String(e))))],
     ]),
+    a.drafts().length ? section('Drafts',
+      h('p', { class: 'muted' }, 'Unfinished work the archive shows, on which nothing may rely: never signed, pinned or named by a sheaf: URI (section 10.1).'),
+      h('ul', { class: 'plain' }, a.drafts().map((dr) => h('li', {},
+        h('a', { href: pages.object(dr.id) }, h('code', {}, dr.id)), ` (${String(dr.kind ?? '?')}, head ${String(dr.head ?? '?')})`)))) : null,
     tombstones.length ? section('Tombstones',
-      h('p', { class: 'muted' }, 'Objects taken down (section 11.2). Their identifiers are never reused, and pins to them are reported as removed.'),
+      h('p', { class: 'muted' }, 'Objects taken down (section 13.2). Each keeps its line taken, and pins of its versions are reported as removed (section 13.3).'),
       h('ul', { class: 'plain' }, tombstones.map((t) => h('li', {},
-        h('code', {}, t.id), ` (${t.kind ?? '?'}, last version ${t.lastVersion ?? '?'}, ${t.date ?? '?'}): `,
+        h('code', {}, String(t.id)), ` (${String(t.kind ?? '?')}, last version ${String(t.lastVersion ?? '?')}, ${String(t.date ?? '?')}): `,
         String(t.reason ?? ''))))) : null,
     jsonView('opensheaf.json', d, a.base + 'opensheaf.json'));
 }
@@ -44,10 +47,10 @@ function objectList(ctx) {
   const search = h('input', { type: 'search', placeholder: 'Search titles, authors, identifiers', 'aria-label': 'Search' });
   const kind = h('select', { 'aria-label': 'Kind' },
     h('option', { value: '' }, 'all kinds'), h('option', { value: 'document' }, 'documents'),
-    h('option', { value: 'collection' }, 'collections'));
+    h('option', { value: 'collection' }, 'collections'), h('option', { value: 'owner' }, 'owners'));
   const state = h('select', { 'aria-label': 'Status' },
     h('option', { value: '' }, 'any status'), h('option', { value: 'active' }, 'active'),
-    h('option', { value: 'withdrawn' }, 'withdrawn'), h('option', { value: 'mirror' }, 'mirrors'));
+    h('option', { value: 'withdrawn' }, 'withdrawn'));
   let loaded = 0;
   const filter = () => {
     const words = fold(search.value || '').split(/\s+/).filter(Boolean);
@@ -55,7 +58,7 @@ function objectList(ctx) {
     for (const row of rows.values()) {
       const e = row.entry;
       const ok = words.every((w) => row.folded.includes(w)) && (!kind.value || e.kind === kind.value) &&
-        (!state.value || (state.value === 'mirror' ? Boolean(e.mirrorOf) : e.status === state.value));
+        (!state.value || e.status === state.value);
       row.el.hidden = !ok;
       if (ok) shown++;
     }
@@ -111,11 +114,11 @@ function objectList(ctx) {
   const main = a.disc.mainCollection;
   filter();
   if (typeof main === 'string' && rows.has(main)) {
-    summary(ctx, main).then(async (s) => {
-      const mem = await a.json(main, s.inv, s.inv.head, 'members.json', { signal: ctx.signal });
-      const members = (Array.isArray(mem?.members) ? mem.members : []).filter((m) => m?.archive === a.archiveId);
+    a.inventory(main, null, { signal: ctx.signal }).then(async (inv) => {
+      const mem = await a.json(main, inv, inv.head, 'members.json', { signal: ctx.signal });
+      const members = (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
       for (const m of [...members].reverse()) {
-        const row = rows.get(m.id);
+        const row = rows.get(objectId(m.name, m.owner));
         if (!row) continue;
         list.prepend(row.el);
         if (!row.loaded && m.cite) {
@@ -133,24 +136,24 @@ function objectList(ctx) {
 }
 
 function objectRow(entry) {
-  const isCollection = entry.kind === 'collection';
-  const href = isCollection ? pages.collection(entry.id) : pages.object(entry.id);
-  const title = h('a', { class: 'title', href }, entry.id);
+  const name = typeof entry.label === 'string' ? entry.label : entry.id;
+  const href = entry.kind === 'owner' ? pages.owner(entry.owner)
+    : entry.kind === 'collection' ? pages.collection(name) : pages.object(name);
+  const title = h('a', { class: 'title', href }, entry.kind === 'owner' ? `Owner ${entry.owner}` : name);
   const creators = h('span', { class: 'creators' });
   const meta = h('span', { class: 'meta' });
   const el = h('li', { class: 'object' },
     h('div', { class: 'main' }, title, creators),
     h('div', { class: 'side' },
-      h('code', { class: 'id' }, entry.id), ' ',
-      chip(entry.kind ?? '?'), ' ', statusChip(entry.status),
-      entry.mirrorOf ? [' ', chip('mirror', 'warn')] : null, ' ', meta));
+      h('code', { class: 'id', title: entry.id }, name), ' ',
+      chip(entry.kind ?? '?'), ' ', statusChip(entry.status), ' ', meta));
   const row = { el, entry, text: entry.id, set(s) {
-    title.replaceChildren(...rich(s.title || entry.id));
+    if (entry.kind !== 'owner') title.replaceChildren(...rich(s.title || name));
     creators.textContent = s.creators?.length ? s.creators.join('; ') : '';
     meta.textContent = [s.documentVersion ? `version ${s.documentVersion}` : null,
                         s.pinned ? `pinned ${s.pinned}` : `head ${s.head ?? entry.head}`,
                         s.year ? String(s.year) : null].filter(Boolean).join(' · ');
-    row.text = [entry.id, plain(s.title || ''), ...(s.creators || [])].join(' ');
+    row.text = [entry.id, name, plain(s.title || ''), ...(s.creators || [])].join(' ');
     row.folded = fold(row.text);
   } };
   row.set({ head: entry.head });
@@ -169,7 +172,7 @@ export function showArchive(ctx, root) {
       h('p', { class: 'kicker' }, 'OpenSheaf archive'),
       h('h1', {}, a.name),
       h('p', { class: 'lead' }, 'The discovery document lists ', plural(a.objects().length, 'object'),
-        '. What it states is checked against the storage root by the ',
+        '. What it states is checked against the storage root, and against what owners signed, by the ',
         h('a', { href: pages.verify() }, 'verification'), ' (section 14).')),
     archiveFacts(a),
     objectList(ctx));

@@ -1,0 +1,48 @@
+{
+  "titles": [
+    {
+      "title": "A reading list"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Example, Ada",
+      "nameType": "Personal",
+      "familyName": "Example",
+      "givenName": "Ada"
+    }
+  ],
+  "publisher": {
+    "name": "A fixture archive"
+  },
+  "publicationYear": 2026,
+  "types": {
+    "resourceTypeGeneral": "Collection"
+  },
+  "version": "1",
+  "dates": [
+    {
+      "date": "2026-11-20",
+      "dateType": "Issued"
+    },
+    {
+      "date": "2026-11-20",
+      "dateType": "Available"
+    }
+  ],
+  "rightsList": [
+    {
+      "rights": "Creative Commons Zero v1.0 Universal",
+      "rightsUri": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "rightsIdentifier": "cc0-1.0",
+      "rightsIdentifierScheme": "SPDX"
+    }
+  ],
+  "url": "https://fixtures.example.org/archive/paper/reading/",
+  "descriptions": [
+    {
+      "description": "The versions read.",
+      "descriptionType": "Abstract"
+    }
+  ]
+}

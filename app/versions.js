@@ -52,7 +52,7 @@ export function rolesOf(inv, objOf) {
     const obj = objOf(ver);
     const n = obj?.documentVersion;
     if (!obj || obj.kind !== 'document') {
-      roles[ver] = obj ? 'collection' : 'unknown';
+      roles[ver] = obj ? (obj.kind === 'owner' ? 'owner' : 'collection') : 'unknown';
       continue;
     }
     const files = Object.keys(ownFiles(inv, ver, obj)).length;
@@ -102,12 +102,19 @@ export function pdfOf(obj) {
   return (rs.find((r) => r.mediaType === 'application/pdf') || rs.find((r) => r.path.toLowerCase().endsWith('.pdf')))?.path || null;
 }
 
+export const IDENTITY = ['datacite.json', 'object.json', 'genesis.json'];
+
+export function isEvidence(p) {
+  return p === 'parent.inventory.json' || p === 'parent.object.json' ||
+    p.startsWith('parent.signatures/') || p.startsWith('parent.chain/');
+}
+
 export function ownFiles(inv, ver, obj) {
   const notes = new Set([...list(obj?.notices), obj?.withdrawal?.reason, obj?.licence]
     .map((x) => x?.path).filter(text));
   const files = Object.create(null);
   for (const [p, digest] of Object.entries(filesOf(inv, ver))) {
-    if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) files[p] = digest;
+    if (!IDENTITY.includes(p) && !isEvidence(p) && !notes.has(p)) files[p] = digest;
   }
   return files;
 }
@@ -124,6 +131,7 @@ export function documentVersionErrors(inv, objOf) {
     const n = obj.documentVersion;
     const own = ownFiles(inv, ver, obj);
     const change = obj.changes?.text ?? null;
+    if (!seen.size && obj.parent) highest = (Number.isInteger(n) ? n : 1) - 1;
     if (seen.has(n)) {
       const before = filesOfDoc.get(n);
       if (missingOf.get(n)) {

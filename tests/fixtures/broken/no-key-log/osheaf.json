@@ -1,0 +1,26 @@
+{
+  "owner": "cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq",
+  "name": "A fixture archive",
+  "contact": "https://fixtures.example.org/archive/",
+  "baseUrl": "https://fixtures.example.org/archive/",
+  "profiles": [
+    "website"
+  ],
+  "storageLayout": "opensheaf-owner-name-storage-layout",
+  "mainCollection": "main",
+  "curator": {
+    "name": "Example, Ada",
+    "givenName": "Ada",
+    "familyName": "Example",
+    "affiliation": ""
+  },
+  "depositor": {
+    "name": "Ada Example",
+    "address": "https://fixtures.example.org/archive/"
+  },
+  "index": {
+    "html": {
+      "templates": "templates"
+    }
+  }
+}

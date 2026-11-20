@@ -2,13 +2,15 @@ Validating against the JSON Schemas
 ===================================
 
 The JSON files defined by the specification (`opensheaf.json`,
-`object.json`, `members.json`) must validate against its JSON Schemas
-(section 4 and appendix D), and section 14 asks a verifier to check them
-"checking formats (dates, URIs) as assertions, which JSON Schema 2020-12
-leaves optional". `osheaf verify` uses the Python package `jsonschema`.
-The explorer has no dependencies, so it has its own validator: not a
-general one, but one for the keywords the three schemas use, which are
-few, with the formats they use checked as assertions.
+`object.json`, `members.json`, `genesis.json`, `keys.json`, signature
+files, the files of indexes) must validate against its JSON Schemas
+(section 2 and appendix B), and section 14.2 asks a verifier to check
+them "formats (dates, URIs) included as assertions, which JSON Schema
+2020-12 leaves optional". `osheaf verify` uses the Python package
+`jsonschema`. The explorer has no dependencies, so it has its own
+validator: not a general one, but one for the keywords the schemas of
+version 0.2 use, which are few, with the formats they use checked as
+assertions.
 
 The schemas are those of the specification, copied unchanged into
 `schemas/` (they are dedicated to the public domain under CC0 1.0, so that
@@ -31,7 +33,7 @@ Comparing JSON values
 ---------------------
 
 `const`, `enum` and `uniqueItems` compare JSON values, and so does the
-verification (a notice must be kept "unchanged", section 7.3). Two values
+verification (a notice must be kept "unchanged", section 4.2). Two values
 are the same if they have the same canonical text: the JSON text with the
 keys of every object sorted, so that the order in which a file writes its
 keys does not matter, as it does not for Python's dictionaries, which
@@ -71,7 +73,7 @@ URIs, are rejected.
 A difference with `osheaf verify` is worth stating. `jsonschema` checks a
 format only if a package for it is installed: dates always, URIs only with
 the package `rfc3987`, which `opensheaf-py` does not require. The explorer
-always checks all three, as section 14 asks; an archive whose URIs are
+always checks all three, as section 14.2 asks; an archive whose URIs are
 malformed fails here and may pass there.
 
     // in the formats checked as assertions:
@@ -98,11 +100,12 @@ The validator
 
 `validate(schema, data)` returns the list of errors, each with the place
 in the data (a JSON pointer such as `/objects/3/head`) and a message. The
-keywords are those of the three schemas: `type`, `required`, `properties`,
+keywords are those of the schemas: `type`, `required`, `properties`,
 `additionalProperties`, `pattern`, `format`, `items`, `minLength`,
-`maxLength`, `minItems`, `minimum`, `const`, `enum`, `if`/`then`/`else`,
-`anyOf`, `allOf`, `not`, `$ref` to the schema's own `$defs`,
-`uniqueItems`, `propertyNames` and `dependentRequired`. A schema using
+`maxLength`, `minItems`, `maxItems`, `minimum`, `maximum`,
+`minProperties`, `const`, `enum`, `if`/`then`/`else`, `anyOf`, `oneOf`,
+`allOf`, `not`, `$ref` to the schema's own `$defs`, `uniqueItems`,
+`propertyNames` and `dependentRequired`. A schema using
 another keyword is not wrong, but the keyword is ignored, so a new schema
 must be checked against this list.
 
@@ -184,6 +187,7 @@ strings are counted in characters (code points), not in UTF-16 units.
         <<the keywords of strings>>
       }
       if (typeof v === 'number' && s.minimum !== undefined && v < s.minimum) fail(`${v} is less than ${s.minimum}`);
+      if (typeof v === 'number' && s.maximum !== undefined && v > s.maximum) fail(`${v} is greater than ${s.maximum}`);
       if (Array.isArray(v)) {
         <<the keywords of arrays>>
       }
@@ -220,23 +224,27 @@ The compiled patterns are kept by their source.
       return patterns.get(source);
     }
 
-Arrays have a minimum length, may require distinct items (compared as
-JSON values, above), and have a schema for every item.
+Arrays have a minimum and a maximum length, may require distinct items
+(compared as JSON values, above), and have a schema for every item.
 
     // in the keywords of arrays:
     if (s.minItems !== undefined && v.length < s.minItems) fail(`has fewer than ${s.minItems} items`);
+    if (s.maxItems !== undefined && v.length > s.maxItems) fail(`has more than ${s.maxItems} items`);
     if (s.uniqueItems && new Set(v.map(canonical)).size !== v.length) fail('has repeated items');
     if (s.items !== undefined) v.forEach((item, k) => check(s.items, item, `${path}/${k}`, root, errors));
 
 Properties not named in `properties` are checked against
 `additionalProperties`, which the schemas never set to `false`: readers
-ignore unknown properties (section 12). The names of the properties of
+ignore unknown properties (section 2). The names of the properties of
 the data are the archive's: a property named `constructor` must not be
 taken for one named in the schema because every JavaScript object
 inherits a `constructor`, so names are looked up with `Object.hasOwn`
 (see also [the versions](13-versions.md)).
 
     // in the keywords of objects:
+    if (s.minProperties !== undefined && Object.keys(v).length < s.minProperties) {
+      fail(`has fewer than ${s.minProperties} properties`);
+    }
     for (const name of s.required || []) {
       if (!Object.hasOwn(v, name)) fail(`${JSON.stringify(name)} is a required property`);
     }
@@ -260,7 +268,8 @@ inherits a `constructor`, so names are looked up with `Object.hasOwn`
     }
 
 `anyOf` fails with the first error of each alternative, which usually
-says what is missing ("`text` is required; or `path` is required").
+says what is missing ("`text` is required; or `path` is required");
+`oneOf` also fails when more than one alternative holds.
 
     // in the keywords that combine schemas:
     for (const sub of s.allOf || []) check(sub, v, path, root, errors);
@@ -268,6 +277,16 @@ says what is missing ("`text` is required; or `path` is required").
       const reasons = s.anyOf.map((sub) => collect(sub, v, root)[0]).filter(Boolean)
         .map((e) => (e.path ? `${e.path}: ` : '') + e.message);
       fail(`satisfies none of the alternatives (${reasons.join('; or ')})`);
+    }
+    if (s.oneOf) {
+      const holding = s.oneOf.filter((sub) => isValid(sub, v, root)).length;
+      if (holding === 0) {
+        const reasons = s.oneOf.map((sub) => collect(sub, v, root)[0]).filter(Boolean)
+          .map((e) => (e.path ? `${e.path}: ` : '') + e.message);
+        fail(`satisfies none of the alternatives (${reasons.join('; or ')})`);
+      } else if (holding > 1) {
+        fail(`satisfies ${holding} of the alternatives, and should satisfy one`);
+      }
     }
     if (s.not !== undefined && isValid(s.not, v, root)) fail(describeNot(s.not));
     if (s.if !== undefined) {
@@ -291,20 +310,28 @@ and `propertyNames`.
 The schemas
 -----------
 
-The three schemas are read once, by a function given to `loadSchemas`
-that reads a file next to the application: `fetch` in the browser, the
-file system in the tests. The result maps the format version declared by
-a file (its `format`) to its schema, which is how section 4 says a file
-is validated: "against the JSON Schemas of appendix D for their declared
-format version". A file declaring a version the explorer does not know is
-reported as such (section 12), not validated against another version's
+The schemas are read once, by a function given to `loadSchemas` that
+reads a file next to the application: `fetch` in the browser, the file
+system in the tests. The result maps the format version declared by a
+file (its `format`) to its schema, which is how section 2 says a file is
+validated: "against the JSON Schemas of appendix B for their declared
+format version". The explorer reads only version 0.2: an archive of
+version 0.1 is not read, but recognised and reported as one to rebuild
+(chapter [14](14-archive.md)). A file declaring a version the explorer does not know is
+reported as such (section 16), not validated against another version's
 schema.
 
     // in loading the schemas of the specification:
     export const SCHEMA_FILES = {
-      'opensheaf-archive/0.1': 'opensheaf-archive-0.1.schema.json',
-      'opensheaf-object/0.1': 'opensheaf-object-0.1.schema.json',
-      'opensheaf-collection/0.1': 'opensheaf-collection-0.1.schema.json',
+      'opensheaf-archive/0.2': 'opensheaf-archive-0.2.schema.json',
+      'opensheaf-object/0.2': 'opensheaf-object-0.2.schema.json',
+      'opensheaf-collection/0.2': 'opensheaf-collection-0.2.schema.json',
+      'opensheaf-genesis/0.2': 'opensheaf-genesis-0.2.schema.json',
+      'opensheaf-keys/0.2': 'opensheaf-keys-0.2.schema.json',
+      'opensheaf-signature/0.2': 'opensheaf-signature-0.2.schema.json',
+      'opensheaf-index/0.2': 'opensheaf-index-0.2.schema.json',
+      'opensheaf-keeper/0.2': 'opensheaf-keeper-0.2.schema.json',
+      'opensheaf-timestamps/0.2': 'opensheaf-timestamps-0.2.schema.json',
     };
 
     export async function loadSchemas(read) {

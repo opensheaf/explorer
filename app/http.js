@@ -10,10 +10,9 @@ export const LIMITS = {
   concurrency: 6,          // requests in flight at once
   depth: 3,                // levels of member collections followed
   pins: 2000,              // pins resolved in one walk through collections, or in one verification
-  mirrors: 5,              // mirrors tried for one pin, after the member's archive
+  mirrors: 5,              // locations of copies (at, hints) tried for one line, after the archive explored
   versions: 10_000,        // object versions of one object
   objects: 10_000,         // objects of one archive listed or verified
-  described: 200,          // object versions read to find the current version of a member
   nesting: 64,             // levels of arrays and objects in a JSON file
   retry: 30_000,           // milliseconds a busy server may ask to be left alone (Retry-After)
   pageRequests: 40_000,    // requests made for one page
@@ -35,7 +34,7 @@ export function explain(error) {
     case 'cors':
       return 'The server answered, but without the header Access-Control-Allow-Origin, so the ' +
         'browser does not let this page read the answer. OpenSheaf archives should allow ' +
-        'cross-origin requests (section 5 of the specification); GitHub Pages does. Otherwise, ' +
+        'cross-origin requests (section 3 of the specification); GitHub Pages does. Otherwise, ' +
         'copy the explorer into the archive’s own site (for instance as explorer/ next to ' +
         'opensheaf.json): served from there, it reads the archive without cross-origin requests. ' +
         'The file may also simply be missing: a server that answers 404 without the header looks ' +
@@ -77,7 +76,7 @@ export function explain(error) {
         'to pages served over https: or from localhost.';
     case 'unsafe':
       return 'The archive names a file with an identifier or a path that breaks the rules of ' +
-        'sections 6.3 and 7.1; the explorer does not fetch it (section 15).';
+        'sections 3.2 and 4.1; the explorer does not fetch it (section 15.2).';
     default:
       return '';
   }

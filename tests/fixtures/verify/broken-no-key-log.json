@@ -1,0 +1,227 @@
+[
+  {
+    "severity": "error",
+    "place": "reading",
+    "message": "the key log of its owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "beta",
+    "message": "the key log of its owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "gamma",
+    "message": "the key log of its owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "alpha",
+    "message": "the key log of its owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v3",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v3",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v4",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha v4",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "alpha",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "main",
+    "message": "the key log of its owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "main v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "main v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "main v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "main v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "main",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1 member alpha v1",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1 member alpha v3",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1 member beta v2",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "main v2 member alpha v4",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "main v2 member beta v2",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "main v2 member gamma v2",
+    "message": "unchecked (section 8.5)"
+  },
+  {
+    "severity": "error",
+    "place": "opensheaf.json",
+    "message": "lists sheaf:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq, which is not an object of the storage root (section 3.1)"
+  },
+  {
+    "severity": "warning",
+    "place": "opensheaf.json",
+    "message": "owners lists cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq, whose key log is not held here (section 3.1)"
+  },
+  {
+    "severity": "result",
+    "place": "opensheaf.json",
+    "message": "removed: sheaf:t246sk3u3wh3wlb5a56s3dyaksosato7rz3odljzugartwz6dxia:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq (2026-11-20: Taken down for the tests.)"
+  },
+  {
+    "severity": "error",
+    "place": "names/",
+    "message": "an entry the storage root does not justify: sheaf:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq  (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "owners/",
+    "message": "no entry, or a stale one, for cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq  (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "owners/",
+    "message": "an entry the storage root does not justify: cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq  (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "an entry the storage root does not justify: sheaf:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq v1 (section 12.5)"
+  }
+]

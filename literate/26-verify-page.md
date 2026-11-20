@@ -29,6 +29,7 @@ The module is `app/view-verify.js`.
     import { chip, section, sectionRef, pages, errorBox } from './ui.js';
     import { verify, estimateContent, NOT_CHECKED } from './verify.js';
     import { explain } from './http.js';
+    import { parseId } from './names.js';
 
     <<the options of a verification>>
 
@@ -62,10 +63,11 @@ The module is `app/view-verify.js`.
         h('header', { class: 'page-head' },
           h('p', { class: 'kicker' }, 'Verification · ', h('a', { href: pages.archive() }, ctx.archive.name)),
           h('h1', {}, 'Verify this archive'),
-          h('p', { class: 'lead' }, 'The checks of section 14 that can be made over HTTP, in this browser: ',
-            'the discovery document against the storage root, every inventory and its checksum file, the descriptions ',
-            'of every object version against the schemas and the rules of sections 7 to 11, the document versions, ',
-            'the pins of collections, mirrors and accepted copies.')),
+          h('p', { class: 'lead' }, 'The checks of section 14 that can be made over HTTP, in this browser, ',
+            'in agreement with osheaf verify: the storage root and its layout, every inventory, its checksum file and ',
+            'the inventory chain, the key logs of the owners, the names, signatures and statuses of every line, the ',
+            'branch points, the descriptions against the schemas and the rules of sections 4 to 13, the pins of ',
+            'collections, the discovery document, the tombstones and the indexes.')),
         options.el, h('div', { class: 'controls' }, start, cancel), progress, results.el,
         section('What is not checked', h('ul', { class: 'not-checked' },
           NOT_CHECKED.map((n) => h('li', {}, n.text, ' ', sectionRef(n.section))))));
@@ -75,8 +77,9 @@ The module is `app/view-verify.js`.
 The options
 -----------
 
-Two options: resolving the members of other archives and the sources of
-accepted copies (on by default, as it is what section 14 asks; it reads
+Two options: resolving the members of other archives and the parent
+lines of branches (on by default, as it is what sections 14.4 and 14.5
+ask; it reads
 other archives, which may not allow it, see [cross-origin requests](10-http.md)),
 and checking the digests of all files (off by default, since it downloads
 the whole archive). When the second is chosen, the page first asks the
@@ -109,7 +112,7 @@ server for the sizes of the files and says how much will be read.
       return {
         remote, digests,
         el: h('fieldset', { class: 'options' }, h('legend', {}, 'What to check'),
-          h('label', {}, remote, ' Resolve the members of other archives and the sources of accepted copies (sections 6.4 and 14)'),
+          h('label', {}, remote, ' Resolve the members of other archives and the parent lines of branches (sections 14.4 and 14.5)'),
           h('label', {}, digests, ' Also check the digest of every file (downloads every content file)', estimate)),
       };
     }
@@ -186,9 +189,14 @@ read by this run (each run reads the archive afresh, see
 [the verification](17-verify.md)), and the time taken.
 A cancelled run says so: its findings are those of the part it checked.
 Below, the findings are grouped: first those about the archive as a whole
-(its discovery document, its presentation), then those of each object,
-in the order of the identifiers. A group with errors is open, the others
-closed. The levels can be hidden one by one.
+(its discovery document, storage root, indexes, presentation, and what
+the resolution of other archives met), then those of each object, in the
+order of the identifiers, each named as `osheaf verify` names it (its
+label, or `owner <name>` for a key log). Findings are errors, warnings
+and results (section 14.1): results are neither good nor bad, but what a
+reader is told (statuses, verdicts, ends, exposures, withdrawals,
+removals). A group with errors is open, the others closed. The levels
+can be hidden one by one.
 
 The view of the findings is made once, when the page is shown, and
 updated: `update` adds the findings that came since the last update.
@@ -197,11 +205,11 @@ those of its report when it ends, in the same order; a new run starts
 from none, and the view then starts again.
 
     // in the findings of a verification:
-    const LEVELS = { error: ['error', 'bad'], warning: ['warning', 'warn'], info: ['note', ''] };
+    const LEVELS = { error: ['error', 'bad'], warning: ['warning', 'warn'], result: ['result', ''] };
 
     function findingsView(ctx, run) {
-      const shown = ctx.verificationLevels || (ctx.verificationLevels = new Set(['error', 'warning', 'info']));
-      const counts = { error: 0, warning: 0, info: 0 };
+      const shown = ctx.verificationLevels || (ctx.verificationLevels = new Set(['error', 'warning', 'result']));
+      const counts = { error: 0, warning: 0, result: 0 };
       let groups = new Map(), keys = [], drawn = [], source = null, report;
       const verdict = h('div', {});
       const labels = {};
@@ -236,7 +244,7 @@ from none, and the view then starts again.
         clear(verdict, summaryView(run, counts));
         if (run.report !== report) {
           report = run.report;
-          clear(tail, report ? h('details', { class: 'json' }, h('summary', {}, 'The errors as text, in the form of osheaf verify'),
+          clear(tail, report ? h('details', { class: 'json' }, h('summary', {}, 'The findings as text, in the form of osheaf verify'),
             h('pre', {}, report.text())) : null);
         }
       };
@@ -252,7 +260,7 @@ checked in another order.
     const before = (x, y) => (x === '' ? true : y === '' ? false : x.localeCompare(y) < 0);
     const groupOf = (key) => {
       if (groups.has(key)) return groups.get(key);
-      const group = groupView(key);
+      const group = groupView(key, ctx.archive);
       let lo = 0, hi = keys.length;
       while (lo < hi) {
         const mid = (lo + hi) >> 1;
@@ -293,12 +301,14 @@ left as the reader has put it; the findings of the levels hidden are
 hidden, and a group with none shown is hidden.
 
     // in the findings of a verification:
-    function groupView(key) {
+    function groupView(key, archive) {
       const errorChip = h('span', {});
       const count = h('span', { class: 'muted small' });
       const list = h('ul', { class: 'findings' });
+      const owner = key ? parseId(key) : null;
+      const href = !key ? null : owner && owner.name === owner.owner ? pages.owner(owner.owner) : pages.object(archive.labelOf(key) || key);
       const el = h('details', { class: 'group' },
-        h('summary', {}, key ? h('a', { href: pages.object(key) }, key) : 'The archive', ' ', errorChip, ' ', count), list);
+        h('summary', {}, key ? h('a', { href }, archive.where(key)) : 'The archive', ' ', errorChip, ' ', count), list);
       const items = [];
       let errors = 0, visible = 0;
       const group = {
@@ -307,7 +317,8 @@ hidden, and a group with none shown is hidden.
           const li = h('li', { class: f.level },
             chip(LEVELS[f.level][0], LEVELS[f.level][1]), ' ',
             f.ver ? h('code', {}, f.ver) : null, f.ver ? ' ' : '',
-            f.object ? f.message : `${f.where}: ${f.message}`, ' ', sectionRef(f.section),
+            f.object && f.place.startsWith(archive.where(f.object)) ? f.message : `${f.place}: ${f.message}`, ' ',
+            f.section ? sectionRef(f.section) : null,
             (f.errors || []).map(explain).filter(Boolean).slice(0, 1).map((t) => h('div', { class: 'small muted' }, t)));
           li.hidden = !shown.has(f.level);
           if (!li.hidden) visible++;

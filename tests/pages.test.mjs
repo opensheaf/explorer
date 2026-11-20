@@ -1,7 +1,7 @@
 // Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
+import { diskFetch, readSchemas, ORIGIN, ALPHA, BETA, idOf, folder } from './disk.mjs';
 
 class FakeNode {
   constructor() { this.childNodes = []; this.parent = null; this.listeners = {}; }
@@ -75,6 +75,7 @@ const { showObject } = await import('../app/view-object.js');
 const { showCollection } = await import('../app/view-collection.js');
 const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
 const { showVerify } = await import('../app/view-verify.js');
+const { showOwner } = await import('../app/view-owner.js');
 const { clear } = await import('../app/dom.js');
 
 async function session(base = 'archive/', delay = 15) {
@@ -103,13 +104,13 @@ test('an object page left while loading is not drawn below the next one', async 
   const { ctx, main, go } = await session();
   go();
   const { summary } = await import('../app/summary.js');
-  await summary(ctx, 'alpha');
-  await summary(ctx, 'beta');
+  await summary(ctx, ALPHA);
+  await summary(ctx, BETA);
   go();
-  const left = showObject(ctx, main, 'alpha', 'v1');
+  const left = showObject(ctx, main, ALPHA, 'v1');
   await wait(5);
   go();
-  const shown = showObject(ctx, main, 'beta');
+  const shown = showObject(ctx, main, BETA);
   await Promise.all([left, shown]);
   assert.deepEqual(main.all('code').map((c) => c.textContent).filter((t) => t === 'alpha' || t === 'beta'), ['beta']);
   assert.equal(main.all('h1').length, 1);
@@ -118,7 +119,7 @@ test('an object page left while loading is not drawn below the next one', async 
 test('the pins of a collection page left are not resolved further', async () => {
   const { ctx, main, log, go } = await session('other/');
   go();
-  await showCollection(ctx, main, 'collection-main');
+  await showCollection(ctx, main, idOf('shelf', 'other'));
   const run = main.all('button').find((b) => b.textContent === 'Resolve and check all pins');
   const resolving = run.listeners.click[0]();
   const started = log.length;
@@ -138,7 +139,7 @@ test('the page of an archive reads only what its rows show', async () => {
   const status = () => main.all('p').find((p) => p.className === 'muted small').textContent;
   for (let t = 0; /descriptions read|^$/.test(status()) && t < 3000; t++) await wait(1);
   await wait(20);
-  const alpha = log.filter((u) => u.includes('/ocfl/alpha/')).map((u) => u.split('/ocfl/alpha/')[1]).sort();
+  const alpha = log.filter((u) => u.startsWith(folder(ALPHA))).map((u) => u.slice(folder(ALPHA).length)).sort();
   assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json']);
   const row = main.all('li').find((li) => li.all('code').some((c) => c.textContent === 'alpha'));
   assert.match(row.textContent, /version 2 · head v4/);
@@ -157,8 +158,9 @@ test('the rows of a large archive are read a few at a time, and filtered in line
       reject(Object.assign(new Error('gone'), { kind: 'missing' }));
     }, 1));
   };
-  const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/', archiveId: 'synthetic',
-                    disc: { objects }, objects: () => objects, tombstones: () => [], inventory: read, history: read };
+  const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/',
+                    disc: { objects }, objects: () => objects, tombstones: () => [], owners: () => [], drafts: () => [],
+                    inventory: read, history: read };
   const ctx = { archive, summaries: new Map(), signal: new AbortController().signal };
   const main = new FakeElement('main');
   const normalize = String.prototype.normalize;
@@ -201,4 +203,25 @@ test('the page of a verification in progress keeps what the reader opened', asyn
   for (const box of boxes) assert.ok(main.all('input').includes(box), 'a box was drawn again');
   go();
   assert.equal(ctx.verification.listeners.size, 0);
+});
+
+test('a contested line, an ended owner, the statuses of members', async () => {
+  const other = await session('other/', 0);
+  other.go();
+  await showObject(other.ctx, other.main, idOf('exposed', 'other'));
+  const text = other.main.textContent;
+  assert.match(text, /contested/);
+  assert.match(text, /no signed version that is not contested/);
+  assert.ok(text.includes(`sheaf:${idOf('exposed', 'other').split(':')[1]}`));
+  const forked = await session('forked/', 0);
+  forked.go();
+  await showOwner(forked.ctx, forked.main, idOf('before', 'forked').split(':')[2]);
+  assert.match(forked.main.textContent, /ended by a fork at v2/);
+  other.go();
+  await showCollection(other.ctx, other.main, idOf('shelf', 'other'));
+  const run = other.main.all('button').find((b) => b.textContent === 'Resolve and check all pins');
+  await run.listeners.click[0]();
+  const report = other.main.all('p').find((p) => /pins? resolved/.test(p.textContent));
+  assert.match(report.textContent, /verified/);
+  assert.doesNotMatch(report.textContent, /mismatch|unavailable|not a version/);
 });

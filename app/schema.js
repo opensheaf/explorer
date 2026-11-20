@@ -77,12 +77,17 @@ function check(s, v, path, root, errors) {
     if (s.format !== undefined && FORMATS[s.format] && !FORMATS[s.format](v)) fail(`${show(v)} is not a valid ${s.format}`);
   }
   if (typeof v === 'number' && s.minimum !== undefined && v < s.minimum) fail(`${v} is less than ${s.minimum}`);
+  if (typeof v === 'number' && s.maximum !== undefined && v > s.maximum) fail(`${v} is greater than ${s.maximum}`);
   if (Array.isArray(v)) {
     if (s.minItems !== undefined && v.length < s.minItems) fail(`has fewer than ${s.minItems} items`);
+    if (s.maxItems !== undefined && v.length > s.maxItems) fail(`has more than ${s.maxItems} items`);
     if (s.uniqueItems && new Set(v.map(canonical)).size !== v.length) fail('has repeated items');
     if (s.items !== undefined) v.forEach((item, k) => check(s.items, item, `${path}/${k}`, root, errors));
   }
   if (v && typeof v === 'object' && !Array.isArray(v)) {
+    if (s.minProperties !== undefined && Object.keys(v).length < s.minProperties) {
+      fail(`has fewer than ${s.minProperties} properties`);
+    }
     for (const name of s.required || []) {
       if (!Object.hasOwn(v, name)) fail(`${JSON.stringify(name)} is a required property`);
     }
@@ -110,6 +115,16 @@ function check(s, v, path, root, errors) {
     const reasons = s.anyOf.map((sub) => collect(sub, v, root)[0]).filter(Boolean)
       .map((e) => (e.path ? `${e.path}: ` : '') + e.message);
     fail(`satisfies none of the alternatives (${reasons.join('; or ')})`);
+  }
+  if (s.oneOf) {
+    const holding = s.oneOf.filter((sub) => isValid(sub, v, root)).length;
+    if (holding === 0) {
+      const reasons = s.oneOf.map((sub) => collect(sub, v, root)[0]).filter(Boolean)
+        .map((e) => (e.path ? `${e.path}: ` : '') + e.message);
+      fail(`satisfies none of the alternatives (${reasons.join('; or ')})`);
+    } else if (holding > 1) {
+      fail(`satisfies ${holding} of the alternatives, and should satisfy one`);
+    }
   }
   if (s.not !== undefined && isValid(s.not, v, root)) fail(describeNot(s.not));
   if (s.if !== undefined) {
@@ -153,9 +168,15 @@ function collect(schema, data, root) {
 }
 
 export const SCHEMA_FILES = {
-  'opensheaf-archive/0.1': 'opensheaf-archive-0.1.schema.json',
-  'opensheaf-object/0.1': 'opensheaf-object-0.1.schema.json',
-  'opensheaf-collection/0.1': 'opensheaf-collection-0.1.schema.json',
+  'opensheaf-archive/0.2': 'opensheaf-archive-0.2.schema.json',
+  'opensheaf-object/0.2': 'opensheaf-object-0.2.schema.json',
+  'opensheaf-collection/0.2': 'opensheaf-collection-0.2.schema.json',
+  'opensheaf-genesis/0.2': 'opensheaf-genesis-0.2.schema.json',
+  'opensheaf-keys/0.2': 'opensheaf-keys-0.2.schema.json',
+  'opensheaf-signature/0.2': 'opensheaf-signature-0.2.schema.json',
+  'opensheaf-index/0.2': 'opensheaf-index-0.2.schema.json',
+  'opensheaf-keeper/0.2': 'opensheaf-keeper-0.2.schema.json',
+  'opensheaf-timestamps/0.2': 'opensheaf-timestamps-0.2.schema.json',
 };
 
 export async function loadSchemas(read) {

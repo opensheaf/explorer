@@ -1,303 +1,176 @@
 The rules of an archive
 =======================
 
-Section 14 lists what a verifier must check. Most of it is a matter of
-reading files and comparing them with rules: this chapter gives those
-rules as pure functions of data already fetched, the discovery document,
-an inventory, the two descriptions of an object version, a member list.
-The [next chapter](17-verify.md) fetches the data, calls these functions,
-and adds the checks that need more requests: digests, pins, accepted
-copies.
-
-The checks are those of `osheaf verify`
-([its chapter](https://opensheaf.org/opensheaf-py/17-verify.html)), with
-the same messages where the same thing is checked, so that a reader can
-compare the two reports line by line. Where the explorer checks more, or
-less, it says so, here and on the page of the verification.
+The verification (chapter [17](17-verify.md)) reads an archive and
+reports its findings (section 14.1). This chapter holds the rules it
+applies to what it has read, as pure functions of the data: the form of
+a finding, the schemas, the descriptions of an object version, the
+member lists of collections, and what the discovery document and the
+indexes should say of the objects held. Each is a port of the function of
+the same purpose in `osheaf verify` (opensheaf-py's chapter
+[17-verify](https://opensheaf.org/opensheaf-py/17-verify.html)), with the
+same messages, so that the two verifiers report the same problems in the
+same words; the tests compare them on the fixture archives.
 
 The module is `app/rules.js`.
 
     // in app/rules.js:
     import { validate } from './schema.js';
-    import { isObjectId, isVersion, versionNumber, logicalPathProblem, contentPathProblem } from './paths.js';
-    import { versionsOf, filesOf, dateOf } from './versions.js';
-
-    <<findings>>
-
-    <<validating a file against its schema>>
-
-    <<the rules of the discovery document>>
-
-    <<the rules of an inventory>>
-
-    <<the rules of an object version>>
-
-    <<the rules of a member list>>
+    import { filesOf, dateOf } from './versions.js';
+    import { isObject } from './names.js';
 
 Findings
 --------
 
-A finding has a *level*: an `error` breaks a requirement of the
-specification (a MUST, or a rule that section 14 names); a `warning` is
-something a reader should know and that is not an error (a SHOULD); an
-`info` is a note on the verification itself (what was not checked, a
-source that was unavailable). It names the place (`opensheaf.json`, or
-`ocfl/<id>` for an object, as opensheaf-py does), the object and the
-object version it concerns, if any, the section of the specification,
-and a message; its `text` is the finding as one line, in the form of the
-lines `osheaf verify` prints: `<place>: <version> <message>`. For a check
-that opensheaf-py also makes, the line is the one it prints, word for
-word, except where this chapter or the next says otherwise; the lines of
-checks it does not make (and the messages of the schema validator, which
-differ from those of the Python `jsonschema`) only follow its form. A
-few checks of opensheaf-py print lines of another form (the members of
-other archives and the accepted copies are reported as `<id>: ...`,
-without `ocfl/` and without the version); for those, the finding is
-given its `text` explicitly, so that the line is still opensheaf-py's.
+A finding (section 14.1) is an *error* (a breach of a MUST), a *warning*
+(a breach of a SHOULD, a breach the archive cannot repair, or a check not
+made), or a *result* (statuses, verdicts, forks, ends, exposures,
+withdrawals, removals). It has a place, as `osheaf verify` names places:
+`opensheaf.json`, `ocfl`, the label or identifier of an object (`owner
+<name>` for a key log), followed by an object version where the finding
+is about one, or `resolution` for what the resolution of other archives
+met. The section of the specification cited in the message is kept apart
+for the pages, which link to it. `text` is the finding as `osheaf verify`
+prints it.
 
-    // in findings:
-    export function finding(level, where, message, section, { object = null, ver = null, text = null } = {}) {
-      text = text ?? `${where}: ${ver ? ver + ' ' : ''}${message}`;
-      return { level, where, object, ver, message, section, text };
+    // in app/rules.js:
+    export function finding(level, place, message, { object = null, ver = null } = {}) {
+      const section = /\(sections? ([0-9A-Z][^)]*)\)/.exec(message)?.[1]?.split(/,| and /)[0].trim() ?? null;
+      return { level, place, message, object, ver, section, text: `${place}: ${message}` };
     }
-
-    export const LAYOUT = '0002-flat-direct-storage-layout';
 
 Schemas
 -------
 
-The JSON files are validated against the schema of the format the
-explorer knows, version 0.1. A file declaring another version fails on
-its `format` (a `const`), which is what section 12 asks: a reader "MUST
-NOT silently treat the files as valid". Each error of the schema is a
-finding, with the place in the file.
+A file defined by the specification is checked against the schema of its
+format (chapter [12](12-schema.md)); each error is a finding of the
+severity given (an error, but a warning for the files of witness
+folders, section 14.2).
 
-    // in validating a file against its schema:
-    export function schemaFindings(where, data, schema, section, context = {}) {
+    // in app/rules.js:
+    export function schemaFindings(place, data, schema, level = 'error', context = {}) {
       if (!schema) return [];
-      return validate(schema, data).map((e) =>
-        finding('error', where, `${e.path ? e.path + ': ' : ''}${e.message}`, section, context));
+      return validate(schema, data).map((e) => finding(level, place, `${e.path ? e.path + ': ' : ''}${e.message}`, context));
     }
 
-The discovery document
-----------------------
+The descriptions of an object version
+-------------------------------------
 
-The discovery document is checked against its schema; its objects must
-have distinct identifiers,
-none of them that of a tombstone (sections 6.3 and 14). These checks need
-nothing but the document. The rest (that the storage root exists with the
-required layout, which opensheaf-py reports in one line whether the
-layout or the storage root is wrong, and that each listed object is as
-its head states it) is in the next chapter.
+The rules of sections 4.3 and 4.4 that the files of one version decide:
+`object.json` and `datacite.json` agree on the document version and the
+date of a withdrawal; `datacite.json` has the properties section 4.4
+requires; a licence without an SPDX identifier has its URL; the files of
+the notes, the main source and the renditions are in the version; and a
+collection has its member list. The answer is a list of messages.
 
-A verifier "SHOULD check [...] the requirements of the profiles the
-archive declares, and those of the extensions it knows; it SHOULD report
-the extensions it does not know". The explorer knows no profile
-requirement and no extension: it reports both as notes. The one
-exception is the index page of the profile `website`, checked in the next
-chapter.
-
-    // in the rules of the discovery document:
-    export function discoveryFindings(disc, schemas) {
+    // in app/rules.js:
+    export function descriptionErrors(inv, ver, obj, dc) {
       const out = [];
-      const where = 'opensheaf.json';
-      out.push(...schemaFindings(where, disc, schemas['opensheaf-archive/0.1'], '6.1, appendix D'));
-      const objects = Array.isArray(disc.objects) ? disc.objects : [];
-      const ids = objects.map((o) => o?.id);
-      for (const id of new Set(ids.filter((id, k) => ids.indexOf(id) !== k))) {
-        out.push(finding('error', where, `lists the object ${id} more than once`, '6.3'));
-      }
-      for (const t of Array.isArray(disc.tombstones) ? disc.tombstones : []) {
-        if (ids.includes(t?.id)) out.push(finding('error', where, `lists the object ${t.id}, which has a tombstone`, '11.3, 14'));
-      }
-      for (const o of objects) {
-        if (!isObjectId(o?.id)) out.push(finding('error', where, `an object without a valid identifier: ${JSON.stringify(o?.id ?? o)}`, '6.3'));
-      }
-      for (const p of Array.isArray(disc.profiles) ? disc.profiles : []) {
-        out.push(finding('info', where, p === 'website'
-          ? 'declares the profile website, whose requirements are not checked, except that the index page shows the pins of the main collection'
-          : `declares the profile ${p}, whose requirements are not checked`, '4, 14'));
-      }
-      for (const e of Array.isArray(disc.extensions) ? disc.extensions : []) {
-        out.push(finding('info', where, `lists the extension ${e}, which the explorer does not know`, '4, 14'));
-      }
-      return out;
-    }
-
-An inventory
-------------
-
-The inventory names its object and uses SHA-512 (section 7.1), as
-opensheaf-py checks. The explorer adds a few checks of the structure of
-OCFL that it needs to read the inventory safely, since a standard OCFL
-validator, which `osheaf verify` runs when it is installed, is not
-available in a browser:
-
-- the versions are `v1`, `v2`, ... without gaps and without zero-padding
-  (section 7.1), and the head is the last;
-- every digest of a state is in the manifest;
-- every content path of the manifest lies in a version's content
-  directory and is safe to fetch (section 15).
-
-These are a small part of OCFL's rules; the page of the verification says
-that the storage root is not validated against OCFL 1.1 as a whole.
-
-    // in the rules of an inventory:
-    export function inventoryFindings(id, inv) {
-      const out = [];
-      const where = `ocfl/${id}`;
-      const add = (message, section, ver = null) => out.push(finding('error', where, message, section, { object: id, ver }));
-      if (inv.id !== id || !isObjectId(id)) add('bad identifier', '6.3');
-      if (inv.digestAlgorithm !== 'sha512') add('digest algorithm is not sha512', '7.1');
-      const names = Object.keys(inv.versions);
-      const versions = versionsOf(inv);
-      if (names.length !== versions.length) add(`versions with names other than v1, v2, ...: ${names.filter((v) => !isVersion(v)).join(', ')}`, '7.1');
-      const last = versions.length ? versionNumber(versions[versions.length - 1]) : 0;
-      if (versions.some((v, k) => versionNumber(v) !== k + 1)) add(`the versions are not v1 to v${last} without gaps`, '7.1');
-      if (!versions.length || inv.head !== versions[versions.length - 1]) add(`the head ${inv.head} is not the last version`, 'OCFL 3.5.1');
-      for (const v of versions) {
-        for (const digest of Object.keys(inv.versions[v]?.state || {})) {
-          if (!Object.hasOwn(inv.manifest, digest)) add(`a digest of the state is not in the manifest`, 'OCFL 3.5.3', v);
-        }
-      }
-      for (const paths of Object.values(inv.manifest)) {
-        for (const cp of Array.isArray(paths) ? paths : []) {
-          const problem = contentPathProblem(cp, inv.contentDirectory || 'content');
-          if (problem) add(`the content path ${cp} ${problem}`, '15');
-        }
-      }
-      return out;
-    }
-
-An object version
------------------
-
-Each object version is checked as opensheaf-py checks it, in three
-groups.
-
-Section 7.1: a user with a name and a message, logical paths following
-the rules, and both descriptions. A version without them cannot be
-checked further. The checks of the logical paths include normalisation
-form C, which opensheaf-py leaves out.
-
-    // in the rules of an object version:
-    export function versionBasics(id, ver, inv) {
-      const out = [];
-      const where = `ocfl/${id}`;
-      const add = (message, section) => out.push(finding('error', where, message, section, { object: id, ver }));
-      const vinfo = inv.versions[ver] || {};
-      if (!vinfo.user?.name || !vinfo.message) add('lacks a user name or a message', '7.1');
       const logical = Object.keys(filesOf(inv, ver));
-      for (const p of logical) {
-        const problem = logicalPathProblem(p);
-        if (problem) out.push(finding('error', where, `bad logical path ${p} (it ${problem})`, '7.1, 15', { object: id, ver }));
-      }
-      for (const n of ['datacite.json', 'object.json']) {
-        if (!logical.includes(n)) add(`has no ${n}`, '7.1');
-      }
-      return out;
-    }
-
-The descriptions are checked against each other and against sections 8
-and 9: `object.json` against its schema; it names its object and its
-archive (this archive, or, for a mirror, the archive it copies, which
-every version of the mirror must name, section 14); the two files agree
-on the document version and on the date of a withdrawal; `datacite.json`
-has the required properties; a Creative Commons or arXiv licence is
-identified by SPDX or by URL (section 8); every note with a file finds
-that file in the version.
-
-One note is added that opensheaf-py does not make: an `object.json`
-using extensions (section 4) is reported, since the explorer knows none,
-and section 14 asks verifiers to report the extensions they do not know.
-
-    // in the rules of an object version:
-    export function descriptionFindings({ id, ver, inv, obj, dc, archiveId, mirrorOf, schemas }) {
-      const out = [];
-      const where = `ocfl/${id}`;
-      const context = { object: id, ver };
-      const add = (message, section) => out.push(finding('error', where, message, section, context));
-      const logical = Object.keys(filesOf(inv, ver));
-      out.push(...schemaFindings(`${where}/${ver}/object.json`, obj, schemas['opensheaf-object/0.1'], '9, appendix D', context));
-      if (obj.objectId !== id) add('object.json names another object', '9');
-      else if (obj.archiveId !== (mirrorOf || archiveId)) add('object.json names another archive', mirrorOf ? '10.4, 14' : '9');
-      if (String(obj.documentVersion) !== dc.version) add('datacite.json and object.json disagree on the version', '8, 9');
-      if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== obj.withdrawal?.date) add('withdrawal dates disagree', '11.1');
+      if (!isObject(obj) || !isObject(dc)) return out;
+      if (String(obj.documentVersion) !== dc.version) out.push('datacite.json and object.json disagree on the version');
+      if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== (obj.withdrawal?.date ?? null)) out.push('withdrawal dates disagree');
       for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
-        if (!Object.hasOwn(dc, k)) add(`datacite.json lacks ${k}`, '8');
+        if (!Object.hasOwn(dc, k)) out.push(`datacite.json lacks ${k}`);
       }
       for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
         const rights = typeof r?.rights === 'string' ? r.rights.toLowerCase() : '';
         if (r?.rightsIdentifier == null && (rights.startsWith('creative') || rights.startsWith('arxiv')) && !r?.rightsUri) {
-          add('licence without SPDX identifier and without rightsUri', '8');
+          out.push('licence without SPDX identifier and without rightsUri');
         }
       }
       const notes = [obj.changes, obj.sourcesMissing, obj.licence, ...(Array.isArray(obj.notices) ? obj.notices : []), obj.withdrawal?.reason];
       for (const note of notes) {
-        if (note?.path && !logical.includes(note.path)) add(`note file ${note.path} not in the version`, '9');
+        if (note?.path && !logical.includes(note.path)) out.push(`note file ${note.path} not in the version`);
       }
-      <<the files of a document version or the member list of a collection version>>
-      if (obj.extensions && typeof obj.extensions === 'object') {
-        for (const name of Object.keys(obj.extensions)) {
-          out.push(finding('info', where, `uses the extension ${name}, which the explorer does not know`, '4', context));
+      if (obj.kind === 'document') {
+        if (obj.mainSource && !logical.includes(obj.mainSource)) out.push('main source not in the version');
+        if (obj.sourcesMissing && obj.mainSource) out.push('sourcesMissing together with a main source');
+        for (const r of Array.isArray(obj.renditions) ? obj.renditions : []) {
+          if (!logical.includes(r?.path)) out.push(`rendition ${r?.path} not in the version`);
+        }
+      } else if (obj.kind === 'collection' && !logical.includes('members.json')) {
+        out.push('collection without members.json');
+      }
+      return out;
+    }
+
+Member lists
+------------
+
+The rules of sections 8.2 to 8.4 on one member, whatever its archive: a
+member of a catalogue has a pin and no revisions; a member of a selection
+has a revision set, each revision complete, no document version twice,
+and no pin of its own.
+
+    // in app/rules.js:
+    export function memberErrors(type, m) {
+      const out = [];
+      if (type === 'catalogue' && (!m?.version || !m?.inventorySha512 || (isObject(m) && Object.hasOwn(m, 'revisions')))) {
+        out.push('a member of a catalogue needs version and inventorySha512, and no revisions');
+      }
+      if (type === 'selection') {
+        const revs = m?.revisions;
+        if (['version', 'inventorySha512', 'follow'].some((k) => isObject(m) && Object.hasOwn(m, k))) {
+          out.push('a member of a selection has no version, inventorySha512 or follow');
+        }
+        if (!Array.isArray(revs) || !revs.length ||
+            revs.some((r) => !['documentVersion', 'version', 'inventorySha512'].every((k) => r?.[k]))) {
+          out.push('a member of a selection needs revisions, each with documentVersion, version and inventorySha512');
+        } else if (new Set(revs.map((r) => r.documentVersion)).size !== revs.length) {
+          out.push('a document version is vetted twice');
         }
       }
       return out;
     }
 
-A document version must hold its main source and its renditions, and
-cannot both name a main source and say that its sources are missing
-(sections 7.2 and 9). A collection version must hold `members.json`
-(section 7.4), whose checks follow.
+The pins of a member, as `osheaf verify` reads them: one in a catalogue,
+one for each revision in a selection, with the document version a
+revision states.
 
-    // in the files of a document version or the member list of a collection version:
-    if (obj.kind === 'document') {
-      if (obj.mainSource && !logical.includes(obj.mainSource)) add('main source not in the version', '7.2, 9');
-      if (obj.sourcesMissing && obj.mainSource) add('sourcesMissing together with a main source', '9');
-      for (const r of Array.isArray(obj.renditions) ? obj.renditions : []) {
-        if (!logical.includes(r?.path)) add(`rendition ${r?.path} not in the version`, '7.2, 9');
+    // in app/rules.js:
+    export function memberPins(m) {
+      if (isObject(m) && Object.hasOwn(m, 'revisions')) {
+        return (Array.isArray(m.revisions) ? m.revisions : []).map((r) => ({
+          version: r?.version, pin: r?.inventorySha512, documentVersion: r?.documentVersion ?? null,
+        }));
       }
-    } else if (!logical.includes('members.json')) {
-      add('collection without members.json', '7.4');
+      return [{ version: m?.version, pin: m?.inventorySha512, documentVersion: null }];
     }
 
-A member list
--------------
+What the indexes should hold
+----------------------------
 
-The schema already says much of this, but section 14 names these rules,
-and opensheaf-py checks them by hand (its schema check is optional), with
-these messages: the member list has a `type`; a member of a catalogue has `version` and `inventorySha512` and no revisions; a member
-of a selection has a non-empty list of revisions, each with its three
-fields, of distinct document versions, and none of `version`,
-`inventorySha512` or `follow`.
+The entries of the three indexes for the objects held (section 12.5): in
+`names/`, an entry for each object with a genesis record, with its
+status, originator (an owner object being its own) and the text of its
+genesis record; in `owners/`, the names of each owner's lines; in
+`sha512/`, an entry for each version, by the digest its checksum file
+states, and one for each version of a key log a fork record carries. The
+objects are given as the verification read them.
 
-    // in the rules of a member list:
-    export function memberListFindings(id, ver, mem, schemas) {
-      const out = [];
-      const where = `ocfl/${id}`;
-      const context = { object: id, ver };
-      out.push(...schemaFindings(`${where}/${ver}/members.json`, mem, schemas['opensheaf-collection/0.1'], '10.2, appendix D', context));
-      const kind = mem.type;
-      if (kind !== 'catalogue' && kind !== 'selection') {
-        out.push(finding('error', where, 'members.json has no valid type (archive or selection)', '10.2', context));
-      }
-      for (const m of Array.isArray(mem.members) ? mem.members : []) {
-        const add = (message) => out.push(finding('error', where, `member ${m?.id}: ${message}`, '10.2', context));
-        if (kind === 'catalogue' && (!m?.version || !m?.inventorySha512 || Object.hasOwn(m, 'revisions'))) {
-          add('a member of a catalogue needs version and inventorySha512, and no revisions');
-        }
-        if (kind === 'selection') {
-          const revs = m?.revisions;
-          if (['version', 'inventorySha512', 'follow'].some((k) => m != null && Object.hasOwn(m, k))) {
-            add('a member of a selection has no version, inventorySha512 or follow');
-          }
-          if (!Array.isArray(revs) || !revs.length ||
-              revs.some((r) => !['documentVersion', 'version', 'inventorySha512'].every((k) => r?.[k]))) {
-            add('a member of a selection needs revisions, each with documentVersion, version and inventorySha512');
-          } else if (new Set(revs.map((r) => r.documentVersion)).size !== revs.length) {
-            add('a document version is vetted twice');
-          }
+    // in app/rules.js:
+    export const INDEX_KEY = { names: 'name', owners: 'owner', sha512: 'inventorySha512' };
+
+    export function indexEntries(objects) {
+      const out = { names: [], owners: [], sha512: [] };
+      const lines = new Map();
+      for (const o of objects) {
+        const [, name, owner] = o.id.split(':');
+        const entry = { name, owner, id: o.id, status: o.status,
+                        originator: o.rec.kind === 'owner' ? owner : o.rec.originator ?? null,
+                        genesis: new TextDecoder().decode(o.genesis) };
+        if (o.label) entry.label = o.label;
+        out.names.push(entry);
+        if (!lines.has(owner)) lines.set(owner, []);
+        lines.get(owner).push(name);
+        o.sidecars.forEach((digest, k) => {
+          if (digest !== null) out.sha512.push({ inventorySha512: digest, id: o.id, version: `v${k + 1}`, status: o.status });
+        });
+        for (const c of o.carried || []) {
+          out.sha512.push({ inventorySha512: c.digest, id: o.id, version: `v${c.number}`, status: 'active' });
         }
       }
+      out.owners = [...lines].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([owner, names]) => ({ owner, names: names.sort() }));
       return out;
     }

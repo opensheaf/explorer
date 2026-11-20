@@ -1,13 +1,11 @@
 // Generated from literate/70-tests.md by opensheaf-literate: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { Http, LIMITS } from '../app/http.js';
+import { Http } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { verify } from '../app/verify.js';
-import { Resolver } from '../app/resolve.js';
-import { diskFetch, readSchemas, ORIGIN } from './disk.mjs';
+import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, idOf } from './disk.mjs';
 
 const schemas = await readSchemas();
 
@@ -29,49 +27,54 @@ function patched(fetch, patch) {
   };
 }
 
-const inventoryOf = async (path) => JSON.parse(await readFile(new URL(`./fixtures/${path}`, import.meta.url), 'utf-8'));
 const digestOf = (text) => createHash('sha512').update(text).digest('hex');
 
-test('the fixture archives verify', async () => {
+const beyondHttp = (f) => /^error: [^:]*: OCFL validator: |^error: ocfl: the OCFL validator rejects/.test(f) ||
+  / an entry the storage root does not justify: /.test(f) ||
+  /^warning: .*: signature-[a-z2-7]{16}\.json: unchecked: /.test(f);
+
+async function compare(name, path, options) {
+  const report = await run(path, options);
+  const ours = report.findings.map((f) => `${f.level}: ${f.text}`).sort();
+  const theirs = (await osheaf(name)).map((x) => `${x.severity}: ${x.place}: ${x.message}`).sort();
+  assert.deepEqual(ours.filter((f) => !theirs.includes(f)), [], `${name}: found by the explorer alone`);
+  assert.deepEqual(theirs.filter((f) => !beyondHttp(f) && !ours.includes(f)), [], `${name}: found by osheaf verify alone`);
+  return report;
+}
+
+test('the fixture archives verify as osheaf verify says', async () => {
   const log = [];
-  const report = await run('archive/', { digests: true, log });
+  const report = await compare('archive', 'archive/', { digests: true, log });
   assert.deepEqual(errors(report), []);
-  assert.equal(report.stats.objects, 5);
+  assert.equal(report.stats.objects, 7);
   assert.ok(report.stats.files > 20);
-  const allowed = (url) => url.startsWith(ORIGIN + 'archive/ocfl/') || url === ORIGIN + 'archive/opensheaf.json' ||
-    url === ORIGIN + 'archive/index.html';
+  const allowed = (url) => /^https:\/\/fixtures\.example\.org\/archive\/(ocfl\/|opensheaf\.json$|index\.html$|paper\/|names\/|owners\/|sha512\/)/.test(url);
   assert.deepEqual(log.filter((url) => !allowed(url)), []);
-  assert.deepEqual(errors(await run('other/', { digests: true })), []);
+  for (const a of ['forked', 'other']) assert.deepEqual(errors(await compare(a, `${a}/`, { digests: true })), []);
 });
 
-test('the broken copies give the problems osheaf verify gives', async () => {
+test('the broken copies give the findings osheaf verify gives', async () => {
+  const broken = ['bad-signature', 'changed-file', 'dropped-notice', 'gap', 'key-log', 'no-key-log', 'old',
+                  'previous', 'stale', 'unchecked-branch', 'unsigned', 'wrong-pin'];
+  for (const b of broken) {
+    const report = await compare(`broken-${b}`, `broken/${b}/`, { digests: true, remote: b === 'unchecked-branch' });
+    assert.ok(errors(report).length > 0, `${b} passes`);
+  }
+});
+
+test('what the broken copies break', async () => {
+  assert.deepEqual(errors(await run('broken/old/')), ['archive: specification 0.1: rebuild (section 16.1)']);
+  assert.deepEqual(errors(await run('broken/stale/')),
+    ['opensheaf.json: the entry of beta is stale: head v1 instead of v2']);
   assert.deepEqual(errors(await run('broken/changed-file/', { digests: true })),
-    ['ocfl/alpha: digest mismatch for v1/content/paper.pdf']);
-  assert.deepEqual(errors(await run('broken/changed-file/')), []);
-  assert.deepEqual(errors(await run('broken/wrong-pin/')), ['ocfl/reading: v1 member alpha v1: mismatch']);
-  assert.deepEqual(errors(await run('broken/gap/')), [
-    'ocfl/alpha: v2 document version 3 breaks the numbering (expected 2)',
-    'ocfl/alpha: v3 document version 2 breaks the numbering (expected 4)',
-    'ocfl/alpha: v3 document version 2 holds the same files and change note as document version 3, whose number it keeps',
-    'ocfl/alpha: v4 has other files than document version 3',
-    'ocfl/collection-main: v2 member alpha v4: mismatch',
-    'ocfl/reading: v1 member alpha v3: mismatch',
-  ]);
-  assert.deepEqual(errors(await run('broken/dropped-notice/')), [
-    'ocfl/alpha: v4 drops or changes an earlier notice',
-    'ocfl/collection-main: v2 member alpha v4: mismatch',
-  ]);
-  assert.deepEqual(errors(await run('broken/stale/')), ['opensheaf.json: stale entry for beta']);
-});
-
-test('an archive that disappeared', async () => {
-  const report = await run('other/', { down: [ORIGIN + 'archive/'] });
-  assert.deepEqual(errors(report).map((e) => e.replace(/: unavailable: .*/, ': unavailable')), [
-    `collection-main: member alpha v4: ${ORIGIN}archive/: unavailable`,
-    `collection-main: member gamma v1: ${ORIGIN}archive/: unavailable`,
-    `collection-main: member reading v1: ${ORIGIN}archive/: unavailable`,
-  ]);
-  assert.ok(report.findings.some((f) => f.level === 'info' && /source of the accepted copy is unavailable/.test(f.message)));
+    ['alpha: v1/content/paper.pdf does not have the digest of the manifest']);
+  assert.ok(errors(await run('broken/previous/')).includes('alpha v2: previous is not the digest of the inventory of v1 (section 4.3)'));
+  assert.ok(errors(await run('broken/unsigned/')).includes('main v2 member beta v2: not a version: a collection pins only signed versions (section 8.5)'));
+  const noLog = await run('broken/no-key-log/');
+  assert.ok(errors(noLog).includes(`alpha: the key log of its owner ${ALPHA.split(':')[2]} is not in the storage root (section 6.5)`));
+  const branch = await run('broken/unchecked-branch/');
+  assert.ok(branch.findings.some((f) => f.level === 'warning' && f.place === 'alpha-accepted v1' && /^unchecked branch point: /.test(f.message)));
+  assert.ok(branch.findings.some((f) => f.level === 'result' && f.message.endsWith(': unchecked (section 9.3)')));
 });
 
 test('a verification reads the archive afresh, and counts its own requests', async () => {
@@ -96,82 +99,54 @@ test('a verification is not held to the budget of a page', async () => {
   assert.ok(report.requests > 1);
 });
 
-test('a member resolved again is read from the server again', async () => {
-  const down = [];
-  const http = new Http({ fetch: diskFetch({ down }) });
-  const text = await readFile(new URL('./fixtures/archive/ocfl/alpha/v1/inventory.json', import.meta.url), 'utf-8');
-  const m = { archive: 'tag:example.org,2026:fixture', archiveUrl: ORIGIN + 'archive/', id: 'alpha' };
-  const resolver = new Resolver(http);
-  assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
-  down.push(ORIGIN + 'archive/');
-  assert.equal((await resolver.confirm(m, 'v1', digestOf(text))).status, 'verified');
-  assert.equal((await resolver.again().confirm(m, 'v1', digestOf(text))).status, 'unavailable');
-});
-
-test('a member of many versions is described at its pin', async () => {
-  const log = [];
-  const http = new Http({ fetch: diskFetch({ log }) });
-  const archive = await Archive.open(http, ORIGIN + 'archive/');
-  const m = { archive: archive.archiveId, id: 'alpha', version: 'v1' };
-  const saved = LIMITS.described;
-  LIMITS.described = 2;
-  let d;
-  try {
-    d = await new Resolver(http, archive).describe(m, archive);
-  } finally {
-    LIMITS.described = saved;
-  }
-  assert.equal(d.version, 'v1');
-  assert.ok(d.limited);
-  assert.equal(log.filter((url) => url.endsWith('/object.json')).length, 2);
+test('an archive that disappeared', async () => {
+  const report = await run('other/', { down: [ORIGIN + 'archive/'] });
+  const shelf = report.findings.filter((f) => f.place.startsWith('shelf v1 member') && f.level === 'warning');
+  assert.deepEqual(shelf.map((f) => f.message), ['unavailable (section 8.5)', 'unavailable (section 8.5)', 'unavailable (section 8.5)']);
+  assert.ok(report.findings.some((f) => f.message === "the parent's line: unavailable"));
+  assert.ok(report.findings.some((f) => f.place === 'resolution' && f.message.startsWith(`unavailable: ${ORIGIN}archive/`)));
+  assert.deepEqual(errors(report), []);
 });
 
 test('an inventory copy with another head, or fewer versions', async () => {
-  const url = `${ORIGIN}archive/ocfl/alpha/v2/inventory.json`;
-  const copy = await inventoryOf('archive/ocfl/alpha/v2/inventory.json');
+  const url = `${folder(ALPHA)}v2/inventory.json`;
+  const copy = JSON.parse(await (await diskFetch()(url)).text());
   copy.head = 'v1';
   let text = JSON.stringify(copy);
-  assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })),
-    ['ocfl/alpha: v2 the inventory copy has the head v1']);
+  const patch = { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` };
+  const found = errors(await run('archive/', { patch }));
+  assert.ok(found.includes('alpha v2: the inventory copy has the head v1'));
   delete copy.versions.v2;
   text = JSON.stringify(copy);
-  assert.deepEqual(errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: digestOf(text) } })), [
-    'ocfl/alpha: v2 the inventory copy does not record exactly the versions v1 to v2',
-    'ocfl/alpha: v2 the inventory copy has the head v1',
-  ]);
+  const fewer = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+  assert.ok(fewer.includes('alpha v2: the inventory copy does not record exactly the versions v1 to v2'));
 });
 
-test('a mirror whose head cannot be read', async () => {
-  const report = await run('other/', { remote: false, patch: { [`${ORIGIN}other/ocfl/beta/v2/content/object.json`]: null } });
-  assert.deepEqual(errors(report), ['ocfl/beta: v2 cannot read object.json: HTTP 404']);
-});
-
-test('the index page and the profile website; the storage root', async () => {
+test('the layout, the home page and the profile website', async () => {
+  assert.deepEqual(errors(await run('archive/', { patch: { [`${ORIGIN}archive/ocfl/ocfl_layout.json`]: '{}' } })),
+    ['ocfl: ocfl_layout.json names only registered layouts: the owner-name layout has none (section 3.2)']);
   const index = { [`${ORIGIN}archive/index.html`]: '<html></html>' };
   assert.deepEqual(errors(await run('archive/', { patch: index })), [
-    'index.html does not show the pin of alpha',
-    'index.html does not show the pin of beta',
-    'index.html does not show the pin of gamma',
-  ]);
+    'index.html: does not show the pin of ' + ALPHA.split(':')[1],
+    'index.html: does not show the pin of ' + BETA.split(':')[1],
+    'index.html: does not show the pin of ' + idOf('gamma').split(':')[1],
+  ].sort());
   const noWebsite = (text) => JSON.stringify({ ...JSON.parse(text), profiles: [] });
   const report = await run('archive/', { patch: { ...index, [`${ORIGIN}archive/opensheaf.json`]: noWebsite } });
   assert.deepEqual(errors(report), []);
-  assert.equal(report.findings.filter((f) => f.where === 'index.html' && f.level === 'info').length, 3);
-  const layout = (text) => JSON.stringify({ ...JSON.parse(text), storageLayout: 'another' });
-  assert.deepEqual(errors(await run('archive/', { patch: {
-    [`${ORIGIN}archive/opensheaf.json`]: layout, [`${ORIGIN}archive/ocfl/0=ocfl_1.1`]: null } })).filter((e) => /storage root/.test(e)),
-    ['opensheaf.json: storage root missing or with another layout']);
+  assert.equal(report.findings.filter((f) => f.place === 'index.html' && f.level === 'warning').length, 3);
 });
 
-test('at most five mirrors are tried for a pin', async () => {
-  const log = [];
-  const http = new Http({ fetch: diskFetch({ log }) });
-  const mirrors = Array.from({ length: 20 }, (_, k) => `https://mirror${k}.example.org/`);
-  const m = { archive: 'tag:example.org,2026:gone', archiveUrl: 'https://gone.example.org/', id: 'alpha', mirrors };
-  const result = await new Resolver(http).confirm(m, 'v1', '0'.repeat(128));
-  assert.equal(result.status, 'unavailable');
-  assert.equal(log.length, 6);
-  assert.match(result.problems[result.problems.length - 1], /15 more mirror\(s\) not tried/);
+test('labels given twice, a tombstone of an object listed', async () => {
+  const twice = (text) => {
+    const disc = JSON.parse(text);
+    disc.objects.find((o) => o.label === 'beta').label = 'alpha';
+    disc.tombstones[0].id = ALPHA;
+    return JSON.stringify(disc);
+  };
+  const found = errors(await run('archive/', { patch: { [`${ORIGIN}archive/opensheaf.json`]: twice } }));
+  assert.ok(found.includes('opensheaf.json: the label alpha is given twice (section 3.1)'));
+  assert.ok(found.includes(`opensheaf.json: ${ALPHA} has a tombstone, and is an object of the archive (section 13.3)`));
 });
 
 test('cancelling keeps what was found', async () => {

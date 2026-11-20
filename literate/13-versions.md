@@ -4,7 +4,7 @@ Document versions and history
 OCFL knows object versions, `v1`, `v2`, ..., one for every change of an
 object. Readers want the versions of the *work*: OpenSheaf calls them
 document versions, numbers them from 1 without gaps, and orders them by a
-*history* (section 7.3). The two numberings diverge: a description-only
+*history* (section 4.2). The two numberings diverge: a description-only
 version changes the description and keeps the document version, a
 completion adds the sources of a version deposited without them and keeps
 its number, and a version found later gets the next number although it
@@ -85,9 +85,11 @@ Without `history` in `object.json`, the history is the last object version
 holding each document version, in the order of the numbers, among the
 object versions up to `at` (by default the head); with it, it is the
 `history` of the object version `at`. The current version is the last
-entry of the history (section 7.3). A collection pins an object version,
-and shows the history as known at that version, which is what `at` is
-for.
+entry of the history (section 4.2). The history of a line is read from its
+latest signed version (section 7.3), which is what `at` is for: the
+pages give it the latest signed version that [the signatures](08-signatures.md)
+find, and a collection the object version it pins, whose history is that
+known at that version (section 8.3).
 
     // in the history and the current version:
     export function defaultHistory(inv, objOf, at = inv.head) {
@@ -116,8 +118,9 @@ What each object version did
 
 The explorer shows, for every object version, what it did to the
 document: deposited a new document version, completed one that lacked its
-sources, or only described one (a description-only version, section 7.3,
-which also covers notices and withdrawals). This is read from the same
+sources, or only described one (a description-only version, section 4.2,
+which also covers notices and withdrawals). A version of a key log does
+none of these: it is a version of an owner (section 6). This is read from the same
 data as the rules below: a document version seen before, with files added
 while its sources were missing, is a completion; seen before otherwise, a
 description.
@@ -130,7 +133,7 @@ description.
         const obj = objOf(ver);
         const n = obj?.documentVersion;
         if (!obj || obj.kind !== 'document') {
-          roles[ver] = obj ? 'collection' : 'unknown';
+          roles[ver] = obj ? (obj.kind === 'owner' ? 'owner' : 'collection') : 'unknown';
           continue;
         }
         const files = Object.keys(ownFiles(inv, ver, obj)).length;
@@ -148,10 +151,10 @@ The pins of a member
 A member of a catalogue has one pin, its `version` with its
 `inventorySha512`; a member of a selection has one per revision, each also
 stating the document version that the pinned object version holds
-(section 10.2). The pin presented, and the version shown at it, are
+(section 8.4). The pin presented, and the version shown at it, are
 those of [resolving members](15-resolve.md): the last revision of a
 selection's member; for a catalogue's member, the current version read
-from the history of the pinned version (section 10.2).
+from the history of the pinned version (section 8.3).
 
     // in the pins of a member:
     export function memberPins(m) {
@@ -204,12 +207,19 @@ an empty list rather than failing.
       return (rs.find((r) => r.mediaType === 'application/pdf') || rs.find((r) => r.path.toLowerCase().endsWith('.pdf')))?.path || null;
     }
 
+    export const IDENTITY = ['datacite.json', 'object.json', 'genesis.json'];
+
+    export function isEvidence(p) {
+      return p === 'parent.inventory.json' || p === 'parent.object.json' ||
+        p.startsWith('parent.signatures/') || p.startsWith('parent.chain/');
+    }
+
     export function ownFiles(inv, ver, obj) {
       const notes = new Set([...list(obj?.notices), obj?.withdrawal?.reason, obj?.licence]
         .map((x) => x?.path).filter(text));
       const files = Object.create(null);
       for (const [p, digest] of Object.entries(filesOf(inv, ver))) {
-        if (p !== 'datacite.json' && p !== 'object.json' && !notes.has(p)) files[p] = digest;
+        if (!IDENTITY.includes(p) && !isEvidence(p) && !notes.has(p)) files[p] = digest;
       }
       return files;
     }
@@ -217,15 +227,16 @@ an empty list rather than failing.
 The rules of document versions
 ------------------------------
 
-Section 14 asks a verifier to "check the document versions of each
-document (section 7.3): object versions with the same document version
-have the same sources, renditions and change note, except that a version
-with `sourcesMissing` may be completed by adding files; new numbers follow
-the rule of new versions, without gaps; `history`, when present, lists
-distinct document versions, covers all of them, each entry being the last
-object version holding its document version; no object version after the
-first one with `history` lacks it; every notice is kept unchanged in every
-later object version".
+Section 14.4 asks a verifier to check "the rules of sections 4.2 to 4.4
+in every version and between versions (numbering, new versions,
+completion, `history`, notices), as far as the files decide them": object
+versions with the same document version have the same sources, renditions
+and change note, except that a version with `sourcesMissing` may be
+completed by adding files; new numbers follow the rule of new versions,
+without gaps; `history`, when present, lists distinct document versions,
+covers all of them, each entry being the last object version holding its
+document version; no object version after the first one with `history`
+lacks it; every notice is kept unchanged in every later object version.
 
 The check is a port of `document_version_errors` of `osheaf verify`
 ([its chapter](https://opensheaf.org/opensheaf-py/17-verify.html)), line
@@ -234,19 +245,22 @@ same problems in the same words. It goes once through the object
 versions, remembering for each document version its *own* files, its
 change note, and whether its sources were missing.
 
-The own files of a document version are, by section 7.3, its "sources,
-renditions, change note": everything the version holds except the two
-descriptions and the files of the notes that describe the object rather
-than the document version. Those notes are the notices and a withdrawal,
-which description-only versions add (section 7.3), and the licence terms
-(`licence`, section 9), which "any object MAY contain" and which belong
-to the description of the object, like `rightsList` in `datacite.json`:
-a description-only version may add or replace the file of the licence
+The own files of a document version are, by section 4.2, "the sources,
+the renditions and the change note": everything the version holds except
+the two descriptions, the identity files (the genesis record and the
+evidence of a branch point, section 4.1), and the files of the notes that
+describe the object rather than the document version. Those notes are the
+notices and a withdrawal, which description-only versions add (section
+4.2), and the licence terms (`licence`, section 4.3), which belong to the
+description of the object, like `rightsList` in `datacite.json`: a
+description-only version may add or replace the file of the licence
 terms. The note of missing sources stays with the document version (a
-completion "changes or removes no file of the version", section 7.3).
+completion "changes or removes no file of the version", section 4.2).
 The check stops at the first object version that is not a document (a
 collection has no document versions) or whose `object.json` could not be
-read, as opensheaf-py does.
+read, as opensheaf-py does. A branch numbers on from its branch point
+(section 9.4): its first version holds the document version of its
+parent version, and the numbering continues from there.
 
     // in the rules of document versions:
     export function documentVersionErrors(inv, objOf) {
@@ -261,6 +275,7 @@ read, as opensheaf-py does.
         const n = obj.documentVersion;
         const own = ownFiles(inv, ver, obj);
         const change = obj.changes?.text ?? null;
+        if (!seen.size && obj.parent) highest = (Number.isInteger(n) ? n : 1) - 1;
         <<check the number and the files of a document version>>
         <<check the history recorded in an object version>>
         <<check that an object version keeps the earlier notices>>
@@ -274,7 +289,7 @@ never changed or removed. A document version not seen before must have
 the next number, and must hold something new: an object version holding
 the same own files (the same paths, with the same digests) and the same
 change note as an earlier document version "keeps its number" (section
-7.3), so a new number given to it is reported, naming the first document
+4.2), so a new number given to it is reported, naming the first document
 version it repeats. Only this exact repetition is checked; opensheaf-py
 makes the same check, with the same message.
 

@@ -2,7 +2,7 @@ Building pages from untrusted data
 ==================================
 
 Everything the pages show comes from archives: titles, names, abstracts,
-notes, file names, addresses. All of it is untrusted (section 15), and a
+notes, file names, addresses. All of it is untrusted (section 15.2), and a
 page that inserted it as HTML would run whatever script an archive put in
 a title. The explorer never does: it builds the page element by element,
 and puts remote text in with `textContent` (through text nodes), which

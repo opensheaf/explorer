@@ -1,0 +1,4 @@
+{
+  "extension": "0003-hash-and-id-n-tuple-storage-layout",
+  "description": "Hashed n-tuple storage layout with its default parameters (OpenSheaf 0.2, section 3.2)"
+}

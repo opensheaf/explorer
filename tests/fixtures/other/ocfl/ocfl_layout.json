@@ -1,4 +1,4 @@
 {
-  "extension": "0002-flat-direct-storage-layout",
-  "description": "Flat direct storage layout: the object identifier is the object's folder name"
+  "extension": "0003-hash-and-id-n-tuple-storage-layout",
+  "description": "Hashed n-tuple storage layout with its default parameters (OpenSheaf 0.2, section 3.2)"
 }

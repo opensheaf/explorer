@@ -1,0 +1,52 @@
+[
+  {
+    "severity": "error",
+    "place": "alpha",
+    "message": "v1/content/paper.pdf does not have the digest of the manifest"
+  },
+  {
+    "severity": "error",
+    "place": "alpha",
+    "message": "OCFL validator: [E092a] OCFL Object root inventory manifest using digest algorithm sha512 has digest 0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0 for file v1/content/paper.pdf which doesn't match calculated digest 04855694ed15370c90057191906ff7434650c0ffdf078895befc5c474a676d9c13053aaa817aeb4de02b6f978818e15c32cbe2b7d4454d8cddd0dd5b371e0e40 for that file (see https://ocfl.io/1.1/spec/#E092)\n[E092a] OCFL Object v1,v2,v3 inventory manifest using digest algorithm sha512 has digest 0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0 for file v1/content/paper.pdf which doesn't match calculated digest 04855694ed15370c90057191906ff7434650c0ffdf078895befc5c474a676d9c13053aaa817aeb4de02b6f978818e15c32cbe2b7d4454d8cddd0dd5b371e0e40 for that file (see https://ocfl.io/1.1/spec/#E092)\n[E093a] OCFL Object root inventory fixity block for digest algorithm md5 has digest 3b48e959dde46787fdb4a83968fc6b26 for file v1/content/paper.pdf which doesn't match calculated digest 215104aeb84f63b290a4588833762cdb for that file (see https://ocfl.io/1.1/spec/#E093)\n[E093a] OCFL Object root inventory fixity block for digest algorithm sha256 has digest a275d4ca594f414f18efc41f14983895fa9e2cf6188a5ccbe6aa4f2478490aad for file v1/content/paper.pdf which doesn't match calculated digest 55f9a8051f77a8b4f70f51740df21f89234a8223f4f55a6be207bdcc24e8d25d for that file (see https://ocfl.io/1.1/spec/#E093)\n[E093a] OCFL Object v1,v2,v3 inventory fixity block for digest algorithm md5 has digest 3b48e959dde46787fdb4a83968fc6b26 for file v1/content/paper.pdf which doesn't match calculated digest 215104aeb84f63b290a4588833762cdb for that file (see https://ocfl.io/1.1/spec/#E093)\n[E093a] OCFL Object v1,v2,v3 inventory fixity block for digest algorithm sha256 has digest a275d4ca594f414f18efc41f14983895fa9e2cf6188a5ccbe6aa4f2478490aad for file v1/content/paper.pdf which doesn't match calculated digest 55f9a8051f77a8b4f70f51740df21f89234a8223f4f55a6be207bdcc24e8d25d for that file (see https://ocfl.io/1.1/spec/#E093)"
+  },
+  {
+    "severity": "result",
+    "place": "owner cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq",
+    "message": "key log of cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq: latest version v1"
+  },
+  {
+    "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "beta",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
+  },
+  {
+    "severity": "result",
+    "place": "alpha",
+    "message": "latest signed version v4"
+  },
+  {
+    "severity": "result",
+    "place": "main",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "opensheaf.json",
+    "message": "removed: sheaf:t246sk3u3wh3wlb5a56s3dyaksosato7rz3odljzugartwz6dxia:cfot5emc26bk2sy4fksihrzyupt7zvrk5jnplnnvrilglsfngpbq (2026-11-20: Taken down for the tests.)"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "owner": "xkwacnqknthwxnolmnb6q6gnrf4dlvgd7vfmw4ruka5ye55qhg2q",
+  "name": "A forked owner",
+  "contact": "https://fixtures.example.org/forked/",
+  "baseUrl": "https://fixtures.example.org/forked/",
+  "profiles": [
+    "website"
+  ],
+  "storageLayout": "opensheaf-owner-name-storage-layout",
+  "mainCollection": "main",
+  "curator": {
+    "name": "Example, Ada",
+    "givenName": "Ada",
+    "familyName": "Example",
+    "affiliation": ""
+  },
+  "depositor": {
+    "name": "Ada Example",
+    "address": "https://fixtures.example.org/forked/"
+  },
+  "index": {
+    "html": {
+      "templates": "templates"
+    }
+  }
+}
