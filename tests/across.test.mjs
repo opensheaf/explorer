@@ -1,7 +1,7 @@
 // Generated from literate/72-tests-across.md by opensheaf-literate: edit the document, not this file.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Http } from '../app/http.js';
+import { Http, LIMITS } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { Resolver, Copy } from '../app/resolve.js';
 import { verdict, levelOfVersion, level, CONFIRMED, UNCHECKED, INCONSISTENT } from '../app/branches.js';
@@ -117,6 +117,23 @@ test('the statuses of pins (section 8.5)', async () => {
   assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/no-key-log')])).status, 'unchecked');
   assert.equal((await r.pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/unsigned')])).status, 'verified');
   assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('nowhere')])).status, 'unavailable');
+});
+
+test('a pin resolved again is read from the server again; locations are bounded', async () => {
+  const down = [];
+  const r = new Resolver(new Http({ fetch: diskFetch({ down }) }));
+  const alpha = pinOf('archive', 'alpha');
+  const pin = (resolver, where = [at('archive')]) => resolver.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, where);
+  assert.equal((await pin(r)).status, 'verified');
+  down.push(at('archive'));
+  assert.equal((await pin(r)).status, 'verified');
+  assert.equal((await pin(r.again())).status, 'unavailable');
+  const log = [];
+  const many = new Resolver(new Http({ fetch: diskFetch({ log }) }));
+  const where = Array.from({ length: 20 }, (_, k) => `https://mirror${k}.example.org/`);
+  assert.equal((await pin(many, where)).status, 'unavailable');
+  assert.equal(log.length, LIMITS.mirrors);
+  assert.ok(many.notes.some((n) => n.message.startsWith(`15 more location(s) not tried`)));
 });
 
 test('an owner ended by a fork, met by a resolver (sections 6.3 and 12.3)', async () => {

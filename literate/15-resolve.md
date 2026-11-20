@@ -152,7 +152,11 @@ pool and the page budget of the first).
 
 An archive is opened once; one that cannot be read, or is not of version
 0.2, counts as none, and is noted as unavailable, in the words of
-opensheaf-py.
+opensheaf-py. The places a resolver looks in are the archive explored and
+the locations it is given (the `at` of a URI or of a member, a parent's
+`url`): hints, which a hostile collection may make many, each costing
+requests and perhaps a time limit; at most `LIMITS.mirrors` of them are
+tried, and the resolver notes how many were left (section 15.2).
 
     // in app/resolve.js:
       source(where, options = {}) {
@@ -180,8 +184,21 @@ opensheaf-py.
 
       places(where) {
         const out = this.home ? [this.home.base] : [];
-        for (const w of where) if (typeof w === 'string' && w && !out.includes(baseOf(w))) out.push(baseOf(w));
-        return out;
+        const given = [];
+        for (const w of where) {
+          if (typeof w !== 'string' || !w) continue;
+          let base;
+          try {
+            base = baseOf(w);
+          } catch {
+            continue;
+          }
+          if (!out.includes(base) && !given.includes(base)) given.push(base);
+        }
+        if (given.length > LIMITS.mirrors) {
+          this.note('warning', `${given.length - LIMITS.mirrors} more location(s) not tried (at most ${LIMITS.mirrors} are tried, section 15.2)`);
+        }
+        return [...out, ...given.slice(0, LIMITS.mirrors)];
       }
 
 Key logs met

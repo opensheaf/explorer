@@ -100,8 +100,21 @@ export class Resolver {
 
   places(where) {
     const out = this.home ? [this.home.base] : [];
-    for (const w of where) if (typeof w === 'string' && w && !out.includes(baseOf(w))) out.push(baseOf(w));
-    return out;
+    const given = [];
+    for (const w of where) {
+      if (typeof w !== 'string' || !w) continue;
+      let base;
+      try {
+        base = baseOf(w);
+      } catch {
+        continue;
+      }
+      if (!out.includes(base) && !given.includes(base)) given.push(base);
+    }
+    if (given.length > LIMITS.mirrors) {
+      this.note('warning', `${given.length - LIMITS.mirrors} more location(s) not tried (at most ${LIMITS.mirrors} are tried, section 15.2)`);
+    }
+    return [...out, ...given.slice(0, LIMITS.mirrors)];
   }
 
   async keyLog(owner, where = [], options = {}) {

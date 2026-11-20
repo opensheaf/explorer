@@ -16,7 +16,7 @@ points, confirmed, unchecked and inconsistent.
     // in tests/across.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { Http } from '../app/http.js';
+    import { Http, LIMITS } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { Resolver, Copy } from '../app/resolve.js';
     import { verdict, levelOfVersion, level, CONFIRMED, UNCHECKED, INCONSISTENT } from '../app/branches.js';
@@ -200,6 +200,29 @@ match the pin will do, section 8.5); a version whose key log is missing
       assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/no-key-log')])).status, 'unchecked');
       assert.equal((await r.pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('broken/unsigned')])).status, 'verified');
       assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('nowhere')])).status, 'unavailable');
+    });
+
+A pin resolved again by the same resolver is answered from what it has
+read; a resolver made afresh (`again`) reads the servers again, and finds
+an archive gone. A member listing many locations has only the first
+`LIMITS.mirrors` tried, and the resolver notes the others.
+
+    // in tests of the statuses of pins:
+    test('a pin resolved again is read from the server again; locations are bounded', async () => {
+      const down = [];
+      const r = new Resolver(new Http({ fetch: diskFetch({ down }) }));
+      const alpha = pinOf('archive', 'alpha');
+      const pin = (resolver, where = [at('archive')]) => resolver.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, where);
+      assert.equal((await pin(r)).status, 'verified');
+      down.push(at('archive'));
+      assert.equal((await pin(r)).status, 'verified');
+      assert.equal((await pin(r.again())).status, 'unavailable');
+      const log = [];
+      const many = new Resolver(new Http({ fetch: diskFetch({ log }) }));
+      const where = Array.from({ length: 20 }, (_, k) => `https://mirror${k}.example.org/`);
+      assert.equal((await pin(many, where)).status, 'unavailable');
+      assert.equal(log.length, LIMITS.mirrors);
+      assert.ok(many.notes.some((n) => n.message.startsWith(`15 more location(s) not tried`)));
     });
 
 A key log is met in every archive the resolver reads: the owner of

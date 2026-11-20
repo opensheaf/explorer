@@ -10,10 +10,9 @@ export const LIMITS = {
   concurrency: 6,          // requests in flight at once
   depth: 3,                // levels of member collections followed
   pins: 2000,              // pins resolved in one walk through collections, or in one verification
-  mirrors: 5,              // mirrors tried for one pin, after the member's archive
+  mirrors: 5,              // locations of copies (at, hints) tried for one line, after the archive explored
   versions: 10_000,        // object versions of one object
   objects: 10_000,         // objects of one archive listed or verified
-  described: 200,          // object versions read to find the current version of a member
   nesting: 64,             // levels of arrays and objects in a JSON file
   retry: 30_000,           // milliseconds a busy server may ask to be left alone (Retry-After)
   pageRequests: 40_000,    // requests made for one page
