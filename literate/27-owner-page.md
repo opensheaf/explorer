@@ -160,8 +160,10 @@ The ORCID record is read from the public API of the registry,
 `https://pub.orcid.org/v3.0/<iD>/researcher-urls`, which answers in JSON
 when asked to (`Accept: application/json`) and lets any site read it; its
 links are `researcher-url[].url.value`. A link names the owner when its
-address contains the owner name, as a word of base32 of its own (not a
-part of a longer one). The domain's file is JSON of format
+address holds the owner name as a word of its own (not a part of a longer
+word of letters and digits), and is the first such word, as
+opensheaf-py reads it: `https://example.org/owner/<owner>/` or
+`sheaf:<owner>`. The domain's file is JSON of format
 `opensheaf-keeper/0.2`, with `owners`, and possibly `successors`, owner
 names it answers for mapped to their successors.
 
@@ -182,7 +184,7 @@ is not read, as for the locations named in archive data
     export const KEEPER_FORMAT = 'opensheaf-keeper/0.2';
     export const CONFIRMED = 'confirmed', CLAIMED = 'claimed only', NOT_CHECKED = 'not checked';
     const KEEPER_LIMIT = 2 ** 20;
-    const OWNER_WORD = /(?<![a-z2-7])[a-z2-7]{51}[aq](?![a-z2-7])/g;
+    const OWNER_WORD = /(?<![a-z0-9])[a-z2-7]{51}[aq](?![a-z0-9])/g;
 
     export function keeperPlace(keeper) {
       const orcid = /^https:\/\/orcid\.org\/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])$/.exec(keeper);
@@ -224,8 +226,9 @@ because the reader left the page is passed on.
       return place.kind === 'orcid' ? fromOrcid(data, owner, answer) : fromDomain(data, owner, answer, place.url);
     }
 
-On ORCID, a link that names the owner confirms it; a link that names the
-owner and one other owner name names a successor (section 6.6). An
+On ORCID, the first link that names the owner confirms it; if it names a
+second owner after it, that is its successor (section 6.6: "a link naming
+both"). An
 answer without the list of links is not the registry's, and leaves the
 link not checked.
 
@@ -234,12 +237,13 @@ link not checked.
       if (!isObject(data) || !Array.isArray(data['researcher-url'])) {
         return answer(NOT_CHECKED, 'the ORCID registry did not answer with the links of the record');
       }
-      const words = data['researcher-url'].map((r) => r?.url?.value).filter((u) => typeof u === 'string')
-        .map((u) => [...new Set(u.match(OWNER_WORD) || [])]).filter((w) => w.includes(owner));
-      if (!words.length) return answer(CLAIMED, 'no link of the ORCID record names this owner');
-      const successors = [...new Set(words.map((w) => w.filter((x) => x !== owner))
-        .filter((others) => others.length === 1).map(([x]) => x))];
-      return answer(CONFIRMED, 'a link of the ORCID record names this owner', successors);
+      for (const r of data['researcher-url']) {
+        const words = typeof r?.url?.value === 'string' ? r.url.value.match(OWNER_WORD) || [] : [];
+        if (words[0] !== owner) continue;
+        const next = words.slice(1).find((w) => w !== owner);
+        return answer(CONFIRMED, 'a link of the ORCID record names this owner', next ? [next] : []);
+      }
+      return answer(CLAIMED, 'no link of the ORCID record names this owner');
     }
 
     function fromDomain(data, owner, answer, url) {

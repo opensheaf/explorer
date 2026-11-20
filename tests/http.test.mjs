@@ -259,7 +259,8 @@ test('keepers confirmed, claimed only, or not checked (section 6.6)', async () =
   assert.equal(seen[0][1].credentials, 'omit');
   answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/${OWNER}`))];
   assert.deepEqual(await checkKeeper(http, ORCID_ID, OWNER), { status: CONFIRMED, reason: 'a link of the ORCID record names this owner', successors: [] });
-  answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/x${OWNER}`), link('https://example.org/'))];
+  answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/x${OWNER}`), link(`https://opensheaf.org/owner/${OWNER}9`),
+                                   link(`https://opensheaf.org/owner/${NEXT}/${OWNER}`), link('https://example.org/'))];
   assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);
   answers[orcidApi] = [200, record()];
   assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);

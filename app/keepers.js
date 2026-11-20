@@ -6,7 +6,7 @@ import { localKind } from './resolve.js';
 export const KEEPER_FORMAT = 'opensheaf-keeper/0.2';
 export const CONFIRMED = 'confirmed', CLAIMED = 'claimed only', NOT_CHECKED = 'not checked';
 const KEEPER_LIMIT = 2 ** 20;
-const OWNER_WORD = /(?<![a-z2-7])[a-z2-7]{51}[aq](?![a-z2-7])/g;
+const OWNER_WORD = /(?<![a-z0-9])[a-z2-7]{51}[aq](?![a-z0-9])/g;
 
 export function keeperPlace(keeper) {
   const orcid = /^https:\/\/orcid\.org\/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])$/.exec(keeper);
@@ -45,12 +45,13 @@ function fromOrcid(data, owner, answer) {
   if (!isObject(data) || !Array.isArray(data['researcher-url'])) {
     return answer(NOT_CHECKED, 'the ORCID registry did not answer with the links of the record');
   }
-  const words = data['researcher-url'].map((r) => r?.url?.value).filter((u) => typeof u === 'string')
-    .map((u) => [...new Set(u.match(OWNER_WORD) || [])]).filter((w) => w.includes(owner));
-  if (!words.length) return answer(CLAIMED, 'no link of the ORCID record names this owner');
-  const successors = [...new Set(words.map((w) => w.filter((x) => x !== owner))
-    .filter((others) => others.length === 1).map(([x]) => x))];
-  return answer(CONFIRMED, 'a link of the ORCID record names this owner', successors);
+  for (const r of data['researcher-url']) {
+    const words = typeof r?.url?.value === 'string' ? r.url.value.match(OWNER_WORD) || [] : [];
+    if (words[0] !== owner) continue;
+    const next = words.slice(1).find((w) => w !== owner);
+    return answer(CONFIRMED, 'a link of the ORCID record names this owner', next ? [next] : []);
+  }
+  return answer(CLAIMED, 'no link of the ORCID record names this owner');
 }
 
 function fromDomain(data, owner, answer, url) {
