@@ -213,6 +213,7 @@ test('a contested line, an ended owner, the statuses of members', async () => {
   assert.match(text, /contested/);
   assert.match(text, /no signed version that is not contested/);
   assert.ok(text.includes(`sheaf:${idOf('exposed', 'other').split(':')[1]}`));
+  assert.ok(!text.includes(idOf('exposed', 'other')), 'the line of its originator is written sheaf:<name> only');
   const forked = await session('forked/', 0);
   forked.go();
   await showOwner(forked.ctx, forked.main, idOf('before', 'forked').split(':')[2]);

@@ -44,7 +44,7 @@ export async function showObject(ctx, root, id, ver) {
     h('header', { class: 'page-head' },
       h('p', { class: 'kicker' }, parts.draft ? 'Draft' : isDocument ? 'Document' : 'Collection', ' · ',
         h('a', { href: pages.archive() }, a.name)),
-      h('h1', {}, rich(titleOf(dc) || a.labelOf(id) || id)),
+      h('h1', {}, rich(titleOf(dc) || a.labelOf(id) || (parts.draft ? id : lineUri(id, rec)))),
       h('p', { class: 'creators' }, creatorsOf(dc).join('; ')),
       h('p', { class: 'chips' }, a.labelOf(id) ? [h('code', {}, a.labelOf(id)), ' '] : null, statusChip(s.status), ' ',
         chip(`object version ${shown}`), ' ', status ? [verdictChip(status, 'the status of its signatures (section 7.3)'), ' '] : null,
@@ -54,7 +54,7 @@ export async function showObject(ctx, root, id, ver) {
     parts.draft ? null : identity(ctx, s, id, shown, rec),
     objectState(ctx, s, id, shown, obj, fileUrl, status),
     abstractOf(dc) ? section('Abstract', h('p', { class: 'abstract' }, rich(abstractOf(dc)))) : null,
-    isObject(s.head?.parent) ? branchPoints(ctx, s, id) : null,
+    isObject(s.head?.parent) ? branchPoints(ctx, s, id, rec) : null,
     section(`Object version ${shown}`, versionFacts(ctx, s, id, shown, obj, dc, fileUrl(shown))),
     section('Files', filesTable(ctx, s, id, shown, obj)),
     isDocument ? documentVersions(s, id, shown, descs, ref(a, id), rec) : null,
@@ -85,7 +85,6 @@ function identity(ctx, s, id, shown, rec) {
   return facts([
     ['Line', copyable(lineUri(id, rec))],
     ['This version', pin ? copyable(pin) : h('span', { class: 'muted' }, 'not signed: it has no pin a reader may rely on (section 7.3)')],
-    ['Identifier', copyable(id)],
     ['Name', [h('code', {}, name), rec && rec.originator !== owner ? h('span', { class: 'muted' }, ' (a branch: its owner is not the originator of the work)') : null]],
     ['Owner', h('a', { href: pages.owner(owner) }, h('code', {}, owner))],
     ['Originator', rec?.originator && rec.originator !== owner ? h('a', { href: pages.owner(rec.originator) }, h('code', {}, rec.originator)) : null],
@@ -140,7 +139,7 @@ function objectState(ctx, s, id, shown, obj, fileUrl, status) {
   return parts;
 }
 
-function branchPoints(ctx, s, id) {
+function branchPoints(ctx, s, id, rec) {
   const a = ctx.archive;
   const list = h('ul', { class: 'plain' });
   let before = null;
@@ -153,7 +152,7 @@ function branchPoints(ctx, s, id) {
     const pid = typeof p.name === 'string' && typeof p.owner === 'string' ? objectId(p.name, p.owner) : null;
     const base = typeof p.url === 'string' && p.url.includes('/ocfl/') ? p.url.split('/ocfl/')[0] + '/' : null;
     list.append(h('li', {}, h('strong', {}, `At ${v}: `), 'object version ', String(p.objectVersion ?? '?'),
-      ` (document version ${String(p.documentVersion ?? '?')}) of `, pid ? copyable(pid) : '?', ' ',
+      ` (document version ${String(p.documentVersion ?? '?')}) of `, pid ? copyable(lineUri(pid, rec)) : '?', ' ',
       digest(p.inventorySha512), ' ', mark,
       base ? [' · ', h('a', { href: elsewhere(base, pid ? pages.object(pid, p.objectVersion) : '') }, 'explore the parent')] : null));
     (async () => {

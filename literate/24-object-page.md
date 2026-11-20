@@ -93,7 +93,7 @@ left would be drawn below the next one.
         h('header', { class: 'page-head' },
           h('p', { class: 'kicker' }, parts.draft ? 'Draft' : isDocument ? 'Document' : 'Collection', ' · ',
             h('a', { href: pages.archive() }, a.name)),
-          h('h1', {}, rich(titleOf(dc) || a.labelOf(id) || id)),
+          h('h1', {}, rich(titleOf(dc) || a.labelOf(id) || (parts.draft ? id : lineUri(id, rec)))),
           h('p', { class: 'creators' }, creatorsOf(dc).join('; ')),
           h('p', { class: 'chips' }, a.labelOf(id) ? [h('code', {}, a.labelOf(id)), ' '] : null, statusChip(s.status), ' ',
             chip(`object version ${shown}`), ' ', status ? [verdictChip(status, 'the status of its signatures (section 7.3)'), ' '] : null,
@@ -103,7 +103,7 @@ left would be drawn below the next one.
         parts.draft ? null : identity(ctx, s, id, shown, rec),
         objectState(ctx, s, id, shown, obj, fileUrl, status),
         abstractOf(dc) ? section('Abstract', h('p', { class: 'abstract' }, rich(abstractOf(dc)))) : null,
-        isObject(s.head?.parent) ? branchPoints(ctx, s, id) : null,
+        isObject(s.head?.parent) ? branchPoints(ctx, s, id, rec) : null,
         section(`Object version ${shown}`, versionFacts(ctx, s, id, shown, obj, dc, fileUrl(shown))),
         section('Files', filesTable(ctx, s, id, shown, obj)),
         isDocument ? documentVersions(s, id, shown, descs, ref(a, id), rec) : null,
@@ -119,8 +119,12 @@ The identity of a line
 ----------------------
 
 A line is named by `sheaf:<name>:<owner>`, and written without its owner
-part when its owner is the originator of the work (section 12.1); the
-page gives that URI, the URI of the version shown, a pin, when the version
+part when its owner is the originator of the work (section 12.1): the
+page gives the line in this canonical form only, `sheaf:<name>` for the
+originator's line and `sheaf:<name>:<owner>` for a branch, everywhere it
+names it and in what it offers to copy, so that a citation compares byte
+for byte with the relations files record (sections 12.2 and A.3). It
+gives that URI, the URI of the version shown, a pin, when the version
 is signed (`/v<n>?sha512=<digest>`, the document version and the digest
 of the inventory of the object version that holds it), and the owner,
 with its page. A citation of a fixed version should carry the pin
@@ -147,7 +151,6 @@ with its page. A citation of a fixed version should carry the pin
       return facts([
         ['Line', copyable(lineUri(id, rec))],
         ['This version', pin ? copyable(pin) : h('span', { class: 'muted' }, 'not signed: it has no pin a reader may rely on (section 7.3)')],
-        ['Identifier', copyable(id)],
         ['Name', [h('code', {}, name), rec && rec.originator !== owner ? h('span', { class: 'muted' }, ' (a branch: its owner is not the originator of the work)') : null]],
         ['Owner', h('a', { href: pages.owner(owner) }, h('code', {}, owner))],
         ['Originator', rec?.originator && rec.originator !== owner ? h('a', { href: pages.owner(rec.originator) }, h('code', {}, rec.originator)) : null],
@@ -220,13 +223,14 @@ Branch points
 
 A branch shows its branch points: the parent version of its first
 version, and of every version that moves it (section 9.4), each with the
-parent's line and pin, the address it gives as a hint, and the verdict
+parent's line, in canonical form (a branch has the genesis record of its
+parent, so the originator is that of the branch), and pin, the address it gives as a hint, and the verdict
 of chapter [09](09-branches.md), against the key logs this archive keeps
 beside the branch (section 6.5). The verdicts are computed when the page
 is shown; they read the evidence, a few small files.
 
     // in app/view-object.js:
-    function branchPoints(ctx, s, id) {
+    function branchPoints(ctx, s, id, rec) {
       const a = ctx.archive;
       const list = h('ul', { class: 'plain' });
       let before = null;
@@ -239,7 +243,7 @@ is shown; they read the evidence, a few small files.
         const pid = typeof p.name === 'string' && typeof p.owner === 'string' ? objectId(p.name, p.owner) : null;
         const base = typeof p.url === 'string' && p.url.includes('/ocfl/') ? p.url.split('/ocfl/')[0] + '/' : null;
         list.append(h('li', {}, h('strong', {}, `At ${v}: `), 'object version ', String(p.objectVersion ?? '?'),
-          ` (document version ${String(p.documentVersion ?? '?')}) of `, pid ? copyable(pid) : '?', ' ',
+          ` (document version ${String(p.documentVersion ?? '?')}) of `, pid ? copyable(lineUri(pid, rec)) : '?', ' ',
           digest(p.inventorySha512), ' ', mark,
           base ? [' · ', h('a', { href: elsewhere(base, pid ? pages.object(pid, p.objectVersion) : '') }, 'explore the parent')] : null));
         (async () => {
