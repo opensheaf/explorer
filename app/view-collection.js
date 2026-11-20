@@ -1,5 +1,5 @@
 // Generated from literate/25-collection-page.md by opensheaf-literate: edit the document, not this file.
-import { h, append, clear, digest, doiLink, plural } from './dom.js';
+import { h, append, clear, digest, doiLink, plural, copyable } from './dom.js';
 import { rich } from './text.js';
 import { facts, chip, statusChip, verdictChip, section, jsonView, errorBox, loading, pages, elsewhere, ref } from './ui.js';
 import { summary } from './summary.js';
@@ -252,7 +252,7 @@ function memberItem(ctx, home, m, k, level, list, type) {
       cite.title ? h('span', { class: 'muted small', title: 'cached citation, not authoritative (section 8.2)' }, ' (cached)') : null),
     h('div', { class: 'creators' }, Array.isArray(cite.creators) ? cite.creators.join('; ') : '',
       cite.year ? ` · ${cite.year}` : ''),
-    h('div', { class: 'small' }, chip(String(m.kind ?? '?')), ' ', h('code', { title: id || '' }, held ? ref(home, id) : String(id ?? '?')), ' · ',
+    h('div', { class: 'small' }, chip(String(m.kind ?? '?')), ' ', id ? copyable(String(id), held ? ref(home, id) : String(id)) : '?', ' · ',
       held ? (home === ctx.archive ? 'held in this archive' : `held in the archive of this collection, ${home.name}`)
         : ['copies at ', at.length ? at.map((u) => [h('a', { href: elsewhere(u) }, u), ' ']) : '?'],
       m.doi ? [' · DOI ', doiLink(m.doi)] : null),

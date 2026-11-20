@@ -25,7 +25,7 @@ page of its owner (chapter [27](27-owner-page.md)).
 The module is `app/view-object.js`.
 
     // in app/view-object.js:
-    import { h, append, external, doiLink, identifierLink, digest, bytes, timestamp, plural } from './dom.js';
+    import { h, append, external, doiLink, identifierLink, digest, bytes, timestamp, plural, copyable } from './dom.js';
     import { rich } from './text.js';
     import { facts, chip, statusChip, verdictChip, section, jsonView, jsonText, errorBox, loading, noteView, pages, elsewhere,
              ref } from './ui.js';
@@ -145,9 +145,9 @@ with its page. A citation of a fixed version should carry the pin
       const { name, owner } = parseId(id);
       const pin = pinUri(s, id, shown, rec);
       return facts([
-        ['Line', h('code', { class: 'uri' }, lineUri(id, rec))],
-        ['This version', pin ? h('code', { class: 'uri' }, pin) : h('span', { class: 'muted' }, 'not signed: it has no pin a reader may rely on (section 7.3)')],
-        ['Identifier', h('code', {}, id)],
+        ['Line', copyable(lineUri(id, rec))],
+        ['This version', pin ? copyable(pin) : h('span', { class: 'muted' }, 'not signed: it has no pin a reader may rely on (section 7.3)')],
+        ['Identifier', copyable(id)],
         ['Name', [h('code', {}, name), rec && rec.originator !== owner ? h('span', { class: 'muted' }, ' (a branch: its owner is not the originator of the work)') : null]],
         ['Owner', h('a', { href: pages.owner(owner) }, h('code', {}, owner))],
         ['Originator', rec?.originator && rec.originator !== owner ? h('a', { href: pages.owner(rec.originator) }, h('code', {}, rec.originator)) : null],
@@ -239,7 +239,7 @@ is shown; they read the evidence, a few small files.
         const pid = typeof p.name === 'string' && typeof p.owner === 'string' ? objectId(p.name, p.owner) : null;
         const base = typeof p.url === 'string' && p.url.includes('/ocfl/') ? p.url.split('/ocfl/')[0] + '/' : null;
         list.append(h('li', {}, h('strong', {}, `At ${v}: `), 'object version ', String(p.objectVersion ?? '?'),
-          ` (document version ${String(p.documentVersion ?? '?')}) of `, h('code', {}, String(pid ?? '?')), ' ',
+          ` (document version ${String(p.documentVersion ?? '?')}) of `, pid ? copyable(pid) : '?', ' ',
           digest(p.inventorySha512), ' ', mark,
           base ? [' · ', h('a', { href: elsewhere(base, pid ? pages.object(pid, p.objectVersion) : '') }, 'explore the parent')] : null));
         (async () => {
@@ -409,7 +409,7 @@ it is.
             dateOf(dc, 'Available', 'Created') ? [' · ', dateOf(dc, 'Available', 'Created')] : null,
             about ? [' · ', chip(plural(about, 'notice'), 'warn')] : null,
             obj?.changes?.text ? h('div', { class: 'change' }, rich(obj.changes.text)) : null,
-            pin ? h('div', { class: 'small' }, h('code', { class: 'uri' }, pin)) : null);
+            pin ? h('div', { class: 'small' }, copyable(pin)) : null);
         })));
     }
 

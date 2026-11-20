@@ -57,6 +57,20 @@ export function identifierLink(value, type) {
   return String(value ?? '');
 }
 
+export function copyable(text, shown = text) {
+  const el = h('code', { class: 'uri copy', title: `${text} (click to copy)`, role: 'button', tabindex: '0' }, shown);
+  const copy = () => {
+    const done = () => { el.classList.add('copied'); setTimeout(() => el.classList.remove('copied'), 1200); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents(el);
+                           const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, select);
+    else select();
+  };
+  el.addEventListener('click', copy);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
+  return el;
+}
+
 export function bytes(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '?';
   const units = ['bytes', 'kB', 'MB', 'GB', 'TB'];

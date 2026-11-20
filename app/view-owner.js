@@ -1,5 +1,5 @@
 // Generated from literate/27-owner-page.md by opensheaf-literate: edit the document, not this file.
-import { h, append, digest, timestamp, plural } from './dom.js';
+import { h, append, digest, timestamp, plural, copyable } from './dom.js';
 import { facts, chip, verdictChip, section, jsonView, errorBox, loading, pages, ref } from './ui.js';
 import { objectId, OWNER_NAME } from './names.js';
 import { describeVersion, jsonOrNull } from './owners.js';
@@ -33,7 +33,7 @@ export async function showOwner(ctx, root, owner) {
     state(log),
     facts([
       ['Owner name', h('code', {}, owner)],
-      ['Key log', [h('code', { class: 'uri' }, `sheaf:${owner}`), ' ', h('span', { class: 'muted' }, `(${plural(log.versions.length, 'version')} held)`)]],
+      ['Key log', [copyable(`sheaf:${owner}`), ' ', h('span', { class: 'muted' }, `(${plural(log.versions.length, 'version')} held)`)]],
       ['Created', String(genesis.created ?? '?')],
       ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => h('div', {}, String(k))) : null],
       ['Current keys', latest ? latest.keys.keys.map((k) => h('div', {}, h('code', {}, String(k)))) : null],

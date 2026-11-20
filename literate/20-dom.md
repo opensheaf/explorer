@@ -108,6 +108,31 @@ when it is an address, and text otherwise.
       return String(value ?? '');
     }
 
+Identifiers copied on a click
+-----------------------------
+
+The identifiers a reader will paste elsewhere, `sheaf:` URIs, pins and
+identifiers of lines, are copied to the clipboard when clicked (or when
+Enter is pressed on them): the text copied is the whole identifier, also
+when the page shows a shorter name for it, and a short "copied" says it
+was done. Where the browser refuses (an address that is not secure), the
+identifier is selected instead, ready to be copied by hand.
+
+    // in formatting numbers, digests and dates:
+    export function copyable(text, shown = text) {
+      const el = h('code', { class: 'uri copy', title: `${text} (click to copy)`, role: 'button', tabindex: '0' }, shown);
+      const copy = () => {
+        const done = () => { el.classList.add('copied'); setTimeout(() => el.classList.remove('copied'), 1200); };
+        const select = () => { const r = document.createRange(); r.selectNodeContents(el);
+                               const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, select);
+        else select();
+      };
+      el.addEventListener('click', copy);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
+      return el;
+    }
+
 Numbers, digests and dates
 --------------------------
 
