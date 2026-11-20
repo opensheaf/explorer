@@ -1246,6 +1246,7 @@ on fixtures served slowly, so that the reader can leave in the middle.
     const { showCollection } = await import('../app/view-collection.js');
     const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
     const { showVerify } = await import('../app/view-verify.js');
+    const { showOwner } = await import('../app/view-owner.js');
     const { clear } = await import('../app/dom.js');
 
     <<a session of the explorer on slow fixtures>>
@@ -1253,6 +1254,8 @@ on fixtures served slowly, so that the reader can leave in the middle.
     <<tests of pages left>>
 
     <<tests of pages that grow>>
+
+    <<tests of what the pages show>>
 
 The imitation keeps the tree of nodes and the listeners; the pages are
 imported after it is installed, since they create elements through the
@@ -1501,6 +1504,38 @@ run.
       for (const box of boxes) assert.ok(main.all('input').includes(box), 'a box was drawn again');
       go();
       assert.equal(ctx.verification.listeners.size, 0);
+    });
+
+What the pages show
+-------------------
+
+What the pages of version 0.2 add, on the fixtures: the page of a line
+gives its `sheaf:` URI and the status of the signatures of each version,
+and says when a version is contested and the line has no signed version;
+the page of an owner whose key log forks says that it has ended, at the
+fork point; the page of a catalogue resolves its members, wherever they
+are, with the statuses of section 8.5.
+
+    // in tests of what the pages show:
+    test('a contested line, an ended owner, the statuses of members', async () => {
+      const other = await session('other/', 0);
+      other.go();
+      await showObject(other.ctx, other.main, idOf('exposed', 'other'));
+      const text = other.main.textContent;
+      assert.match(text, /contested/);
+      assert.match(text, /no signed version that is not contested/);
+      assert.ok(text.includes(`sheaf:${idOf('exposed', 'other').split(':')[1]}`));
+      const forked = await session('forked/', 0);
+      forked.go();
+      await showOwner(forked.ctx, forked.main, idOf('before', 'forked').split(':')[2]);
+      assert.match(forked.main.textContent, /ended by a fork at v2/);
+      other.go();
+      await showCollection(other.ctx, other.main, idOf('shelf', 'other'));
+      const run = other.main.all('button').find((b) => b.textContent === 'Resolve and check all pins');
+      await run.listeners.click[0]();
+      const report = other.main.all('p').find((p) => /pins? resolved/.test(p.textContent));
+      assert.match(report.textContent, /verified/);
+      assert.doesNotMatch(report.textContent, /mismatch|unavailable|not a version/);
     });
 
 Verification
