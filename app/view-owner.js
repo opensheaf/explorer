@@ -3,6 +3,7 @@ import { h, append, digest, timestamp, plural, copyable, external } from './dom.
 import { facts, chip, verdictChip, section, jsonView, errorBox, loading, pages, ref } from './ui.js';
 import { objectId, OWNER_NAME } from './names.js';
 import { describeVersion, jsonOrNull } from './owners.js';
+import { checkKeeper, CONFIRMED, CLAIMED } from './keepers.js';
 
 export async function showOwner(ctx, root, owner) {
   const a = ctx.archive;
@@ -35,7 +36,7 @@ export async function showOwner(ctx, root, owner) {
       ['Owner name', h('code', {}, owner)],
       ['Key log', [copyable(`sheaf:${owner}`), ' ', h('span', { class: 'muted' }, `(${plural(log.versions.length, 'version')} held)`)]],
       ['Created', String(genesis.created ?? '?')],
-      ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => h('div', {}, external(String(k)))) : null],
+      ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => keeper(ctx, String(k), owner, log)) : null],
       ['Current keys', latest ? latest.keys.keys.map((k) => h('div', {}, h('code', {}, String(k)))) : null],
       ['Threshold', latest ? `${latest.keys.threshold} of ${latest.keys.keys.length} current keys sign a version of a line` : null],
       ['Rotation keys', latest ? `${latest.keys.nextThreshold} of ${latest.keys.next.length} sign the next version of the key log` : null],
@@ -98,4 +99,25 @@ function ownedLines(a, lines) {
   return section('Lines of this owner in this archive', h('ul', { class: 'plain' }, lines.map((o) => h('li', {},
     h('a', { href: (o.kind === 'collection' ? pages.collection : pages.object)(ref(a, o.id)) }, ref(a, o.id)),
     ' ', chip(String(o.kind ?? '?')), ' ', o.status === 'withdrawn' ? chip('withdrawn', 'bad') : null))));
+}
+
+function keeper(ctx, k, owner, log) {
+  const mark = h('span', {}, loading('Checking…'));
+  const tones = { [CONFIRMED]: 'ok', [CLAIMED]: 'warn' };
+  const accepted = log.side().slice(1).find((v) => v.keys?.ended && (!log.forkPoint || v.number < log.forkPoint))?.keys.successor ?? null;
+  (async () => {
+    let result;
+    try {
+      result = await checkKeeper(ctx.http, k, owner, { signal: ctx.signal });
+    } catch {
+      return;
+    }
+    mark.replaceChildren(chip(result.status, tones[result.status] || ''),
+      h('span', { class: 'small muted' }, ` ${result.reason} (section 6.6)`),
+      ...result.successors.map((succ) => h('div', { class: 'small' }, 'The keeper names a successor, ', h('code', {}, succ), ': ',
+        accepted === succ ? 'the one the key log names too.'
+          : accepted ? 'a claim, since the key log names another (section 6.6).'
+          : 'named by the keeper; it does not by itself end the owner, and readers never follow it by themselves.')));
+  })();
+  return h('div', {}, external(k), ' ', mark);
 }

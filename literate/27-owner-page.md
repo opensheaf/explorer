@@ -5,7 +5,8 @@ An owner is a keyed identity, named by its owner name, whose key log is
 the line of its owner object, `sheaf:<owner>:<owner>` (section 6). The
 page of an owner shows what a reader needs to weigh what it signs: its
 genesis record (when and with which keys it was created, and its keeper,
-as a link, section 6.6), every version of its key log with what it did and whether
+as a link, with whether the keeper confirms it and the successor it may
+name, section 6.6), every version of its key log with what it did and whether
 it is a version of the key log, the current keys of its latest version,
 the keys it has exposed (section 6.3), whether it has ended, by an ending
 version or by a fork of its key log, with its fork point and its
@@ -14,13 +15,15 @@ successor (sections 6.3 and 6.6), the problems the checks of section
 one this archive keeps beside its lines (section 6.5): a copy that stops
 early looks complete, which the page says.
 
-The module is `app/view-owner.js`.
+The module is `app/view-owner.js`, and the check of the keeper is
+`app/keepers.js`.
 
     // in app/view-owner.js:
     import { h, append, digest, timestamp, plural, copyable, external } from './dom.js';
     import { facts, chip, verdictChip, section, jsonView, errorBox, loading, pages, ref } from './ui.js';
     import { objectId, OWNER_NAME } from './names.js';
     import { describeVersion, jsonOrNull } from './owners.js';
+    import { checkKeeper, CONFIRMED, CLAIMED } from './keepers.js';
 
 The page reads the key log (chapter [14](14-archive.md)), which also
 checks it, and draws it. An owner name that is not one, or an owner whose
@@ -58,7 +61,7 @@ key log the archive does not hold, is said so.
           ['Owner name', h('code', {}, owner)],
           ['Key log', [copyable(`sheaf:${owner}`), ' ', h('span', { class: 'muted' }, `(${plural(log.versions.length, 'version')} held)`)]],
           ['Created', String(genesis.created ?? '?')],
-          ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => h('div', {}, external(String(k)))) : null],
+          ['Keeper', Array.isArray(genesis.keeper) ? genesis.keeper.map((k) => keeper(ctx, String(k), owner, log)) : null],
           ['Current keys', latest ? latest.keys.keys.map((k) => h('div', {}, h('code', {}, String(k)))) : null],
           ['Threshold', latest ? `${latest.keys.threshold} of ${latest.keys.keys.length} current keys sign a version of a line` : null],
           ['Rotation keys', latest ? `${latest.keys.nextThreshold} of ${latest.keys.next.length} sign the next version of the key log` : null],
@@ -135,4 +138,145 @@ signed (section 6.1).
       return section('Lines of this owner in this archive', h('ul', { class: 'plain' }, lines.map((o) => h('li', {},
         h('a', { href: (o.kind === 'collection' ? pages.collection : pages.object)(ref(a, o.id)) }, ref(a, o.id)),
         ' ', chip(String(o.kind ?? '?')), ' ', o.status === 'withdrawn' ? chip('withdrawn', 'bad') : null))));
+    }
+
+The keeper
+----------
+
+A keeper answers for an owner, and may confirm it in a place only the
+keeper controls (section 6.6): a link naming the owner in its ORCID
+record, or the file `/.well-known/opensheaf` of its domain, which lists
+the owners it answers for. The page reads that place when it is shown,
+and says beside the link whether the keeper is *confirmed* (the place
+names the owner), *claimed only* (the place was read, and does not name
+it: the owner names the keeper, the keeper does not answer), or *not
+checked*, with the reason (the network, a server that does not let other
+sites read it). A confirmation is read as it is now: a keeper who
+withdraws it ends the link, and what the owner signed stays authentic.
+The link says who answers for the owner, never who owns its lines, which
+only its keys decide.
+
+The ORCID record is read from the public API of the registry,
+`https://pub.orcid.org/v3.0/<iD>/researcher-urls`, which answers in JSON
+when asked to (`Accept: application/json`) and lets any site read it; its
+links are `researcher-url[].url.value`. A link names the owner when its
+address contains the owner name, as a word of base32 of its own (not a
+part of a longer one). The domain's file is JSON of format
+`opensheaf-keeper/0.2`, with `owners`, and possibly `successors`, owner
+names it answers for mapped to their successors.
+
+Both are read through the [HTTP client](10-http.md), with its time
+limits, without credentials, and within the budget of the page; a file
+larger than a mebibyte is not a keeper's. The ORCID registry is a public
+host, and so is a keeper's domain; one that is local or private
+(`https://localhost/`, `https://192.168.1.1/`), which a hostile genesis
+record could name to have the reader's browser probe its own network,
+is not read, as for the locations named in archive data
+([resolving members](15-resolve.md)).
+
+    // in app/keepers.js:
+    import { OWNER_NAME, orcidValid, isObject } from './names.js';
+    import { parseJson } from './http.js';
+    import { localKind } from './resolve.js';
+
+    export const KEEPER_FORMAT = 'opensheaf-keeper/0.2';
+    export const CONFIRMED = 'confirmed', CLAIMED = 'claimed only', NOT_CHECKED = 'not checked';
+    const KEEPER_LIMIT = 2 ** 20;
+    const OWNER_WORD = /(?<![a-z2-7])[a-z2-7]{51}[aq](?![a-z2-7])/g;
+
+    export function keeperPlace(keeper) {
+      const orcid = /^https:\/\/orcid\.org\/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])$/.exec(keeper);
+      if (orcid) {
+        return orcidValid(keeper) ? { kind: 'orcid', url: `https://pub.orcid.org/v3.0/${orcid[1]}/researcher-urls` } : null;
+      }
+      if (/^https:\/\/[a-z0-9.-]+\/$/.test(keeper)) return { kind: 'domain', url: `${keeper}.well-known/opensheaf` };
+      return null;
+    }
+
+The answer is a status, the reason for it, and the successors the keeper
+names for the owner, if any. A file that is missing (404 or 410), or that
+is not what it should be, is read: the keeper does not confirm. A request
+that fails otherwise leaves the link not checked. A request cancelled
+because the reader left the page is passed on.
+
+    // in app/keepers.js:
+    export async function checkKeeper(http, keeper, owner, { signal } = {}) {
+      const answer = (status, reason, successors = []) => ({ status, reason, successors });
+      const place = keeperPlace(keeper);
+      if (!place) return answer(NOT_CHECKED, 'the keeper is neither an ORCID iD nor a domain (section 6.6)');
+      const local = localKind(new URL(place.url).hostname);
+      if (local) return answer(NOT_CHECKED, `the keeper's domain is ${local}, which the explorer does not read`);
+      const missing = place.kind === 'orcid' ? 'the ORCID registry has no record of this iD'
+        : 'the keeper\'s domain has no file /.well-known/opensheaf';
+      let data;
+      try {
+        const bytes = await http.request(place.url, { limit: KEEPER_LIMIT, signal,
+          headers: place.kind === 'orcid' ? { Accept: 'application/json' } : undefined });
+        data = parseJson(bytes, place.url);
+      } catch (error) {
+        if (error?.kind === 'aborted') throw error;
+        if (error?.kind === 'not-found') return answer(CLAIMED, missing);
+        if (error?.kind === 'json' || error?.kind === 'html' || error?.kind === 'too-large') {
+          return answer(CLAIMED, `${place.url} is not a keeper's confirmation (${error.detail})`);
+        }
+        return answer(NOT_CHECKED, error?.detail || String(error?.message || error));
+      }
+      return place.kind === 'orcid' ? fromOrcid(data, owner, answer) : fromDomain(data, owner, answer, place.url);
+    }
+
+On ORCID, a link that names the owner confirms it; a link that names the
+owner and one other owner name names a successor (section 6.6). An
+answer without the list of links is not the registry's, and leaves the
+link not checked.
+
+    // in app/keepers.js:
+    function fromOrcid(data, owner, answer) {
+      if (!isObject(data) || !Array.isArray(data['researcher-url'])) {
+        return answer(NOT_CHECKED, 'the ORCID registry did not answer with the links of the record');
+      }
+      const words = data['researcher-url'].map((r) => r?.url?.value).filter((u) => typeof u === 'string')
+        .map((u) => [...new Set(u.match(OWNER_WORD) || [])]).filter((w) => w.includes(owner));
+      if (!words.length) return answer(CLAIMED, 'no link of the ORCID record names this owner');
+      const successors = [...new Set(words.map((w) => w.filter((x) => x !== owner))
+        .filter((others) => others.length === 1).map(([x]) => x))];
+      return answer(CONFIRMED, 'a link of the ORCID record names this owner', successors);
+    }
+
+    function fromDomain(data, owner, answer, url) {
+      if (!isObject(data) || data.format !== KEEPER_FORMAT || !Array.isArray(data.owners)) {
+        return answer(CLAIMED, `${url} is not a keeper's file of format ${KEEPER_FORMAT}`);
+      }
+      if (!data.owners.includes(owner)) return answer(CLAIMED, `${url} does not list this owner`);
+      const succ = isObject(data.successors) && Object.hasOwn(data.successors, owner) ? data.successors[owner] : null;
+      return answer(CONFIRMED, `${url} lists this owner`,
+        typeof succ === 'string' && OWNER_NAME.test(succ) && succ !== owner ? [succ] : []);
+    }
+
+On the page, the link to the keeper is followed by its status, checked
+once the rest of the page is drawn. A successor the keeper names is
+weighed against the key log (section 6.6): the accepted successor is the
+one an ending version before any fork point names, and only failing it
+the keeper's; a keeper naming another is a claim. A successor is a hint,
+never followed.
+
+    // in app/view-owner.js:
+    function keeper(ctx, k, owner, log) {
+      const mark = h('span', {}, loading('Checking…'));
+      const tones = { [CONFIRMED]: 'ok', [CLAIMED]: 'warn' };
+      const accepted = log.side().slice(1).find((v) => v.keys?.ended && (!log.forkPoint || v.number < log.forkPoint))?.keys.successor ?? null;
+      (async () => {
+        let result;
+        try {
+          result = await checkKeeper(ctx.http, k, owner, { signal: ctx.signal });
+        } catch {
+          return;
+        }
+        mark.replaceChildren(chip(result.status, tones[result.status] || ''),
+          h('span', { class: 'small muted' }, ` ${result.reason} (section 6.6)`),
+          ...result.successors.map((succ) => h('div', { class: 'small' }, 'The keeper names a successor, ', h('code', {}, succ), ': ',
+            accepted === succ ? 'the one the key log names too.'
+              : accepted ? 'a claim, since the key log names another (section 6.6).'
+              : 'named by the keeper; it does not by itself end the owner, and readers never follow it by themselves.')));
+      })();
+      return h('div', {}, external(k), ' ', mark);
     }

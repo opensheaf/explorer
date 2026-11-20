@@ -271,14 +271,14 @@ export class Http {
     return parsed.href;
   }
 
-  async request(url, { method = 'GET', limit = LIMITS.json, signal } = {}) {
+  async request(url, { method = 'GET', limit = LIMITS.json, signal, headers } = {}) {
     url = this.checkUrl(url);
     const cancelled = () => new FetchError('aborted', url, 'cancelled');
     for (const wait of [1000, 3000, null]) {
       const release = await this.run.acquire(signal).catch(() => { throw cancelled(); });
       let answer;
       try {
-        answer = await this.attempt(url, method, limit, signal, wait !== null);
+        answer = await this.attempt(url, method, limit, signal, wait !== null, headers);
       } finally {
         release();
       }
@@ -287,7 +287,7 @@ export class Http {
     }
   }
 
-  async attempt(url, method, limit, signal, canRetry) {
+  async attempt(url, method, limit, signal, canRetry, headers) {
     const room = this.budget ? this.budget.bytes - this.spent.bytes : Infinity;
     if (this.budget && (this.spent.requests >= this.budget.requests || room <= 0)) {
       throw new FetchError('budget', url, `not read: this page has made ${this.spent.requests} requests ` +
@@ -301,7 +301,8 @@ export class Http {
     try {
       let response;
       try {
-        response = await this.fetchImpl(url, { method, signal: both, credentials: 'omit', redirect: 'follow' });
+        response = await this.fetchImpl(url, { method, signal: both, credentials: 'omit', redirect: 'follow',
+                                               ...(headers ? { headers } : {}) });
       } catch (error) {
         throw await this.diagnose(url, error, signal, dog);
       }

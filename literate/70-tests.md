@@ -642,6 +642,7 @@ for the time limits, which concern the body of an answer as it arrives.
     import { Archive } from '../app/archive.js';
     import { summary } from '../app/summary.js';
     import { diskFetch, ORIGIN, ALPHA, BETA, GAMMA, folder } from './disk.mjs';
+    import { checkKeeper, CONFIRMED, CLAIMED, NOT_CHECKED } from '../app/keepers.js';
 
     function slowFetch(ms, { log = [] } = {}) {
       const disk = diskFetch({ log });
@@ -925,6 +926,79 @@ the text.
       assert.deepEqual(numberTokens('{"a\\"1.5":[-2,3e1],"b":"7"}'), ['-2', '3e1']);
       assert.throws(() => parseJson(new TextEncoder().encode('{"threshold":1.0}'), '', { integers: true }), { kind: 'json', detail: /1\.0 is not an integer/ });
       assert.deepEqual(parseJson(new TextEncoder().encode('{"threshold":1.0}')), { threshold: 1 });
+    });
+
+The keeper of an owner is checked in the place it controls (section 6.6),
+with a `fetch` that answers as the ORCID registry and a keeper's domain
+do. The ORCID answer has the shape of the registry's (version 3.0 of its
+public API): links in `researcher-url`, each address in `url.value`. A
+link confirms when its address names the owner as a word of its own, and
+names a successor when it names one other owner; the request asks for
+JSON and carries no credentials. A missing or wrong file is read as the
+keeper not confirming; a network failure leaves the link not checked; an
+ORCID iD whose check digit is wrong, and a domain that is local, are not
+read at all.
+
+    // in tests of requests:
+    test('keepers confirmed, claimed only, or not checked (section 6.6)', async () => {
+      const OWNER = 'a'.repeat(51) + 'q', NEXT = 'b'.repeat(51) + 'a';
+      const ORCID_ID = 'https://orcid.org/0000-0002-1825-0097';
+      let answers = {}, seen = [];
+      const http = new Http({ fetch: async (url, init) => {
+        seen.push([url, init]);
+        if (!(url in answers)) throw new TypeError('fetch failed');
+        const [status, body, type = 'application/json'] = answers[url];
+        return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': type } });
+      } });
+      const orcidApi = 'https://pub.orcid.org/v3.0/0000-0002-1825-0097/researcher-urls';
+      const link = (value, name = 'OpenSheaf') => ({
+        'created-date': { value: 1763600000000 }, 'last-modified-date': { value: 1763600000000 },
+        source: { 'source-orcid': { uri: ORCID_ID, path: '0000-0002-1825-0097', host: 'orcid.org' } },
+        'url-name': name, url: { value }, visibility: 'public',
+        path: '/0000-0002-1825-0097/researcher-urls/4242', 'put-code': 4242, 'display-index': 1 });
+      const record = (...links) => ({ 'last-modified-date': { value: 1763600000000 }, 'researcher-url': links,
+                                      path: '/0000-0002-1825-0097/researcher-urls' });
+      answers[orcidApi] = [200, record(link('https://example.org/'), link(`https://opensheaf.org/owner/${OWNER}?next=${NEXT}`))];
+      let r = await checkKeeper(http, ORCID_ID, OWNER);
+      assert.equal(r.status, CONFIRMED);
+      assert.deepEqual(r.successors, [NEXT]);
+      assert.equal(seen[0][0], orcidApi);
+      assert.equal(seen[0][1].headers.Accept, 'application/json');
+      assert.equal(seen[0][1].credentials, 'omit');
+      answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/${OWNER}`))];
+      assert.deepEqual(await checkKeeper(http, ORCID_ID, OWNER), { status: CONFIRMED, reason: 'a link of the ORCID record names this owner', successors: [] });
+      answers[orcidApi] = [200, record(link(`https://opensheaf.org/owner/x${OWNER}`), link('https://example.org/'))];
+      assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);
+      answers[orcidApi] = [200, record()];
+      assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, CLAIMED);
+      answers[orcidApi] = [404, { 'response-code': 404 }];
+      assert.deepEqual(await checkKeeper(http, ORCID_ID, OWNER), { status: CLAIMED, reason: 'the ORCID registry has no record of this iD', successors: [] });
+      answers[orcidApi] = [200, { error: 'something else' }];
+      assert.equal((await checkKeeper(http, ORCID_ID, OWNER)).status, NOT_CHECKED);
+      answers = {};
+      r = await checkKeeper(http, ORCID_ID, OWNER);
+      assert.equal(r.status, NOT_CHECKED);
+      assert.match(r.reason, /cannot be reached/);
+      seen = [];
+      assert.equal((await checkKeeper(http, 'https://orcid.org/0000-0002-1825-0098', OWNER)).status, NOT_CHECKED);
+      assert.equal((await checkKeeper(http, 'https://localhost/', OWNER)).status, NOT_CHECKED);
+      assert.equal((await checkKeeper(http, 'https://192.168.1.1/', OWNER)).status, NOT_CHECKED);
+      assert.equal(seen.length, 0);
+
+      const well = 'https://journal.example.org/.well-known/opensheaf';
+      const keeper = 'https://journal.example.org/';
+      answers[well] = [200, { format: 'opensheaf-keeper/0.2', owners: [OWNER], successors: { [OWNER]: NEXT } }];
+      assert.deepEqual(await checkKeeper(http, keeper, OWNER), { status: CONFIRMED, reason: `${well} lists this owner`, successors: [NEXT] });
+      assert.equal(seen[0][1].headers, undefined);
+      answers[well] = [200, { format: 'opensheaf-keeper/0.2', owners: [NEXT] }];
+      assert.deepEqual(await checkKeeper(http, keeper, OWNER), { status: CLAIMED, reason: `${well} does not list this owner`, successors: [] });
+      answers[well] = [200, { format: 'opensheaf-keeper/0.1', owners: [OWNER] }];
+      assert.equal((await checkKeeper(http, keeper, OWNER)).status, CLAIMED);
+      answers[well] = [200, '<!doctype html><title>Not here</title>', 'text/html'];
+      assert.equal((await checkKeeper(http, keeper, OWNER)).status, CLAIMED);
+      answers[well] = [404, 'not found', 'text/plain'];
+      assert.deepEqual(await checkKeeper(http, keeper, OWNER),
+        { status: CLAIMED, reason: "the keeper's domain has no file /.well-known/opensheaf", successors: [] });
     });
 
 A declared size is not trusted with memory: a server declaring 400 MB
