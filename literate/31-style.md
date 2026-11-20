@@ -171,7 +171,8 @@ The page
 --------
 
 An identifier copied on a click ([the elements](20-dom.md)) is underlined
-with a dotted rule, shows the copy cursor, and says "copied" for a moment.
+with a dotted rule when the pointer rests on it, and says "copied" for a
+moment.
 
     /* in the page: */
     * { box-sizing: border-box; }
@@ -190,7 +191,7 @@ with a dotted rule, shows the copy cursor, and says "copied" for a moment.
     code, pre { font-family: var(--mono); font-size: 0.85em; font-variant-numeric: normal;
                 font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
     code { overflow-wrap: anywhere; }
-    code.copy { cursor: copy; border-bottom: 1px dotted var(--faint); }
+    code.copy { border-bottom: 1px dotted transparent; }
     code.copy:hover, code.copy:focus-visible { border-bottom-color: var(--text); outline: none; }
     code.copy.copied::after { content: " copied"; font-family: var(--sans); font-size: 0.85em; color: var(--ok); }
     .muted { color: var(--muted); }
