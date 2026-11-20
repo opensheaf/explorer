@@ -4,12 +4,14 @@
   var script = document.currentScript;
   if (!script) return;
   var attr = function (name) { return script.getAttribute('data-' + name); };
-  var id = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+  var id = /^([a-z0-9]+(-[a-z0-9]+)*|sheaf:[a-z2-7]{52}:[a-z2-7]{51}[aq])$/;
+  var owner = /^[a-z2-7]{51}[aq]$/;
   var explorer = new URL('./', script.src).href;
   var archive = new URL(attr('archive') || './', document.baseURI).href;
   var hash = '';
-  if (attr('object') && id.test(attr('object'))) hash = '#/object/' + attr('object');
-  else if (attr('collection') && id.test(attr('collection'))) hash = '#/collection/' + attr('collection');
+  if (attr('object') && id.test(attr('object'))) hash = '#/object/' + encodeURIComponent(attr('object'));
+  else if (attr('collection') && id.test(attr('collection'))) hash = '#/collection/' + encodeURIComponent(attr('collection'));
+  else if (attr('owner') && owner.test(attr('owner'))) hash = '#/owner/' + attr('owner');
   else if (script.hasAttribute('data-verify')) hash = '#/verify';
   var link = document.createElement('a');
   link.href = explorer + '?url=' + encodeURIComponent(archive) + hash;

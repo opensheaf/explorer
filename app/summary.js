@@ -1,5 +1,6 @@
 // Generated from literate/22-pieces.md by opensheaf-literate: edit the document, not this file.
-import { titleOf, creatorsOf, dateOf, rolesOf, versionsOf, currentVersion } from './versions.js';
+import { titleOf, creatorsOf, dateOf, rolesOf, versionsOf, currentVersion, historyOf } from './versions.js';
+import { parseId } from './names.js';
 
 export const SUMMARIES = 500;
 
@@ -29,15 +30,24 @@ export function summary(ctx, id, signal = ctx.signal) {
 }
 
 async function load(archive, id, options) {
-  const { inv, objs, hist, current } = await archive.history(id, null, options);
+  const { inv, objs } = await archive.history(id, null, options);
   const head = objs.get(inv.head) || null;
-  const shown = head?.kind === 'collection' ? inv.head : current;
-  const { obj, dc } = await archive.descriptions(id, inv, shown, options);
+  const objOf = (v) => objs.get(v) ?? null;
+  let line = null;
+  if (head?.kind !== 'owner' && !parseId(id)?.draft) {
+    line = await archive.line(id, options).catch((error) => {
+      if (error?.kind === 'aborted') throw error;
+      return null;
+    });
+  }
+  const at = line?.latest || inv.head;
+  const hist = historyOf(inv, objOf, at), current = currentVersion(inv, objOf, at);
+  const shown = head?.kind === 'document' ? current : at;
+  const { obj, dc } = head?.kind === 'owner' ? { obj: head, dc: null } : await archive.descriptions(id, inv, shown, options);
   return {
-    id, inv, objs, hist, current, head, shown, obj, dc,
-    objOf: (v) => objs.get(v) ?? null,
-    roles: rolesOf(inv, (v) => objs.get(v) ?? null),
-    kind: head?.kind ?? null, status: head?.status ?? null,
+    id, inv, objs, hist, current, head, shown, obj, dc, line, latest: line?.latest ?? null, objOf,
+    roles: rolesOf(inv, objOf),
+    kind: head?.kind ?? null, status: (objOf(at) || head)?.status ?? null,
     title: titleOf(dc), creators: creatorsOf(dc),
     issued: dateOf(dc, 'Issued', 'Available', 'Created'),
     documentVersion: obj?.documentVersion ?? null,

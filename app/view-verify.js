@@ -3,6 +3,7 @@ import { h, append, clear, bytes, plural } from './dom.js';
 import { chip, section, sectionRef, pages, errorBox } from './ui.js';
 import { verify, estimateContent, NOT_CHECKED } from './verify.js';
 import { explain } from './http.js';
+import { parseId } from './names.js';
 
 function verifyOptions(ctx) {
   const remote = h('input', { type: 'checkbox', checked: true });
@@ -30,7 +31,7 @@ function verifyOptions(ctx) {
   return {
     remote, digests,
     el: h('fieldset', { class: 'options' }, h('legend', {}, 'What to check'),
-      h('label', {}, remote, ' Resolve the members of other archives and the sources of accepted copies (sections 6.4 and 14)'),
+      h('label', {}, remote, ' Resolve the members of other archives and the parent lines of branches (sections 14.4 and 14.5)'),
       h('label', {}, digests, ' Also check the digest of every file (downloads every content file)', estimate)),
   };
 }
@@ -83,11 +84,11 @@ function progressView() {
   };
 }
 
-const LEVELS = { error: ['error', 'bad'], warning: ['warning', 'warn'], info: ['note', ''] };
+const LEVELS = { error: ['error', 'bad'], warning: ['warning', 'warn'], result: ['result', ''] };
 
 function findingsView(ctx, run) {
-  const shown = ctx.verificationLevels || (ctx.verificationLevels = new Set(['error', 'warning', 'info']));
-  const counts = { error: 0, warning: 0, info: 0 };
+  const shown = ctx.verificationLevels || (ctx.verificationLevels = new Set(['error', 'warning', 'result']));
+  const counts = { error: 0, warning: 0, result: 0 };
   let groups = new Map(), keys = [], drawn = [], source = null, report;
   const verdict = h('div', {});
   const labels = {};
@@ -106,7 +107,7 @@ function findingsView(ctx, run) {
   const before = (x, y) => (x === '' ? true : y === '' ? false : x.localeCompare(y) < 0);
   const groupOf = (key) => {
     if (groups.has(key)) return groups.get(key);
-    const group = groupView(key);
+    const group = groupView(key, ctx.archive);
     let lo = 0, hi = keys.length;
     while (lo < hi) {
       const mid = (lo + hi) >> 1;
@@ -155,19 +156,21 @@ function findingsView(ctx, run) {
     clear(verdict, summaryView(run, counts));
     if (run.report !== report) {
       report = run.report;
-      clear(tail, report ? h('details', { class: 'json' }, h('summary', {}, 'The errors as text, in the form of osheaf verify'),
+      clear(tail, report ? h('details', { class: 'json' }, h('summary', {}, 'The findings as text, in the form of osheaf verify'),
         h('pre', {}, report.text())) : null);
     }
   };
   return { el, update };
 }
 
-function groupView(key) {
+function groupView(key, archive) {
   const errorChip = h('span', {});
   const count = h('span', { class: 'muted small' });
   const list = h('ul', { class: 'findings' });
+  const owner = key ? parseId(key) : null;
+  const href = !key ? null : owner && owner.name === owner.owner ? pages.owner(owner.owner) : pages.object(archive.labelOf(key) || key);
   const el = h('details', { class: 'group' },
-    h('summary', {}, key ? h('a', { href: pages.object(key) }, key) : 'The archive', ' ', errorChip, ' ', count), list);
+    h('summary', {}, key ? h('a', { href }, archive.where(key)) : 'The archive', ' ', errorChip, ' ', count), list);
   const items = [];
   let errors = 0, visible = 0;
   const group = {
@@ -176,7 +179,8 @@ function groupView(key) {
       const li = h('li', { class: f.level },
         chip(LEVELS[f.level][0], LEVELS[f.level][1]), ' ',
         f.ver ? h('code', {}, f.ver) : null, f.ver ? ' ' : '',
-        f.object ? f.message : `${f.where}: ${f.message}`, ' ', sectionRef(f.section),
+        f.object && f.place.startsWith(archive.where(f.object)) ? f.message : `${f.place}: ${f.message}`, ' ',
+        f.section ? sectionRef(f.section) : null,
         (f.errors || []).map(explain).filter(Boolean).slice(0, 1).map((t) => h('div', { class: 'small muted' }, t)));
       li.hidden = !shown.has(f.level);
       if (!li.hidden) visible++;
@@ -225,10 +229,11 @@ export function showVerify(ctx, root) {
     h('header', { class: 'page-head' },
       h('p', { class: 'kicker' }, 'Verification · ', h('a', { href: pages.archive() }, ctx.archive.name)),
       h('h1', {}, 'Verify this archive'),
-      h('p', { class: 'lead' }, 'The checks of section 14 that can be made over HTTP, in this browser: ',
-        'the discovery document against the storage root, every inventory and its checksum file, the descriptions ',
-        'of every object version against the schemas and the rules of sections 7 to 11, the document versions, ',
-        'the pins of collections, mirrors and accepted copies.')),
+      h('p', { class: 'lead' }, 'The checks of section 14 that can be made over HTTP, in this browser, ',
+        'in agreement with osheaf verify: the storage root and its layout, every inventory, its checksum file and ',
+        'the inventory chain, the key logs of the owners, the names, signatures and statuses of every line, the ',
+        'branch points, the descriptions against the schemas and the rules of sections 4 to 13, the pins of ',
+        'collections, the discovery document, the tombstones and the indexes.')),
     options.el, h('div', { class: 'controls' }, start, cancel), progress, results.el,
     section('What is not checked', h('ul', { class: 'not-checked' },
       NOT_CHECKED.map((n) => h('li', {}, n.text, ' ', sectionRef(n.section))))));

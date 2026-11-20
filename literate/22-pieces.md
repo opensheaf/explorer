@@ -1,8 +1,8 @@
 Pieces of pages
 ===============
 
-The pages of the explorer (the archive, an object, a collection, the
-verification) are built from a few common pieces: a list of facts, chips
+The pages of the explorer (the archive, an object, an owner, a
+collection, the verification) are built from a few common pieces: a list of facts, chips
 for statuses, a view of a JSON file, a box explaining an error, a note
 with its file, a reference to a section of the specification; and from a
 *summary* of each object, read once and shared by the pages. The pieces
@@ -23,20 +23,30 @@ Addresses of the pages
 ----------------------
 
 A page of the explorer is named by the fragment of its address (`#/`,
-`#/object/<id>`, `#/object/<id>/<version>`, `#/collection/<id>`,
-`#/verify`), so that every state worth sharing is a link; the archive is
-named by the query (`?url=<base URL>`). A link to an object of another
-archive opens the explorer on that archive.
+`#/object/<line>`, `#/object/<line>/<version>`, `#/collection/<line>`,
+`#/owner/<owner name>`, `#/verify`), so that every state worth sharing is
+a link; the archive is named by the query (`?url=<base URL>`). A line is
+named by its label in the archive when it has one (section 3.1), which
+makes readable links, and otherwise by its identifier,
+`sheaf:<name>:<owner>`; both are accepted (`ref` gives the one to use). A
+link to an object of another archive opens the explorer on that archive.
+The specification cited is version 0.2, whose sections the findings
+name.
 
     // in addresses of the pages of the explorer:
-    export const SPECIFICATION = 'https://opensheaf.org/opensheaf-specification-0.1.html';
+    export const SPECIFICATION = 'https://opensheaf.org/opensheaf-specification-0.2.html';
 
     export const pages = {
       archive: () => '#/',
-      object: (id, ver) => `#/object/${encodeURIComponent(id)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
-      collection: (id, ver) => `#/collection/${encodeURIComponent(id)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+      object: (ref, ver) => `#/object/${encodeURIComponent(ref)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+      collection: (ref, ver) => `#/collection/${encodeURIComponent(ref)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+      owner: (owner) => `#/owner/${encodeURIComponent(owner)}`,
       verify: () => '#/verify',
     };
+
+    export function ref(archive, id) {
+      return archive?.labelOf(id) || id;
+    }
 
     export function elsewhere(url, hash = '') {
       return `?url=${encodeURIComponent(url)}${hash}`;
@@ -70,6 +80,16 @@ tone: `ok`, `bad`, `warn`, or neutral.
       if (status === 'withdrawn') return chip('withdrawn', 'bad');
       if (status === 'active') return chip('active', 'ok');
       return status ? chip(String(status), 'warn') : null;
+    }
+
+    export const TONES = {
+      signed: 'ok', 'vouched for': 'ok', contested: 'bad', unchecked: 'warn', invalid: 'bad', unsigned: 'bad',
+      verified: 'ok', mismatch: 'bad', 'not a version': 'bad', unavailable: 'warn', removed: 'warn', fork: 'bad',
+      confirmed: 'ok', inconsistent: 'bad', good: 'ok',
+    };
+
+    export function verdictChip(status, title = null) {
+      return status ? h('span', { class: `chip ${TONES[status] || ''}`, title }, String(status)) : null;
     }
 
     export function section(title, ...content) {
@@ -129,12 +149,17 @@ Summaries of objects
 --------------------
 
 Several pages need, for an object, its inventory, the `object.json` of
-every version, its history and current version, and the two descriptions
-of the version presented: the current version of a document, the head of
-a collection (section 7.3: "landing pages, indexes and citations use the
-current version, not the head"). This is its *summary*, read once per
-object and kept by the explorer's context (`ctx`, see
-[the application](30-app.md)).
+every version, the statuses of its versions and its latest signed version
+(chapter [14](14-archive.md)), its history and current version, read from
+the latest signed version (section 4.2), its status, also read from there
+(section 13.1), and the two descriptions of the version presented: the
+current version of a document ("landing pages, indexes and citations use
+the current version", section 4.2), the latest signed version of a
+collection. Without a signed version, the head stands in, and the page
+says so. A key log has no descriptions and no history (section 6); a
+draft has no signatures (section 10.1). This is the *summary* of an
+object, read once per object and kept by the explorer's context (`ctx`,
+see [the application](30-app.md)).
 
 A summary is loaded with the signal of the page that asks for it, so that
 leaving the page stops it. A summary being loaded is therefore shared only
@@ -155,7 +180,8 @@ recently used are forgotten, except those still loading, which their pages
 are waiting for.
 
     // in app/summary.js:
-    import { titleOf, creatorsOf, dateOf, rolesOf, versionsOf, currentVersion } from './versions.js';
+    import { titleOf, creatorsOf, dateOf, rolesOf, versionsOf, currentVersion, historyOf } from './versions.js';
+    import { parseId } from './names.js';
 
     export const SUMMARIES = 500;
 
@@ -185,15 +211,24 @@ are waiting for.
     }
 
     async function load(archive, id, options) {
-      const { inv, objs, hist, current } = await archive.history(id, null, options);
+      const { inv, objs } = await archive.history(id, null, options);
       const head = objs.get(inv.head) || null;
-      const shown = head?.kind === 'collection' ? inv.head : current;
-      const { obj, dc } = await archive.descriptions(id, inv, shown, options);
+      const objOf = (v) => objs.get(v) ?? null;
+      let line = null;
+      if (head?.kind !== 'owner' && !parseId(id)?.draft) {
+        line = await archive.line(id, options).catch((error) => {
+          if (error?.kind === 'aborted') throw error;
+          return null;
+        });
+      }
+      const at = line?.latest || inv.head;
+      const hist = historyOf(inv, objOf, at), current = currentVersion(inv, objOf, at);
+      const shown = head?.kind === 'document' ? current : at;
+      const { obj, dc } = head?.kind === 'owner' ? { obj: head, dc: null } : await archive.descriptions(id, inv, shown, options);
       return {
-        id, inv, objs, hist, current, head, shown, obj, dc,
-        objOf: (v) => objs.get(v) ?? null,
-        roles: rolesOf(inv, (v) => objs.get(v) ?? null),
-        kind: head?.kind ?? null, status: head?.status ?? null,
+        id, inv, objs, hist, current, head, shown, obj, dc, line, latest: line?.latest ?? null, objOf,
+        roles: rolesOf(inv, objOf),
+        kind: head?.kind ?? null, status: (objOf(at) || head)?.status ?? null,
         title: titleOf(dc), creators: creatorsOf(dc),
         issued: dateOf(dc, 'Issued', 'Available', 'Created'),
         documentVersion: obj?.documentVersion ?? null,

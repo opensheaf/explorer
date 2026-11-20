@@ -3,14 +3,19 @@ import { h, external } from './dom.js';
 import { rich } from './text.js';
 import { explain } from './http.js';
 
-export const SPECIFICATION = 'https://opensheaf.org/opensheaf-specification-0.1.html';
+export const SPECIFICATION = 'https://opensheaf.org/opensheaf-specification-0.2.html';
 
 export const pages = {
   archive: () => '#/',
-  object: (id, ver) => `#/object/${encodeURIComponent(id)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
-  collection: (id, ver) => `#/collection/${encodeURIComponent(id)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+  object: (ref, ver) => `#/object/${encodeURIComponent(ref)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+  collection: (ref, ver) => `#/collection/${encodeURIComponent(ref)}${ver ? '/' + encodeURIComponent(ver) : ''}`,
+  owner: (owner) => `#/owner/${encodeURIComponent(owner)}`,
   verify: () => '#/verify',
 };
+
+export function ref(archive, id) {
+  return archive?.labelOf(id) || id;
+}
 
 export function elsewhere(url, hash = '') {
   return `?url=${encodeURIComponent(url)}${hash}`;
@@ -35,6 +40,16 @@ export function statusChip(status) {
   if (status === 'withdrawn') return chip('withdrawn', 'bad');
   if (status === 'active') return chip('active', 'ok');
   return status ? chip(String(status), 'warn') : null;
+}
+
+export const TONES = {
+  signed: 'ok', 'vouched for': 'ok', contested: 'bad', unchecked: 'warn', invalid: 'bad', unsigned: 'bad',
+  verified: 'ok', mismatch: 'bad', 'not a version': 'bad', unavailable: 'warn', removed: 'warn', fork: 'bad',
+  confirmed: 'ok', inconsistent: 'bad', good: 'ok',
+};
+
+export function verdictChip(status, title = null) {
+  return status ? h('span', { class: `chip ${TONES[status] || ''}`, title }, String(status)) : null;
 }
 
 export function section(title, ...content) {

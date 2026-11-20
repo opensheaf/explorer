@@ -14,9 +14,9 @@ is found:
    `?url=https://mgubi.org/papers/`. The value may be the base URL of an
    archive (the folder holding `opensheaf.json`), the address of
    `opensheaf.json` itself, or the address of an object version
-   (`.../ocfl/<id>/<version>/`), which opens that version. With
-   `&collection=<id>` it opens a collection. Without a value, it shows a
-   form.
+   (`.../ocfl/<owner>/<name>/<version>/` in the owner-name layout, or the
+   hashed path), which opens that version. With `&collection=<label>` it
+   opens a collection. Without a value, it shows a form.
 2. **From an archive's own pages.** A page links to the hosted explorer
    with its archive in `?url=`, or loads `embed.js`, which adds such a
    link, resolving the archive's address relative to the page (see
@@ -28,9 +28,15 @@ is found:
    serves archives whose host does not allow cross-origin requests.
 
 A page of the explorer is named by the fragment: `#/` (the archive),
-`#/object/<id>`, `#/object/<id>/<version>`, `#/collection/<id>`,
-`#/collection/<id>/<version>`, `#/verify`. With the query, it makes every
-state shareable as a link.
+`#/object/<line>`, `#/object/<line>/<version>`, `#/collection/<line>`,
+`#/collection/<line>/<version>`, `#/owner/<owner name>`, `#/verify`,
+where a line is named by its label in the archive or by its identifier
+(chapter [22](22-pieces.md)). With the query, it makes every state
+shareable as a link.
+
+An archive of version 0.1 of the specification is not read (version 0.2
+is incompatible with it, section 16.1): the explorer says that it must be
+rebuilt, and shows nothing else of it.
 
 The page
 --------
@@ -74,9 +80,9 @@ before the page is painted.
     <noscript><p>The OpenSheaf Explorer is a JavaScript application: it needs JavaScript to read archives.</p></noscript>
     </main>
     <footer class="site">
-      <p><strong>Draft.</strong> OpenSheaf 0.1 is a draft specification: until version 1.0, a revision may change
+      <p><strong>Draft.</strong> OpenSheaf 0.2 is a draft specification: until version 1.0, a revision may change
       the format in incompatible ways, and the explorer follows the latest draft.</p>
-      <p><a href="https://opensheaf.org/opensheaf-specification-0.1.html">The specification</a> ·
+      <p><a href="https://opensheaf.org/opensheaf-specification-0.2.html">The specification</a> ·
       <a href="source/">The explorer, a literate program</a> ·
       <a href="https://github.com/opensheaf/explorer">Source code</a> (GPL-3.0-or-later) ·
       The OpenSheaf symbol is licensed under CC BY 4.0.</p>
@@ -95,9 +101,11 @@ The module
     import { h, append, clear } from './dom.js';
     import { errorBox, loading, pages, elsewhere } from './ui.js';
     import { isObjectId, isVersion } from './paths.js';
+    import { LABEL, OWNER_NAME } from './names.js';
     import { showArchive } from './view-archive.js';
     import { showObject } from './view-object.js';
     import { showCollection } from './view-collection.js';
+    import { showOwner } from './view-owner.js';
     import { showVerify } from './view-verify.js';
 
     <<the context of the explorer>>
@@ -138,25 +146,29 @@ another page, so that its pending requests stop.
 Finding the archive
 -------------------
 
-An address of an object version, `<storageRoot><id>/<version>/` (with or
-without `inventory.json`), does not say where the archive's base URL is:
-the storage root is usually `ocfl/` under it, but section 6.1 allows any
-storage root. The explorer tries the storage root itself and the two
-folders above it, and takes the first whose discovery document names
-exactly that storage root. Any other address is taken as the base URL of
-an archive.
+An address of an object version, `<storageRoot><path>/<version>/` (with
+or without `inventory.json`), does not say where the archive's base URL
+is, nor which object it is: the storage root is usually `ocfl/` under the
+base URL, but section 3.1 allows any storage root, and the path of an
+object has two segments in the owner-name layout and four in the hashed
+layout (section 3.2), which are never decoded. The explorer tries the
+folders above the object, up to six levels, and takes the first whose
+discovery document lists an object at exactly that address. Any other
+address is taken as the base URL of an archive.
 
     // in finding the archive from an address:
     export async function locate(http, input) {
       const url = new URL(input, location.href);
-      const m = /^(.*\/)([a-z0-9]+(?:-[a-z0-9]+)*)\/(v[1-9][0-9]*)\/?(?:inventory\.json)?$/.exec(url.origin + url.pathname);
+      const m = /^(.*\/)(v[1-9][0-9]*)\/?(?:inventory\.json)?$/.exec(url.origin + url.pathname);
       if (m) {
-        const [, root, id, ver] = m;
-        let dir = root;
-        for (let k = 0; k < 3; k++) {
+        const [, folder, ver] = m;
+        let dir = new URL('../', folder).href;
+        for (let k = 0; k < 6; k++) {
           try {
             const archive = await Archive.open(http, dir);
-            if (archive.root === root) return { archive, hash: pages.object(id, ver) };
+            const id = [...archive.objects(), ...archive.drafts()].map((o) => o.id)
+              .find((i) => archive.paths.has(i) && archive.url(i, 'x').slice(0, -1) === folder);
+            if (id) return { archive, hash: pages.object(archive.labelOf(id) || id, ver) };
           } catch {
             // not this folder
           }
@@ -186,8 +198,8 @@ a click on it focuses the field.
     function showStart(main, error = null, given = '') {
       const url = h('input', { type: 'text', inputmode: 'url', name: 'url', id: 'start-url', required: true, value: given || null,
                                placeholder: 'https://example.org/papers/' });
-      const collection = h('input', { type: 'text', name: 'collection', pattern: '[a-z0-9]+(-[a-z0-9]+)*',
-                                      placeholder: 'collection identifier (optional)', 'aria-label': 'Collection' });
+      const collection = h('input', { type: 'text', name: 'collection', pattern: '[a-z0-9]+(-[a-z0-9]+)*|sheaf:[a-z2-7]{52}:[a-z2-7]{52}',
+                                      placeholder: 'collection label (optional)', 'aria-label': 'Collection' });
       const here = location.origin + location.pathname;
       clear(main,
         h('header', { class: 'page-head' },
@@ -205,8 +217,9 @@ a click on it focuses the field.
         h('section', { class: 'block' }, h('h2', {}, 'Three ways to use it'),
           h('ol', {},
             h('li', {}, h('strong', {}, 'A link. '), 'Give the archive in the address: ',
-              h('code', {}, `${here}?url=<base URL>`), ', with ', h('code', {}, '#/object/<id>'), ', ',
-              h('code', {}, '#/collection/<id>'), ' or ', h('code', {}, '#/verify'), ' to open a page.'),
+              h('code', {}, `${here}?url=<base URL>`), ', with ', h('code', {}, '#/object/<label>'), ', ',
+              h('code', {}, '#/collection/<label>'), ', ', h('code', {}, '#/owner/<owner name>'), ' or ',
+              h('code', {}, '#/verify'), ' to open a page.'),
             h('li', {}, h('strong', {}, 'A button on an archive’s pages. '), 'Add ',
               h('code', {}, `<script src="${new URL('embed.js', here).href}" data-archive="./"></script>`),
               ': it adds a link “Explore this archive”, for the archive at data-archive, relative to the page.'),
@@ -218,8 +231,9 @@ a click on it focuses the field.
 The pages and the fragment
 --------------------------
 
-The fragment names the page; the identifiers and versions it names are
-checked before anything is fetched. Each new page aborts the requests of
+The fragment names the page; the identifiers, labels, owner names and
+versions it names are checked before anything is fetched, and a label is
+read as the line the discovery document gives it. Each new page aborts the requests of
 the one before, and gets a fresh signal; the new page starts at once,
 while the old one's requests are still being aborted. Requests and
 summaries that the old page had started are therefore never handed to
@@ -256,24 +270,36 @@ moved yet. An address that names no page also gets a heading.
       } catch {
         parts = ['?'];
       }
-      const [page = '', id, ver] = parts;
+      const [page = '', name, ver] = parts;
       clear(main);
       for (const a of document.querySelectorAll('#nav a')) a.classList.toggle('current', a.dataset.page === (page || 'archive'));
-      const valid = isObjectId(id) && (ver === undefined || isVersion(ver)) && parts.length <= 3;
+      const id = isObjectId(name) ? name : LABEL.test(name || '') ? ctx.archive.byLabel(name) : null;
+      const valid = id !== null && (ver === undefined || isVersion(ver)) && parts.length <= 3;
       let shown = null;
-      if (page === '') shown = showArchive(ctx, main);
+      if (ctx.archive.old) shown = showOld(main);
+      else if (page === '') shown = showArchive(ctx, main);
       else if (page === 'object' && valid) shown = showObject(ctx, main, id, ver);
       else if (page === 'collection' && valid) shown = showCollection(ctx, main, id, ver);
+      else if (page === 'owner' && OWNER_NAME.test(name || '') && parts.length === 2) shown = showOwner(ctx, main, name);
       else if (page === 'verify' && parts.length === 1) shown = showVerify(ctx, main);
       else append(main, h('header', { class: 'page-head' }, h('h1', {}, 'No such page')),
         h('p', {}, 'The address names no page of the explorer. ', h('a', { href: pages.archive() }, 'The archive.')));
-      document.title = `${page === '' ? '' : (id || page) + ' · '}${ctx.archive.name} · OpenSheaf Explorer`;
+      document.title = `${page === '' ? '' : (name || page) + ' · '}${ctx.archive.name} · OpenSheaf Explorer`;
       window.scrollTo(0, 0);
       if (navigated) focusHeading(main, shown, ctx.signal);
       navigated = true;
     }
 
     let navigated = false;
+
+    function showOld(main) {
+      append(main, h('header', { class: 'page-head' }, h('p', { class: 'kicker' }, 'OpenSheaf archive'),
+        h('h1', {}, ctx.archive.name)),
+        h('div', { class: 'alert bad', role: 'alert' }, h('strong', {}, 'Specification 0.1: this archive must be rebuilt. '),
+          'Its discovery document is of version 0.1 of the specification, which version 0.2 replaces and is incompatible with ',
+          '(section 16.1). The explorer reads only version 0.2: rebuild the archive with the tools of version 0.2 ',
+          '(osheaf), and its objects can be explored and verified again.'));
+    }
 
     async function focusHeading(main, shown, signal) {
       await Promise.resolve(shown).catch(() => {});
@@ -292,7 +318,8 @@ open its own archive again). With `?url=`, the archive is found, and a
 collection or object version named by the query becomes the fragment, if
 the fragment names no page yet. Without it, the archive one folder up is
 tried, which is how a self-hosted copy finds its archive; failing that,
-the start page is shown. An address typed without its scheme
+the start page is shown. An archive of version 0.1 is opened only to say
+that it must be rebuilt. An address typed without its scheme
 (`mgubi.org/papers/`, `localhost:8000/papers/`) is completed as
 [the base URL](14-archive.md) explains: `http:` for the reader's own
 computer, `https:` otherwise.
@@ -315,7 +342,7 @@ computer, `https:` otherwise.
       ctx.resolver = new Resolver(ctx.http, ctx.archive);
       const collection = params.get('collection');
       if (!location.hash || location.hash === '#') {
-        const hash = found.hash || (isObjectId(collection) ? pages.collection(collection) : null);
+        const hash = found.hash || (isObjectId(collection) || LABEL.test(collection || '') ? pages.collection(collection) : null);
         if (hash) history.replaceState(null, '', hash);
       }
       document.getElementById('archive-name').replaceChildren(h('a', { href: pages.archive() }, ctx.archive.name));
@@ -339,8 +366,10 @@ itself with `document.currentScript`) for an archive's own pages:
 It adds, after itself, a link to the explorer it was loaded from, opening
 the archive at `data-archive`, resolved against the page (`./` for a page
 next to `opensheaf.json`, `../../` for a landing page `paper/<id>/`).
-Optional attributes: `data-object` or `data-collection` (an identifier: the
-link opens that page), `data-verify` (the link opens the verification),
+Optional attributes: `data-object` or `data-collection` (a label, or an
+identifier `sheaf:<name>:<owner>`: the link opens that page),
+`data-owner` (an owner name: the link opens the page of the owner),
+`data-verify` (the link opens the verification),
 `data-label` (the text of the link), `data-target` (the identifier of an
 element to put the link in), `data-unstyled` (no style of its own, for
 pages that style the class `opensheaf-explore` themselves). Loaded from a
@@ -352,12 +381,14 @@ self-hosted copy, it links to that copy.
       var script = document.currentScript;
       if (!script) return;
       var attr = function (name) { return script.getAttribute('data-' + name); };
-      var id = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+      var id = /^([a-z0-9]+(-[a-z0-9]+)*|sheaf:[a-z2-7]{52}:[a-z2-7]{51}[aq])$/;
+      var owner = /^[a-z2-7]{51}[aq]$/;
       var explorer = new URL('./', script.src).href;
       var archive = new URL(attr('archive') || './', document.baseURI).href;
       var hash = '';
-      if (attr('object') && id.test(attr('object'))) hash = '#/object/' + attr('object');
-      else if (attr('collection') && id.test(attr('collection'))) hash = '#/collection/' + attr('collection');
+      if (attr('object') && id.test(attr('object'))) hash = '#/object/' + encodeURIComponent(attr('object'));
+      else if (attr('collection') && id.test(attr('collection'))) hash = '#/collection/' + encodeURIComponent(attr('collection'));
+      else if (attr('owner') && owner.test(attr('owner'))) hash = '#/owner/' + attr('owner');
       else if (script.hasAttribute('data-verify')) hash = '#/verify';
       var link = document.createElement('a');
       link.href = explorer + '?url=' + encodeURIComponent(archive) + hash;
