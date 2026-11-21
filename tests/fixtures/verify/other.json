@@ -1,53 +1,18 @@
 [
   {
     "severity": "result",
-    "place": "owner 7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq",
-    "message": "key log of 7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq: latest version v1"
+    "place": "owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+    "message": "key log of 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq: latest version v1"
   },
   {
     "severity": "result",
-    "place": "owner hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca",
-    "message": "key log of hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca: latest version v2"
+    "place": "owner 23ikzdhsj5gnq5s6zmd6zr2zhhfrfdqnab6bxbzeog46w5vznx7a",
+    "message": "key log of 23ikzdhsj5gnq5s6zmd6zr2zhhfrfdqnab6bxbzeog46w5vznx7a: latest version v2"
   },
   {
     "severity": "result",
-    "place": "owner hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca",
+    "place": "owner 23ikzdhsj5gnq5s6zmd6zr2zhhfrfdqnab6bxbzeog46w5vznx7a",
     "message": "exposed key did:key:z6Mkggf1Q3MsbJ9kBEaAdPqsSiRQxH1ofT8G9R21um2PXffS"
-  },
-  {
-    "severity": "result",
-    "place": "issue",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "a branch of sheaf:lbt5be5mgf7mvxm7ozvxblyuagwkb2wdmmpfiaf3vx4mq6hyav4a:7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq: confirmed (section 9.3)"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "the parent's line: verified at https://fixtures.example.org/archive/"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
-    "place": "exposed v1",
-    "message": "contested (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "exposed",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "result",
-    "place": "vouched",
-    "message": "latest signed version v2"
   },
   {
     "severity": "result",
@@ -66,12 +31,47 @@
   },
   {
     "severity": "result",
+    "place": "exposed v1",
+    "message": "contested (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "exposed",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "result",
+    "place": "sheaf:afxuw6tk7ka3onjpaw32z73aj5ccd54p6upb5orosgfpnzj43cqa:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "a branch of sheaf:mb5sd7aijkrfn3dhv6m65j5ndq7qecxm6xfdhwlvuue7x3hq6v5q:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq: confirmed (section 9.3)"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "the parent's line: verified at https://fixtures.example.org/archive/"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "issue",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
     "place": "shelf",
     "message": "latest signed version v1"
   },
   {
     "severity": "result",
-    "place": "sheaf:zivo4vlf4tb2bbivhdn2leandph6jjtpndh4v4nbgfxdb64bl2dq:7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq",
+    "place": "vouched",
     "message": "latest signed version v2"
   },
   {
@@ -81,22 +81,22 @@
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:lbt5be5mgf7mvxm7ozvxblyuagwkb2wdmmpfiaf3vx4mq6hyav4a:7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq v4",
+    "place": "shelf v1 member sheaf:mb5sd7aijkrfn3dhv6m65j5ndq7qecxm6xfdhwlvuue7x3hq6v5q:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq v4",
     "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:te3v3xa6nggobujtyfrxbxwi7xszsxa4voo7hlpyxjd4kuhitlaa:7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq v2",
+    "place": "shelf v1 member sheaf:r6htcro5qxo5mclowbf4kecm3cofuuwdkjtaul5cbqhps3u72q3a:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq v2",
     "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:vk4pxgas2wnzlejpclqwlkh7lxjacep2fwsnldh4xqhe2olnmyka:7nmdaw4gajrmidtlouujpmhqt2e2bld6ebumhc44jwybmeodb3rq v1",
+    "place": "shelf v1 member sheaf:wpqv23qwtl3nqmfwflv2oxufnog4lqols7h5x33zmzam3kriu2aa:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq v1",
     "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:z6j62ujk5qwzztsnv7vxldoqp5bn2koibqxce5llvpipnig33hva:dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva v1",
+    "place": "shelf v1 member sheaf:2lcfrwzvsu7xo42xywbdwrtlqvgmam6slnjqxrwuxdrwiotx2k3q:gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha v1",
     "message": "verified at https://fixtures.example.org/forked/ (section 8.5)"
   }
 ]

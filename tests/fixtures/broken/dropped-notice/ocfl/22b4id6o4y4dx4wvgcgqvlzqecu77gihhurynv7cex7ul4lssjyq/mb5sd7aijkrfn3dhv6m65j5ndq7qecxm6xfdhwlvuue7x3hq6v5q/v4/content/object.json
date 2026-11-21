@@ -1,0 +1,26 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "mb5sd7aijkrfn3dhv6m65j5ndq7qecxm6xfdhwlvuue7x3hq6v5q",
+  "owner": "22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+  "documentVersion": 3,
+  "mainSource": "alpha-0.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "changes": {
+    "text": "The submitted manuscript, found later."
+  },
+  "history": [
+    "v1",
+    "v4",
+    "v3"
+  ],
+  "previous": "14688c89382a3e3c51448c19eede8ffe113eb1687ea61ba77e36632262c946af47668aadfb0a62ddcd6b8a8dde023af2d5ed6efcef1a1e447bee1a00aa667a8f"
+}

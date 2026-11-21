@@ -68,16 +68,17 @@ test('a description-only version may add the file of the licence terms (sections
   assert.equal(rolesOf(inv, objOf).v2, 'description');
 });
 
-test('a new number for files and a change note deposited before (section 7.3)', () => {
+test('a new number for the files and change note of the current version; a revert (section 4.2)', () => {
   const note = { text: 'typos' };
   const { inv, objOf } = make([
     { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
     { obj: { documentVersion: 2, changes: note }, files: { 'a.tex': 'a2' } },
     { obj: { documentVersion: 3 }, files: { 'a.tex': 'a1' } },
-    { obj: { documentVersion: 4 }, files: { 'a.tex': 'a2' } },
+    { obj: { documentVersion: 4 }, files: { 'a.tex': 'a1' } },
+    { obj: { documentVersion: 5 }, files: { 'b.tex': 'a1' } },
   ]);
   assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
-    'v3 document version 3 holds the same files and change note as document version 1, whose number it keeps',
+    'v4 document version 4 holds the same files and change note as the current version 3: it is no new document version (section 4.2)',
   ]);
 });
 

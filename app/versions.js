@@ -123,7 +123,12 @@ export function documentVersionErrors(inv, objOf) {
   const add = (ver, message) => errors.push({ ver, message });
   const versions = versionsOf(inv);
   const seen = new Map(), filesOfDoc = new Map(), missingOf = new Map();
-  let highest = 0, hadHistory = false, notices = [];
+  let highest = 0, hadHistory = false, notices = [], prevVer = null;
+  const currentBefore = (at) => {
+    if (!at) return null;
+    const n = objOf(currentVersion(inv, objOf, at))?.documentVersion;
+    return Number.isInteger(n) ? n : null;
+  };
   for (const ver of versions) {
     const obj = objOf(ver);
     if (!obj || obj.kind !== 'document') return errors;
@@ -144,11 +149,9 @@ export function documentVersionErrors(inv, objOf) {
       filesOfDoc.set(n, own);
     } else {
       if (n !== highest + 1) add(ver, `document version ${n} breaks the numbering (expected ${highest + 1})`);
-      for (const [m, files] of filesOfDoc) {
-        if (same(own, files) && change === seen.get(m)) {
-          add(ver, `document version ${n} holds the same files and change note as document version ${m}, whose number it keeps`);
-          break;
-        }
+      const m = currentBefore(prevVer);
+      if (seen.has(m) && same(own, filesOfDoc.get(m)) && change === seen.get(m)) {
+        add(ver, `document version ${n} holds the same files and change note as the current version ${m}: it is no new document version (section 4.2)`);
       }
       highest = Math.max(highest, Number.isInteger(n) ? n : 0);
       seen.set(n, change);
@@ -177,6 +180,7 @@ export function documentVersionErrors(inv, objOf) {
     const current = Array.isArray(obj.notices) ? obj.notices : [];
     if (notices.some((x) => !current.some((y) => same(x, y)))) add(ver, 'drops or changes an earlier notice');
     notices = current;
+    prevVer = ver;
   }
   return errors;
 }

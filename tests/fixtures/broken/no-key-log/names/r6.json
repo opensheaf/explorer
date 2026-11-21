@@ -1,0 +1,15 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "r6htcro5qxo5mclowbf4kecm3cofuuwdkjtaul5cbqhps3u72q3a",
+      "owner": "22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+      "id": "sheaf:r6htcro5qxo5mclowbf4kecm3cofuuwdkjtaul5cbqhps3u72q3a:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+      "status": "withdrawn",
+      "originator": "22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"document\",\n  \"created\": \"2026-11-21T19:31:36Z\",\n  \"originator\": \"22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq\",\n  \"nonce\": \"5a938334ff83f11237e1d20dd0580087\"\n}\n",
+      "label": "gamma"
+    }
+  ]
+}
