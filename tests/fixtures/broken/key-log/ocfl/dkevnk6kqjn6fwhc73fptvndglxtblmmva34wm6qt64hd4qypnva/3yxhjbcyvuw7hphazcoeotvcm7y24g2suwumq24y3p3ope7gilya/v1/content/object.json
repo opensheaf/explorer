@@ -1,0 +1,18 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "3yxhjbcyvuw7hphazcoeotvcm7y24g2suwumq24y3p3ope7gilya",
+  "owner": "dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva",
+  "documentVersion": 1,
+  "sourcesMissing": {
+    "text": "x"
+  },
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active"
+}

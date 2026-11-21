@@ -1,23 +1,18 @@
 [
   {
     "severity": "error",
-    "place": "owner scrdx7fbnw2lz7w7dptf53zfehugdcnkocu7htofshuvpyxxhsma",
+    "place": "owner dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva",
     "message": "v2: signed by 0 rotation keys of v1, which needs 2 (section 6.1)"
   },
   {
     "severity": "warning",
-    "place": "owner scrdx7fbnw2lz7w7dptf53zfehugdcnkocu7htofshuvpyxxhsma",
+    "place": "owner dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva",
     "message": "v3: follows a version that is not a version of the key log"
   },
   {
     "severity": "result",
-    "place": "owner scrdx7fbnw2lz7w7dptf53zfehugdcnkocu7htofshuvpyxxhsma",
-    "message": "key log of scrdx7fbnw2lz7w7dptf53zfehugdcnkocu7htofshuvpyxxhsma: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "before",
-    "message": "latest signed version v1"
+    "place": "owner dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva",
+    "message": "key log of dkevnk6kqjn6fwhc73fptvndglxtblmmva34wm6qt64hd4qypnva: latest version v1"
   },
   {
     "severity": "warning",
@@ -37,6 +32,11 @@
   {
     "severity": "result",
     "place": "main",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "before",
     "message": "latest signed version v1"
   }
 ]

@@ -210,8 +210,7 @@ an empty list rather than failing.
     export const IDENTITY = ['datacite.json', 'object.json', 'genesis.json'];
 
     export function isEvidence(p) {
-      return p === 'parent.inventory.json' || p === 'parent.object.json' ||
-        p.startsWith('parent.signatures/') || p.startsWith('parent.chain/');
+      return p.startsWith('parent/');
     }
 
     export function ownFiles(inv, ver, obj) {

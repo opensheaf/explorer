@@ -608,7 +608,7 @@ warning (section 5.3), and an originator owning a branch an error.
       async movedBranchPoint(id, o, ver, p, old, where) {
         const a = this.archive;
         const before = `v${versionNumber(ver) - 1}`;
-        const read = async (v) => jsonOrNull(await a.bytes(id, o.inv, v, 'parent.inventory.json', this.options).catch(() => null)) || {};
+        const read = async (v) => jsonOrNull(await a.bytes(id, o.inv, v, 'parent/inventory.json', this.options).catch(() => null)) || {};
         const [oldInv, newInv] = [await read(before), await read(ver)];
         if (p.owner !== old.owner || p.name !== old.name) {
           this.add('error', where, 'a branch point moves only to a version of the same parent line (section 9.4)', { object: id, ver });
@@ -1041,7 +1041,7 @@ messages of `osheaf verify` (`None` for nothing).
 
     // in app/verify.js:
     function isEvidencePath(p) {
-      return p === 'parent.inventory.json' || p === 'parent.object.json' || p.startsWith('parent.signatures/') || p.startsWith('parent.chain/');
+      return p.startsWith('parent/');
     }
 
     function sameBytes(x, y) {

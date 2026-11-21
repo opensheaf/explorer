@@ -1,0 +1,10 @@
+{
+  "format": "opensheaf-signature/0.2",
+  "object": "sheaf:yu5xqy5ozwc2ceedkjtoqvtbhj234dd6bev6t6xqczh3xzjtterq:hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca",
+  "version": "v1",
+  "inventorySha512": "9a53104e42d201fe8376a3abdaabaec8f86261c17f30a51098b3273b18625fcdd47cf580d0373f56f5e8eb835710e9d8f5715e7748179b2971a0efe9e0ea92d5",
+  "signer": "hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca",
+  "key": "did:key:z6MkkypzX2xQ7NXbZuJu2onJdhoyWfFCAK51kPw4wTAcDjWf",
+  "keyLog": "sheaf:hyh2nywzjhhu2d3krnrny3pj2ixwtfl4ltlalxv6e4ftnrcfvjca/v2?sha512=0744e601e342cb68c1adcfb76d3493be8503a623e821ae7e9649929d3defee620ec3a91d6f5b79604f2a9cf2532ab4beb3dadb05457e5d21fc7b54d109787506",
+  "signature": "1AtEkB5q19jiA2t7EFhddQIw8y1BGWuGh5hYnS9lgpy7QUzJfU1CkppygYD6WRSn2iGk2auJ/2C6b3qLlp5VCA=="
+}

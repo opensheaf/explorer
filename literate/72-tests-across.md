@@ -300,7 +300,7 @@ version is then not a version) or a file of the parent version differs.
       const [unchecked, why] = await verdict(lv, obj, genesis, async () => null);
       assert.equal(unchecked, UNCHECKED);
       assert.deepEqual(why, ['the parent version is unchecked (section 9.3)']);
-      const unsigned = level(new Map([...lv.digests].filter(([p]) => !p.startsWith('parent.signatures/'))), lv.read);
+      const unsigned = level(new Map([...lv.digests].filter(([p]) => !p.startsWith('parent/signatures/'))), lv.read);
       const [v1, problems] = await verdict(unsigned, obj, genesis, logs);
       assert.equal(v1, INCONSISTENT);
       assert.ok(problems.some((p) => p.includes('not a version: unsigned')));

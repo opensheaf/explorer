@@ -1,0 +1,42 @@
+{
+  "titles": [
+    {
+      "title": "Issue 1"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Example, Ada",
+      "nameType": "Personal",
+      "familyName": "Example",
+      "givenName": "Ada"
+    }
+  ],
+  "publisher": {
+    "name": "Another fixture archive"
+  },
+  "publicationYear": 2026,
+  "types": {
+    "resourceTypeGeneral": "Collection"
+  },
+  "version": "2",
+  "dates": [
+    {
+      "date": "2026-11-21",
+      "dateType": "Issued"
+    },
+    {
+      "date": "2026-11-21",
+      "dateType": "Available"
+    }
+  ],
+  "rightsList": [
+    {
+      "rights": "Creative Commons Zero v1.0 Universal",
+      "rightsUri": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "rightsIdentifier": "cc0-1.0",
+      "rightsIdentifierScheme": "SPDX"
+    }
+  ],
+  "url": "https://fixtures.example.org/other/paper/issue/"
+}

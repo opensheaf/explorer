@@ -2,7 +2,7 @@
   "digestAlgorithm": "sha512",
   "fixity": {
     "md5": {
-      "210f675c16ea48559870699b707bf765": [
+      "f040b0077eaaefa7f8e0937a93d2076b": [
         "v1/content/datacite.json"
       ],
       "e6e66a4309450c09dba2c43b8134be3d": [
@@ -13,7 +13,7 @@
       ]
     },
     "sha256": {
-      "53730c3081e1611f98f9bc749b69ddef296098e54002e9a20f5c25a2fa505bad": [
+      "9c24c60fdf4b96bf810ffd07e3a59ab8f0dc1b53caacd8a3a5fe2647ed13d52a": [
         "v1/content/datacite.json"
       ],
       "ef10255aa80caeb4c5c4e4ed1c77684af11c3dfb03d18590633cb3b458d98b99": [
@@ -27,7 +27,7 @@
   "head": "v1",
   "id": "sheaf:draft:notes",
   "manifest": {
-    "cb9f269e33d1fa28bc4bc73136097b9a83f757be553b92e7564411da09196e0815da7d7bd523a6429526f4af40624dfb7cb0993d2363bb21855a9dac48dac02c": [
+    "11f3218250cf25ea8b114a3ab5f3a61f252ac8699b12a3e0a5d7eb138c055b57562a58e6e928553817f489d59ac2ddf903316bcbdc11640426f2108aef605699": [
       "v1/content/datacite.json"
     ],
     "c9345243a3a681896234e9e57edfb9fb2bfe72bb433daf4e4cb1d022a20bf7ae87bb07b271cda9786ddf9f2d32fc1eb4e295f7632d422f802018e60a49a27c29": [
@@ -40,9 +40,9 @@
   "type": "https://ocfl.io/1.1/spec/#inventory",
   "versions": {
     "v1": {
-      "created": "2026-11-20T17:06:44Z",
+      "created": "2026-11-21T18:07:43Z",
       "state": {
-        "cb9f269e33d1fa28bc4bc73136097b9a83f757be553b92e7564411da09196e0815da7d7bd523a6429526f4af40624dfb7cb0993d2363bb21855a9dac48dac02c": [
+        "11f3218250cf25ea8b114a3ab5f3a61f252ac8699b12a3e0a5d7eb138c055b57562a58e6e928553817f489d59ac2ddf903316bcbdc11640426f2108aef605699": [
           "datacite.json"
         ],
         "c9345243a3a681896234e9e57edfb9fb2bfe72bb433daf4e4cb1d022a20bf7ae87bb07b271cda9786ddf9f2d32fc1eb4e295f7632d422f802018e60a49a27c29": [
