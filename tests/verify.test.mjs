@@ -122,6 +122,18 @@ test('an inventory copy with another head, or fewer versions', async () => {
   assert.ok(fewer.includes('alpha v2: the inventory copy does not record exactly the versions v1 to v2'));
 });
 
+test('digests in upper case (section 4.1)', async () => {
+  const sc = `${folder(ALPHA)}v1/inventory.json.sha512`;
+  const found = errors(await run('archive/', { patch: { [sc]: (text) => text.split(' ')[0].toUpperCase() + '  inventory.json\n' } }));
+  assert.ok(found.includes('alpha: v1/inventory.json.sha512 states its digest not in lower case (section 4.1)'));
+  const url = `${folder(ALPHA)}inventory.json`;
+  const inv = JSON.parse(await (await diskFetch()(url)).text());
+  inv.manifest = Object.fromEntries(Object.entries(inv.manifest).map(([k, v]) => [k.toUpperCase(), v]));
+  const text = JSON.stringify(inv);
+  const upper = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+  assert.ok(upper.includes('alpha: the inventory has digests not in lower case (section 4.1)'));
+});
+
 test('the layout, the home page and the profile website', async () => {
   assert.deepEqual(errors(await run('archive/', { patch: { [`${ORIGIN}archive/ocfl/ocfl_layout.json`]: '{}' } })),
     ['ocfl: ocfl_layout.json names only registered layouts: the owner-name layout has none (section 3.2)']);

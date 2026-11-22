@@ -1854,7 +1854,8 @@ function of the old one), or to `null` for a file that is missing.
 
     const digestOf = (text) => createHash('sha512').update(text).digest('hex');
 
-An inventory copy with another head, or fewer versions; a storage root
+An inventory copy with another head, or fewer versions; digests in upper
+case, in a checksum file and in an inventory; a storage root
 with an `ocfl_layout.json` in the owner-name layout; a home page that
 does not show the pins of the owner catalogue, which is an error for an
 archive declaring the profile `website` and a warning otherwise; a key
@@ -1876,6 +1877,18 @@ byte order mark, or holds bytes that are not UTF-8, which is not JSON for
       text = JSON.stringify(copy);
       const fewer = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
       assert.ok(fewer.includes('alpha v2: the inventory copy does not record exactly the versions v1 to v2'));
+    });
+
+    test('digests in upper case (section 4.1)', async () => {
+      const sc = `${folder(ALPHA)}v1/inventory.json.sha512`;
+      const found = errors(await run('archive/', { patch: { [sc]: (text) => text.split(' ')[0].toUpperCase() + '  inventory.json\n' } }));
+      assert.ok(found.includes('alpha: v1/inventory.json.sha512 states its digest not in lower case (section 4.1)'));
+      const url = `${folder(ALPHA)}inventory.json`;
+      const inv = JSON.parse(await (await diskFetch()(url)).text());
+      inv.manifest = Object.fromEntries(Object.entries(inv.manifest).map(([k, v]) => [k.toUpperCase(), v]));
+      const text = JSON.stringify(inv);
+      const upper = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+      assert.ok(upper.includes('alpha: the inventory has digests not in lower case (section 4.1)'));
     });
 
     test('the layout, the home page and the profile website', async () => {

@@ -212,8 +212,17 @@ class Verification {
     this.found.set(id, o);
     const at = (ver) => ({ object: id, ver });
     if (inv.digestAlgorithm !== 'sha512') this.add('error', place, 'the digest algorithm is not sha512 (section 4.1)', at());
+    const stated = [...Object.keys(inv.manifest),
+      ...Object.values(inv.versions).flatMap((v) => Object.keys(isObject(v?.state) ? v.state : {})),
+      ...Object.values(isObject(inv.fixity) ? inv.fixity : {}).flatMap((alg) => Object.keys(isObject(alg) ? alg : {}))];
+    if (stated.some((x) => x !== x.toLowerCase())) this.add('error', place, 'the inventory has digests not in lower case (section 4.1)', at());
+    const upper = (bytes, file) => {
+      const word = sidecarDigest(bytes);
+      if (word && word !== word.toLowerCase()) this.add('error', place, `${file} states its digest not in lower case (section 4.1)`, at());
+    };
     const rootDigest = await sha512(rootBytes);
     const sc = await a.sidecarBytes(id, null, options).catch((e) => { if (this.aborted(e)) throw e; return null; });
+    upper(sc, 'inventory.json.sha512');
     if (!sc || sidecarDigest(sc) !== rootDigest) this.add('error', place, 'the checksum file of the inventory does not state its digest', at());
     o.sidecar = sc ? sidecarDigest(sc) : null;
     const head = typeof inv.head === 'string' ? inv.head : '';
@@ -232,6 +241,7 @@ class Verification {
       const copySc = await a.sidecarBytes(id, ver, this.options).catch((e) => { if (this.aborted(e)) throw e; return null; });
       o.digests[k] = copy ? await sha512(copy) : '';
       o.sidecars[k] = copySc ? sidecarDigest(copySc) : null;
+      upper(copySc, `${ver}/inventory.json.sha512`);
       if (!copy || !copySc) {
         this.add('error', where, 'no copy of the inventory with its checksum file in the version folder (section 4.1)', at(ver));
       } else {
