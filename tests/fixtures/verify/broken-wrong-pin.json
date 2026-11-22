@@ -1,18 +1,8 @@
 [
   {
     "severity": "result",
-    "place": "owner jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca",
-    "message": "key log of jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "withdrawn (section 13.1)"
+    "place": "owner hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
+    "message": "key log of hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q: latest version v1"
   },
   {
     "severity": "result",
@@ -22,6 +12,11 @@
   {
     "severity": "result",
     "place": "main",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "beta",
     "message": "latest signed version v2"
   },
   {
@@ -41,8 +36,13 @@
   },
   {
     "severity": "result",
-    "place": "beta",
+    "place": "gamma",
     "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "result",
@@ -57,16 +57,16 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:oqw7wdta4z5muwqmo27tlsahmfhreyc2vex752veoow5cqfk5gna:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:cedibszyfb2j5reu4fqicrllymunwqgrav6nisvnlurldav25kzq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q (2026-11-22: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:clzmea7cx77kyko3pa2ek62bp574u3gcw5y7rc5wkuqqwwtrcjwa:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:sf6xgf3atnugdffli7p6xll2z653hhcmq6hv3ezpzpdioe64crhq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v1 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:clzmea7cx77kyko3pa2ek62bp574u3gcw5y7rc5wkuqqwwtrcjwa:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:sf6xgf3atnugdffli7p6xll2z653hhcmq6hv3ezpzpdioe64crhq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v1 (section 12.5)"
   }
 ]

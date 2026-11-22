@@ -16,18 +16,8 @@
   },
   {
     "severity": "result",
-    "place": "owner jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca",
-    "message": "key log of jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "withdrawn (section 13.1)"
+    "place": "owner hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
+    "message": "key log of hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q: latest version v1"
   },
   {
     "severity": "warning",
@@ -71,13 +61,23 @@
   },
   {
     "severity": "result",
+    "place": "beta",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
     "place": "reading",
     "message": "latest signed version v1"
   },
   {
     "severity": "result",
-    "place": "beta",
+    "place": "gamma",
     "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "error",
@@ -97,36 +97,36 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:oqw7wdta4z5muwqmo27tlsahmfhreyc2vex752veoow5cqfk5gna:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:cedibszyfb2j5reu4fqicrllymunwqgrav6nisvnlurldav25kzq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q (2026-11-22: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v2 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v2 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v3 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v3 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v4 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v4 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v2 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v3 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v3 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v2 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v4 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v4 (section 12.5)"
   }
 ]

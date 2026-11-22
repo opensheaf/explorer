@@ -815,11 +815,10 @@ class Verification {
       const pin = pins[pins.length - 1]?.pin || '';
       if (!page.includes(pin.slice(0, 32))) this.add(level, 'index.html', `does not show the pin of ${m?.name}` + note);
       if (!this.found.has(mid)) continue;
-      const same = [...this.found.keys()].filter((i) => i.startsWith(`sheaf:${m.name}:`)).length;
-      const landing = `paper/${a.labelOf(mid) || (same <= 1 ? m.name : `${m.name}-${m.owner}`)}/index.html`;
+      const originator = this.found.get(mid).rec?.originator === m.owner;
+      const landing = `paper/${originator ? m.name : `${m.name}-${m.owner}`}/index.html`;
       const text = await this.fetchOrNull(a.base + landing, LIMITS.page).catch((e) => { if (this.aborted(e)) throw e; return null; });
       const words = text ? new TextDecoder().decode(text) : '';
-      const originator = this.found.get(mid).rec?.originator === m.owner;
       if (originator ? !new RegExp(`sheaf:${m.name}(?![a-z0-9:/])`).test(words) : !words.includes(mid)) {
         this.add(level, landing, `no landing page giving the sheaf: URI of ${this.where(mid)} (appendix A.3)` + note);
       }

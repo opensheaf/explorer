@@ -1,0 +1,15 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "hiickigrxssyyqb5p66q34tqnzhcpnikswz23iqsfuiy37l3l6tq",
+      "owner": "rgszaxlr4l4qf4u26wtwboyosntrprxhfqmkv5dcj4op5rkakmmq",
+      "id": "sheaf:hiickigrxssyyqb5p66q34tqnzhcpnikswz23iqsfuiy37l3l6tq:rgszaxlr4l4qf4u26wtwboyosntrprxhfqmkv5dcj4op5rkakmmq",
+      "status": "active",
+      "originator": "rgszaxlr4l4qf4u26wtwboyosntrprxhfqmkv5dcj4op5rkakmmq",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"collection\",\n  \"created\": \"2026-11-22T17:33:40Z\",\n  \"originator\": \"rgszaxlr4l4qf4u26wtwboyosntrprxhfqmkv5dcj4op5rkakmmq\",\n  \"nonce\": \"9a8ce4ae0eb0969263f78b4d2db3ad54\"\n}\n",
+      "label": "issue"
+    }
+  ]
+}

@@ -178,6 +178,8 @@ function versionFacts(ctx, s, id, ver, obj, dc, fileUrl) {
   const user = vinfo.user || {};
   const profiles = list(ctx.archive.disc.profiles);
   const label = ctx.archive.labelOf(id);
+  const landing = typeof dc?.url === 'string' && /^https?:\/\//.test(dc.url) ? dc.url
+    : label && (profiles.includes('website') || profiles.includes('texmacs')) ? `${ctx.archive.base}paper/${label}/` : null;
   return facts([
     ['Deposited', [timestamp(vinfo.created), user.name ? ` by ${user.name}` : '',
       typeof user.address === 'string' ? [' ', external(user.address, '↗')] : null]],
@@ -210,8 +212,7 @@ function versionFacts(ctx, s, id, ver, obj, dc, fileUrl) {
       identifierLink(r?.relatedIdentifier, r?.relatedIdentifierType),
       h('span', { class: 'muted' }, ` (${str(r?.relatedIdentifierType)})`)))],
     ['Extensions', isObject(obj?.extensions) ? Object.keys(obj.extensions).join(', ') : null],
-    ['Landing page', label && (profiles.includes('website') || profiles.includes('texmacs'))
-      ? [external(`${ctx.archive.base}paper/${label}/`), h('span', { class: 'muted' }, ' (presentation, not authoritative)')] : null],
+    ['Landing page', landing ? [external(landing), h('span', { class: 'muted' }, ' (presentation, not authoritative)')] : null],
   ]);
 }
 

@@ -1,18 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner 7rmz54pdph5j4ei34hbc6succp54wcrjas6kyzvw7lbkhc7tuzma",
-    "message": "key log of 7rmz54pdph5j4ei34hbc6succp54wcrjas6kyzvw7lbkhc7tuzma: latest version v3"
+    "place": "owner 3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
+    "message": "key log of 3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a: latest version v3"
   },
   {
     "severity": "result",
-    "place": "owner 7rmz54pdph5j4ei34hbc6succp54wcrjas6kyzvw7lbkhc7tuzma",
+    "place": "owner 3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
     "message": "ended by a fork of its key log at v2 (section 6.3)"
-  },
-  {
-    "severity": "result",
-    "place": "main",
-    "message": "latest signed version v1"
   },
   {
     "severity": "result",
@@ -28,5 +23,10 @@
     "severity": "warning",
     "place": "after",
     "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "result",
+    "place": "main",
+    "message": "latest signed version v1"
   }
 ]

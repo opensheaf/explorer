@@ -1,0 +1,67 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "catalogue",
+  "order": "issued-desc",
+  "members": [
+    {
+      "kind": "document",
+      "name": "4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq",
+      "owner": "hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v4",
+      "inventorySha512": "f19cdff357b7ba473178fed2a15755af4cbd5f07adb3468ca7a205e582f81d908c9d37267e284612c8ac81a16acab03dbb6eba341f9ef87431fede3ce36b84cf",
+      "follow": "latest",
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10",
+        "available": "2024-03-01"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "i3li4c3sa2ygwuttj72igttfnvas6hqlfrlkcfqoc565vvd2xz3a",
+      "owner": "hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v2",
+      "inventorySha512": "ec84769a677523bb0661f95fefef48d18d9b7c301de93e3bbde008f3257492c51864cd8b2f2fd43962cef1e1668f8bf43a0222d0f34e01fcce31ccc54730555b",
+      "follow": "latest",
+      "cite": {
+        "title": "Beta",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2023,
+        "issued": "2023-05-05",
+        "available": "2023-05-05"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "so74wmssakiiqnhvptyoegzroel45dgqdd7txhjvdlt4xqer7y6a",
+      "owner": "hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v2",
+      "inventorySha512": "00ac6375288826a0ba341261a62c02fb65a6dd10b5903661acc9a78d15966311292db7b7ccbe01b0a2f43544b445040bba23e39ca12ccf20767a8402b869be0d",
+      "follow": "latest",
+      "cite": {
+        "title": "Gamma",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2022,
+        "issued": "2022-02-02",
+        "available": "2022-02-02"
+      }
+    }
+  ]
+}

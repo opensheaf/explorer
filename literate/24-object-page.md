@@ -274,8 +274,9 @@ the version before, which fixes it (section 4.3), its stage, dates, DOI
 and licence, its sources and renditions, its change note, the agreement
 of its authors, its external records (an arXiv version, a Zenodo
 deposit), its relations (section 4.4), its extensions; and the landing
-page, for archives with a website, `paper/<label>/` (appendix A.3), which
-is presentation and not authoritative.
+page, the `url` of its description, at the address built from the line's
+name (sections 4.4 and A.3), or, without one, `paper/<label>/` for
+archives with a website: presentation, not authoritative.
 
     // in app/view-object.js:
     function versionFacts(ctx, s, id, ver, obj, dc, fileUrl) {
@@ -285,6 +286,8 @@ is presentation and not authoritative.
       const user = vinfo.user || {};
       const profiles = list(ctx.archive.disc.profiles);
       const label = ctx.archive.labelOf(id);
+      const landing = typeof dc?.url === 'string' && /^https?:\/\//.test(dc.url) ? dc.url
+        : label && (profiles.includes('website') || profiles.includes('texmacs')) ? `${ctx.archive.base}paper/${label}/` : null;
       return facts([
         ['Deposited', [timestamp(vinfo.created), user.name ? ` by ${user.name}` : '',
           typeof user.address === 'string' ? [' ', external(user.address, '↗')] : null]],
@@ -317,8 +320,7 @@ is presentation and not authoritative.
           identifierLink(r?.relatedIdentifier, r?.relatedIdentifierType),
           h('span', { class: 'muted' }, ` (${str(r?.relatedIdentifierType)})`)))],
         ['Extensions', isObject(obj?.extensions) ? Object.keys(obj.extensions).join(', ') : null],
-        ['Landing page', label && (profiles.includes('website') || profiles.includes('texmacs'))
-          ? [external(`${ctx.archive.base}paper/${label}/`), h('span', { class: 'muted' }, ' (presentation, not authoritative)')] : null],
+        ['Landing page', landing ? [external(landing), h('span', { class: 'muted' }, ' (presentation, not authoritative)')] : null],
       ]);
     }
 
