@@ -1,8 +1,23 @@
 [
   {
     "severity": "result",
-    "place": "owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
-    "message": "key log of kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa: latest version v1"
+    "place": "owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
+    "message": "key log of ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq: latest version v1"
+  },
+  {
+    "severity": "result",
+    "place": "alpha",
+    "message": "latest signed version v4"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "warning",
@@ -21,28 +36,13 @@
   },
   {
     "severity": "result",
-    "place": "beta",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "alpha",
-    "message": "latest signed version v4"
-  },
-  {
-    "severity": "result",
     "place": "main",
     "message": "latest signed version v2"
   },
   {
     "severity": "result",
-    "place": "gamma",
+    "place": "beta",
     "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "error",
@@ -57,16 +57,16 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:sha7xconwn2g2pi4f2evyomwj5kjgoe3apfhaaw5ethfa4w2mpcq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:p4el2abi2bmt5op7235g3h3u2ze524roqggb6fjhgcxprlehb7hq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq (2026-11-22: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:53y5eayfk2ermcmvqkbvant4numkvuxt2lwomg5fkwh3y6k3bmrq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v1 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:nysuqsm7ljrqhv4qpchka4tp5yqwic7rntibj26mwuj7fekc4ssa:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:53y5eayfk2ermcmvqkbvant4numkvuxt2lwomg5fkwh3y6k3bmrq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v1 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:nysuqsm7ljrqhv4qpchka4tp5yqwic7rntibj26mwuj7fekc4ssa:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1 (section 12.5)"
   }
 ]

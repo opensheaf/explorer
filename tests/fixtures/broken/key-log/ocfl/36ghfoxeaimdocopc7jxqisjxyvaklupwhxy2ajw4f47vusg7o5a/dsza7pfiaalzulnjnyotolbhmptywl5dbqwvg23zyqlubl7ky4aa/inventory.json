@@ -1,0 +1,74 @@
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "ace8b9baebb887282bb1e4d32a228e89": [
+        "v1/content/datacite.json"
+      ],
+      "1d845c5f31df5ed00928222b38a5f143": [
+        "v1/content/genesis.json"
+      ],
+      "f11121cf058bb991fba26ea0b39e9fd7": [
+        "v1/content/object.json"
+      ],
+      "689f6d8dcdac8e6ef8e5532a5374d0c0": [
+        "v1/content/paper.pdf"
+      ]
+    },
+    "sha256": {
+      "bfbda4e2c8c73384db097130cea48bf2f086ff65b4f43713a02f5d9d772a8d10": [
+        "v1/content/datacite.json"
+      ],
+      "1171f98d5aa05b5bbbc53ab757cadf7a4588efb066b2152e8c4c030faf321b6d": [
+        "v1/content/genesis.json"
+      ],
+      "c01851b140b2e9526255315669abf4932ad7e4d2c467b980186502fb94fe6ccd": [
+        "v1/content/object.json"
+      ],
+      "af7a32d7a25404707ca15ab134a1b8879b27bdfd72e29c06519f0ea8d5502c3a": [
+        "v1/content/paper.pdf"
+      ]
+    }
+  },
+  "head": "v1",
+  "id": "sheaf:dsza7pfiaalzulnjnyotolbhmptywl5dbqwvg23zyqlubl7ky4aa:36ghfoxeaimdocopc7jxqisjxyvaklupwhxy2ajw4f47vusg7o5a",
+  "manifest": {
+    "1a2dd3a50b39ae2aff993205986a901eadae343ccbcc1231709ab50bb8bb0a6ddc75bb7b35b89a4a5a578e99714939cd6310301c9ca42c67a25d5d492c30f7d1": [
+      "v1/content/datacite.json"
+    ],
+    "36fd6190a0f436109de747540c139e7f914d3d527d38f6a755b7d0bc386ceb5cb2c70329665cf0063ec93b52d048f115950831b9aa6c5a046622f9bbc679eb9c": [
+      "v1/content/genesis.json"
+    ],
+    "37033bf7ea23f3da76f0758cff7cc8293a152d0db4ceee56ae5dba577bb94fccb48ca9b99499b83a917b3f5ccfca97d8b15b5cc17a33a390c0b0117a82354de4": [
+      "v1/content/object.json"
+    ],
+    "1ef5fa4142740fe8b05914eb357a12960b5bb68887d868c30ef643caffdb5705fbc153ad6c48c523b2cc02bcc5faa88b8fe0cd4eb36a8ddba366b6e080346c9b": [
+      "v1/content/paper.pdf"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-22T12:49:48Z",
+      "state": {
+        "1a2dd3a50b39ae2aff993205986a901eadae343ccbcc1231709ab50bb8bb0a6ddc75bb7b35b89a4a5a578e99714939cd6310301c9ca42c67a25d5d492c30f7d1": [
+          "datacite.json"
+        ],
+        "36fd6190a0f436109de747540c139e7f914d3d527d38f6a755b7d0bc386ceb5cb2c70329665cf0063ec93b52d048f115950831b9aa6c5a046622f9bbc679eb9c": [
+          "genesis.json"
+        ],
+        "37033bf7ea23f3da76f0758cff7cc8293a152d0db4ceee56ae5dba577bb94fccb48ca9b99499b83a917b3f5ccfca97d8b15b5cc17a33a390c0b0117a82354de4": [
+          "object.json"
+        ],
+        "1ef5fa4142740fe8b05914eb357a12960b5bb68887d868c30ef643caffdb5705fbc153ad6c48c523b2cc02bcc5faa88b8fe0cd4eb36a8ddba366b6e080346c9b": [
+          "paper.pdf"
+        ]
+      },
+      "message": "Deposit: document version 1",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/forked/"
+      }
+    }
+  }
+}

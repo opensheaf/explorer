@@ -1,23 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa",
-    "message": "key log of xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa: latest version v3"
+    "place": "owner 36ghfoxeaimdocopc7jxqisjxyvaklupwhxy2ajw4f47vusg7o5a",
+    "message": "key log of 36ghfoxeaimdocopc7jxqisjxyvaklupwhxy2ajw4f47vusg7o5a: latest version v3"
   },
   {
     "severity": "result",
-    "place": "owner xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa",
+    "place": "owner 36ghfoxeaimdocopc7jxqisjxyvaklupwhxy2ajw4f47vusg7o5a",
     "message": "ended by a fork of its key log at v2 (section 6.3)"
-  },
-  {
-    "severity": "result",
-    "place": "before",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
-    "place": "main",
-    "message": "latest signed version v1"
   },
   {
     "severity": "result",
@@ -28,5 +18,15 @@
     "severity": "warning",
     "place": "after",
     "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "result",
+    "place": "before",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "main",
+    "message": "latest signed version v1"
   }
 ]

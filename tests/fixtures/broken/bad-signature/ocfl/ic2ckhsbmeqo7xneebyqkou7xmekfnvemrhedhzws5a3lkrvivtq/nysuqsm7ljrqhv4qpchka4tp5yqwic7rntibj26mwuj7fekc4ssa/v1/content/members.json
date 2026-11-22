@@ -1,0 +1,60 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "selection",
+  "order": "manual",
+  "members": [
+    {
+      "kind": "document",
+      "name": "5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa",
+      "owner": "ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "revisions": [
+        {
+          "documentVersion": 1,
+          "version": "v1",
+          "inventorySha512": "fbe49e13a1e9752811a4c793dd0a7223020b9cbd24f1121b3f5f9ade0ae3eb35117ced411c1c996d7e232319e0c5acb09113778a7862490a681790150d4ba012"
+        },
+        {
+          "documentVersion": 2,
+          "version": "v3",
+          "inventorySha512": "9840776208c012c77504d355d27958c55da60422fd14eee607463e952803d8b621a217e6179478d93b5b58c83304785af9f485aeb0d14b23f34a0ad8a286e04d"
+        }
+      ],
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10",
+        "available": "2024-01-10"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a",
+      "owner": "ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "revisions": [
+        {
+          "documentVersion": 1,
+          "version": "v2",
+          "inventorySha512": "07b7e13c73606eb6177e75555eb888b16d2f5686d98dcab35fd6debd7afacd7194bdf5b895e9dc4ee5d24659891979dd97496b0259d130f18173ca8dbfcf6bdd"
+        }
+      ],
+      "cite": {
+        "title": "Beta",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2023,
+        "issued": "2023-05-05",
+        "available": "2023-05-05"
+      }
+    }
+  ]
+}

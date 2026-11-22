@@ -1,0 +1,32 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa",
+  "owner": "iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a",
+  "parent": {
+    "owner": "ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
+    "name": "5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa",
+    "objectVersion": "v3",
+    "documentVersion": 2,
+    "inventorySha512": "9840776208c012c77504d355d27958c55da60422fd14eee607463e952803d8b621a217e6179478d93b5b58c83304785af9f485aeb0d14b23f34a0ad8a286e04d",
+    "url": "https://fixtures.example.org/archive/ocfl/ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq/5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa/v3/"
+  },
+  "documentVersion": 1,
+  "mainSource": "alpha-2.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "changes": {
+    "text": "Second version."
+  },
+  "stage": {
+    "scheme": "NISO-JAV",
+    "value": "AM"
+  },
+  "status": "active"
+}

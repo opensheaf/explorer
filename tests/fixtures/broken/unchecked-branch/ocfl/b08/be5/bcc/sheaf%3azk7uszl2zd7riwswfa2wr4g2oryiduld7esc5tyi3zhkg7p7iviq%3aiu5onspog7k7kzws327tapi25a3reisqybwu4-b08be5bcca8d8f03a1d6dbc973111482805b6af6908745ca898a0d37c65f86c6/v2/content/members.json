@@ -1,0 +1,31 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "selection",
+  "order": "manual",
+  "members": [
+    {
+      "kind": "document",
+      "name": "5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa",
+      "owner": "iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a",
+      "at": [
+        "https://fixtures.example.org/other/"
+      ],
+      "revisions": [
+        {
+          "documentVersion": 1,
+          "version": "v1",
+          "inventorySha512": "0749e9a38e8090ad4978b979f56dbdf39a37a19c302de5714a541dd1c2ed4824fe0b3dab4c1f7665dbf950e777511bd4c84e04207a93da77af76213bcfc13ab7"
+        }
+      ],
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10",
+        "available": "2024-03-01"
+      }
+    }
+  ]
+}

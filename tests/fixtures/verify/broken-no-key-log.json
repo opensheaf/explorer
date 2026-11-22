@@ -1,58 +1,8 @@
 [
   {
     "severity": "error",
-    "place": "reading",
-    "message": "the key log of its owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa is not in the storage root (section 6.5)"
-  },
-  {
-    "severity": "warning",
-    "place": "reading v1",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "reading v1",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "reading",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "error",
-    "place": "beta",
-    "message": "the key log of its owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa is not in the storage root (section 6.5)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v1",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v1",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v2",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v2",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "error",
     "place": "alpha",
-    "message": "the key log of its owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa is not in the storage root (section 6.5)"
+    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
@@ -101,8 +51,58 @@
   },
   {
     "severity": "error",
+    "place": "gamma",
+    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "reading",
+    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "reading v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "reading",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
     "place": "main",
-    "message": "the key log of its owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa is not in the storage root (section 6.5)"
+    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
@@ -131,32 +131,32 @@
   },
   {
     "severity": "error",
-    "place": "gamma",
-    "message": "the key log of its owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa is not in the storage root (section 6.5)"
+    "place": "beta",
+    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
-    "place": "gamma v1",
+    "place": "beta v1",
     "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
   },
   {
     "severity": "warning",
-    "place": "gamma v1",
+    "place": "beta v1",
     "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
   },
   {
     "severity": "warning",
-    "place": "gamma v2",
+    "place": "beta v2",
     "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
   },
   {
     "severity": "warning",
-    "place": "gamma v2",
+    "place": "beta v2",
     "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
   },
   {
     "severity": "warning",
-    "place": "gamma",
+    "place": "beta",
     "message": "the line has no signed version (section 7.3)"
   },
   {
@@ -192,36 +192,36 @@
   {
     "severity": "error",
     "place": "opensheaf.json",
-    "message": "lists sheaf:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa, which is not an object of the storage root (section 3.1)"
+    "message": "lists sheaf:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq, which is not an object of the storage root (section 3.1)"
   },
   {
     "severity": "warning",
     "place": "opensheaf.json",
-    "message": "owners lists kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa, whose key log is not held here (section 3.1)"
+    "message": "owners lists ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq, whose key log is not held here (section 3.1)"
   },
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:sha7xconwn2g2pi4f2evyomwj5kjgoe3apfhaaw5ethfa4w2mpcq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:p4el2abi2bmt5op7235g3h3u2ze524roqggb6fjhgcxprlehb7hq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq (2026-11-22: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "names/",
-    "message": "an entry the storage root does not justify: sheaf:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa  (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "no entry, or a stale one, for kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa  (section 12.5)"
+    "message": "no entry, or a stale one, for ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "an entry the storage root does not justify: kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa  (section 12.5)"
+    "message": "an entry the storage root does not justify: ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v1 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1 (section 12.5)"
   }
 ]

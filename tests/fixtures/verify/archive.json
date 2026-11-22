@@ -1,28 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
-    "message": "key log of kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
-    "place": "beta",
-    "message": "latest signed version v2"
+    "place": "owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
+    "message": "key log of ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq: latest version v1"
   },
   {
     "severity": "result",
     "place": "alpha",
     "message": "latest signed version v4"
-  },
-  {
-    "severity": "result",
-    "place": "main",
-    "message": "latest signed version v2"
   },
   {
     "severity": "result",
@@ -36,12 +21,27 @@
   },
   {
     "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "main",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "beta",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
     "place": "main v2 member gamma v2",
     "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   },
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:sha7xconwn2g2pi4f2evyomwj5kjgoe3apfhaaw5ethfa4w2mpcq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:p4el2abi2bmt5op7235g3h3u2ze524roqggb6fjhgcxprlehb7hq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq (2026-11-22: Taken down for the tests.)"
   }
 ]
