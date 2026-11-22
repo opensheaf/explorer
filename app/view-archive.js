@@ -18,9 +18,10 @@ function archiveFacts(a) {
       ['Contact', typeof d.contact === 'string' ? external(d.contact) : null],
       ['Specification', `${d.specification ?? '?'} (format ${d.format ?? '?'})`],
       ['Profiles', list(d.profiles).length ? list(d.profiles).map((p) => chip(String(p))) : 'none'],
-      ['Main catalogue', typeof d.mainCollection === 'string'
-        ? h('a', { href: pages.collection(ref(a, d.mainCollection)) }, ref(a, d.mainCollection)) : null],
-      ['Owners', a.owners().map((o) => h('div', {}, h('a', { href: pages.owner(o) }, h('code', {}, o))))],
+      ['Owners', a.owners().map((e) => h('div', {}, h('a', { href: pages.owner(e.owner) }, h('code', {}, e.owner)),
+        typeof e.catalogue === 'string'
+          ? [h('span', { class: 'muted' }, ', catalogue '), h('a', { href: pages.collection(ref(a, e.catalogue)) }, ref(a, e.catalogue))]
+          : null))],
       ['Indexes', isObject(d.indexes) ? Object.keys(d.indexes).map((k) => chip(`${k}/`)) : null],
       ['Feed', typeof d.feed === 'string' ? external(d.feed) : null],
       ['Extensions', list(d.extensions).map((e) => h('div', {}, external(String(e))))],
@@ -111,12 +112,19 @@ function objectList(ctx) {
     }
   };
   for (let k = 0; k < ROWS_AT_ONCE; k++) worker();
-  const main = a.disc.mainCollection;
+  const catalogues = a.owners().map((e) => e.catalogue).filter((c) => typeof c === 'string' && rows.has(c));
   filter();
-  if (typeof main === 'string' && rows.has(main)) {
-    a.inventory(main, null, { signal: ctx.signal }).then(async (inv) => {
-      const mem = await a.json(main, inv, inv.head, 'members.json', { signal: ctx.signal });
-      const members = (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
+  if (catalogues.length) {
+    Promise.all(catalogues.map(async (cat) => {
+      try {
+        const inv = await a.inventory(cat, null, { signal: ctx.signal });
+        const mem = await a.json(cat, inv, inv.head, 'members.json', { signal: ctx.signal });
+        return (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
+      } catch {
+        return [];
+      }
+    })).then((lists) => {
+      const members = lists.flat();
       for (const m of [...members].reverse()) {
         const row = rows.get(objectId(m.name, m.owner));
         if (!row) continue;

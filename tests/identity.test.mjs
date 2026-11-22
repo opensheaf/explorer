@@ -249,7 +249,7 @@ test('the rules of keys across versions (section 6.1, rules 1 to 4)', async () =
 
 async function keyLogOf(archive) {
   const a = await Archive.open(new Http({ fetch: diskFetch() }), ORIGIN + archive + '/');
-  return a.keyLog(a.owners()[0]);
+  return a.keyLog(a.owners()[0].owner);
 }
 
 test('the key logs of the fixtures', async () => {

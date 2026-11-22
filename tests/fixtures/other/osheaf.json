@@ -1,5 +1,5 @@
 {
-  "owner": "lmaz6cmuq76uhhy2gfq4rsity4rpmlzc7enpigb3jgorkseix25a",
+  "owner": "5fpcy7vrqok74bagfajv3w7ookim3lvqvz56hgvbqgrvvwszfxra",
   "name": "Another fixture archive",
   "contact": "https://fixtures.example.org/other/",
   "baseUrl": "https://fixtures.example.org/other/",
@@ -7,7 +7,6 @@
     "website"
   ],
   "storageLayout": "0003-hash-and-id-n-tuple-storage-layout",
-  "mainCollection": "main",
   "curator": {
     "name": "Example, Ada",
     "givenName": "Ada",
@@ -24,7 +23,7 @@
     }
   },
   "mirrors": {
-    "sheaf:jqtjzbxicmoxfgkomvjekg5w3bo6doxfs3nxuttx3vkr53vz6dqa:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja": [
+    "sheaf:jvol6o4hntxc6xygdum6rwocwzz66cudjvn3zjofs5oog4ylgouq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq": [
       "https://fixtures.example.org/archive/"
     ]
   }

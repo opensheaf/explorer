@@ -421,7 +421,7 @@ is a fork, at 2.
     // in tests of key logs:
     async function keyLogOf(archive) {
       const a = await Archive.open(new Http({ fetch: diskFetch() }), ORIGIN + archive + '/');
-      return a.keyLog(a.owners()[0]);
+      return a.keyLog(a.owners()[0].owner);
     }
 
     test('the key logs of the fixtures', async () => {

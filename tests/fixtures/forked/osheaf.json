@@ -1,5 +1,5 @@
 {
-  "owner": "v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
+  "owner": "4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq",
   "name": "A forked owner",
   "contact": "https://fixtures.example.org/forked/",
   "baseUrl": "https://fixtures.example.org/forked/",
@@ -7,7 +7,6 @@
     "website"
   ],
   "storageLayout": "opensheaf-owner-name-storage-layout",
-  "mainCollection": "main",
   "curator": {
     "name": "Example, Ada",
     "givenName": "Ada",

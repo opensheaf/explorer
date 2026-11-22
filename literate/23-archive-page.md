@@ -40,8 +40,9 @@ The facts
 
 The facts of the archive, as its discovery document gives them: its base
 URL and storage root, with the layout of the storage root (section 3.2),
-its contact, the profiles it declares, its main catalogue, the owners it
-hosts (each with its page, chapter [27](27-owner-page.md)), the indexes it
+its contact, the profiles it declares, the owners it hosts (each with its
+page, chapter [27](27-owner-page.md), and its owner catalogue, section
+8.1), in the order in which the archive presents them, the indexes it
 keeps (section 12.5), its feed and extensions; then the drafts it shows,
 on which nothing may rely (section 10.1), its tombstones (section 13.3),
 each with the line it keeps taken and the pin of its last version, and the
@@ -60,9 +61,10 @@ its base URL is a location, not a name (section 3).
           ['Contact', typeof d.contact === 'string' ? external(d.contact) : null],
           ['Specification', `${d.specification ?? '?'} (format ${d.format ?? '?'})`],
           ['Profiles', list(d.profiles).length ? list(d.profiles).map((p) => chip(String(p))) : 'none'],
-          ['Main catalogue', typeof d.mainCollection === 'string'
-            ? h('a', { href: pages.collection(ref(a, d.mainCollection)) }, ref(a, d.mainCollection)) : null],
-          ['Owners', a.owners().map((o) => h('div', {}, h('a', { href: pages.owner(o) }, h('code', {}, o))))],
+          ['Owners', a.owners().map((e) => h('div', {}, h('a', { href: pages.owner(e.owner) }, h('code', {}, e.owner)),
+            typeof e.catalogue === 'string'
+              ? [h('span', { class: 'muted' }, ', catalogue '), h('a', { href: pages.collection(ref(a, e.catalogue)) }, ref(a, e.catalogue))]
+              : null))],
           ['Indexes', isObject(d.indexes) ? Object.keys(d.indexes).map((k) => chip(`${k}/`)) : null],
           ['Feed', typeof d.feed === 'string' ? external(d.feed) : null],
           ['Extensions', list(d.extensions).map((e) => h('div', {}, external(String(e))))],
@@ -84,9 +86,10 @@ The list of objects
 
 The list starts from the discovery document, which gives each object's
 identifier, kind, name, owner, head, status and label (section 3.1); a
-mirror is listed like any line (section 11). The main catalogue, if there
-is one, gives at once the order of presentation of the archive's
-documents (its order is authoritative, section 8.2) and their cached
+mirror is listed like any line (section 11). The owner catalogues, in the
+order of `owners`, give at once the order of presentation of the
+archive's documents (the order of each is authoritative, section 8.2;
+appendix A.3) and their cached
 citations (`cite`), so that the list is readable before anything else is
 fetched. Then the row summary of every
 object (see [the summaries](22-pieces.md)) is read, a few at a time, and
@@ -110,7 +113,7 @@ the first of them listed, and the page says so (section 15.2).
         list.append(row.el);
       }
       <<complete the rows with the summaries>>
-      <<order the list by the main collection>>
+      <<order the list by the owner catalogues>>
       const cut = all.length > entries.length
         ? h('p', { class: 'alert warn' }, `The discovery document lists ${all.length} objects; only the first ${entries.length} are shown.`) : null;
       return section('Objects', controls, cut, status, list);
@@ -120,8 +123,8 @@ A row shows the title and creators (once known), the label (or the
 identifier), the kind, the status, the head, the current document
 version, and the date of first appearance. A key log links to the page
 of its owner. Until the object's own summary is read, a member of
-the main collection shows its cached citation and the version the
-collection pins, labelled as such ("pinned"), which may be earlier than
+an owner catalogue shows its cached citation and the version the
+catalogue pins, labelled as such ("pinned"), which may be earlier than
 the head. Its text, for the search, is kept up to date with
 what it shows, and folded (see below) once, when it changes, not at every
 search: the list is filtered again each time a row is completed, and
@@ -201,21 +204,28 @@ The controls, and the filtering:
     state.addEventListener('change', later);
     const controls = h('div', { class: 'controls' }, search, kind, state);
 
-The members of the head of the main catalogue are read (its inventory
-and member list only: the order of a list does not wait for signatures);
-those held in this archive are put first, in its order, with their
+The members of the heads of the owner catalogues are read (their
+inventories and member lists only: the order of a list does not wait for
+signatures); those held in this archive are put first, the catalogues in
+the order of `owners` and the members of each in its order, with their
 cached citations, and the other objects follow in the order of the
-discovery document. If the main
-collection cannot be read, the list stays in the order of the discovery
-document.
+discovery document. A catalogue that cannot be read is passed over; if
+none can, the list stays in the order of the discovery document.
 
-    // in order the list by the main collection:
-    const main = a.disc.mainCollection;
+    // in order the list by the owner catalogues:
+    const catalogues = a.owners().map((e) => e.catalogue).filter((c) => typeof c === 'string' && rows.has(c));
     filter();
-    if (typeof main === 'string' && rows.has(main)) {
-      a.inventory(main, null, { signal: ctx.signal }).then(async (inv) => {
-        const mem = await a.json(main, inv, inv.head, 'members.json', { signal: ctx.signal });
-        const members = (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
+    if (catalogues.length) {
+      Promise.all(catalogues.map(async (cat) => {
+        try {
+          const inv = await a.inventory(cat, null, { signal: ctx.signal });
+          const mem = await a.json(cat, inv, inv.head, 'members.json', { signal: ctx.signal });
+          return (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
+        } catch {
+          return [];
+        }
+      })).then((lists) => {
+        const members = lists.flat();
         for (const m of [...members].reverse()) {
           const row = rows.get(objectId(m.name, m.owner));
           if (!row) continue;
@@ -233,7 +243,7 @@ document.
 Then the row summaries. They are read a few at a time (`ROWS_AT_ONCE`,
 as many as the requests the HTTP client lets run at once), in the order
 of the list, so that the first rows, those the reader sees, are
-completed first; when the main collection reorders the list, the rows
+completed first; when the owner catalogues reorder the list, the rows
 not yet started are taken in the new order. Requesting them all at once
 would queue the requests of every object in the HTTP client, mixed, and
 the first screen would be completed last. Leaving the page stops the

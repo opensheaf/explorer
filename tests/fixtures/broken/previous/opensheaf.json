@@ -5,13 +5,15 @@
   "contact": "https://fixtures.example.org/archive/",
   "storageRoot": "ocfl/",
   "storageLayout": "opensheaf-owner-name-storage-layout",
-  "mainCollection": "sheaf:g5bqtppbeivniv423x5omqp6mutq5mwfpjkq75z7hwesnb3zej7q:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
   "profiles": [
     "website"
   ],
   "extensions": [],
   "owners": [
-    "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja"
+    {
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "catalogue": "sheaf:irumg2i6exi54ji6bdzzja52e6v25pfzoci72rwvaq3pfugjdtna:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq"
+    }
   ],
   "indexes": {
     "names": 2,
@@ -20,63 +22,63 @@
   },
   "objects": [
     {
-      "id": "sheaf:7xz6uaxoan4nwfc54a2kxn4nuegbyrm2bziziyum3bswqch2lslq:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "id": "sheaf:3bawl23syobmehl2juvozt7zbki7jgpz4qhpyy5v3iyaul6mpdda:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
       "kind": "document",
-      "name": "7xz6uaxoan4nwfc54a2kxn4nuegbyrm2bziziyum3bswqch2lslq",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "head": "v4",
-      "inventorySha512": "995d4fb9293d1da3cdbe16e8035781f0f4f74db86dfed81c03939364a8ee263820095751f3a10eefb42f3c324c4a63e9a2d0ffd35bf34894f0336e631f22d3cd",
-      "status": "active",
-      "label": "alpha"
-    },
-    {
-      "id": "sheaf:g5bqtppbeivniv423x5omqp6mutq5mwfpjkq75z7hwesnb3zej7q:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "kind": "collection",
-      "name": "g5bqtppbeivniv423x5omqp6mutq5mwfpjkq75z7hwesnb3zej7q",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "name": "3bawl23syobmehl2juvozt7zbki7jgpz4qhpyy5v3iyaul6mpdda",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
       "head": "v2",
-      "inventorySha512": "fda15a0881d250670eb6747583ec4d3b83d91c8c52cb4f1e61365699a20d04274b77c25b391da9753eba8e0e0f16a6abebb800793d7b7ed7436b8d4c4df78a07",
-      "status": "active",
-      "label": "main"
-    },
-    {
-      "id": "sheaf:gm6i33pen6glelqovvzdin7emx7z77ywa37crsepjr4xwjxbafwa:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "kind": "collection",
-      "name": "gm6i33pen6glelqovvzdin7emx7z77ywa37crsepjr4xwjxbafwa",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "head": "v1",
-      "inventorySha512": "421a71a3ef0495008d37c0a113bb9f4e50d1325f12d9444e2127366009fbd32016d63adf8326558b5795f9931b70c4524726592841d628094b905e556da7f227",
-      "status": "active",
-      "label": "reading"
-    },
-    {
-      "id": "sheaf:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "kind": "owner",
-      "name": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "head": "v1",
-      "inventorySha512": "20e7b46c2cafd9d22ac290d6149d0587051515dce356efcc472ca0803ccf3cec4f285ca0e4f6a5123b7c8abbd814dba1b12fdd60afb710e85861e4f672c3a743",
-      "status": "active"
-    },
-    {
-      "id": "sheaf:hegljapy6ki4r2hrtvrk2brfgwpgapticr43skehzdty3rvuqraq:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "kind": "document",
-      "name": "hegljapy6ki4r2hrtvrk2brfgwpgapticr43skehzdty3rvuqraq",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "head": "v2",
-      "inventorySha512": "1e70f690f7351cb21845036699ddd9691a0a21e4061430391b79dcc531a9752c2e428ca6b21cb4c654340bcf05436dde2db74950d0aae9bf91235f1716c0acb1",
+      "inventorySha512": "56b9a03744322a98c565996fe36a8c6819b1360ccabc80554d01c0b3e94aa992fcdfd8cf26ad68a16a31a2ca633275288f751864104c92a6dd023236db4f6c04",
       "status": "withdrawn",
       "label": "gamma"
     },
     {
-      "id": "sheaf:jqtjzbxicmoxfgkomvjekg5w3bo6doxfs3nxuttx3vkr53vz6dqa:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "id": "sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
       "kind": "document",
-      "name": "jqtjzbxicmoxfgkomvjekg5w3bo6doxfs3nxuttx3vkr53vz6dqa",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "name": "a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "head": "v4",
+      "inventorySha512": "6935b2402f44735e30bdd61d4ae380bc6b512fe3052d7c57a96099baba2bed801daf94a293d9f3ade767ec3874652fbdc70fc2599ccd76f854be9aeaacaa7121",
+      "status": "active",
+      "label": "alpha"
+    },
+    {
+      "id": "sheaf:irumg2i6exi54ji6bdzzja52e6v25pfzoci72rwvaq3pfugjdtna:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "kind": "collection",
+      "name": "irumg2i6exi54ji6bdzzja52e6v25pfzoci72rwvaq3pfugjdtna",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
       "head": "v2",
-      "inventorySha512": "522f4f8fcce4992e6cfff49d7daffea17dff0dd2362644c949d7a14b6e6b19589b7f3f6a7d5ed96906b97f9ba8aa99ed0355e637e180bc13e0dda311e8d87ec7",
+      "inventorySha512": "cd84b6a0a5c1631e461ed9da4e0f9e0293cdef086f125bd81942d14380982c9d245def156be34913629468d9b828addcad3a05e519f4bfcc1044e477fe2a24e4",
+      "status": "active",
+      "label": "main"
+    },
+    {
+      "id": "sheaf:jvol6o4hntxc6xygdum6rwocwzz66cudjvn3zjofs5oog4ylgouq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "kind": "document",
+      "name": "jvol6o4hntxc6xygdum6rwocwzz66cudjvn3zjofs5oog4ylgouq",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "head": "v2",
+      "inventorySha512": "69f7ad07153097f71014f949e59eeb9f16ed934e323a0e2ca11aef7c69e5d8c28a480ca90af98b6cebe3caa7072128e68b1918c5545babe3e8c081f56bd3316f",
       "status": "active",
       "label": "beta"
+    },
+    {
+      "id": "sheaf:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "kind": "owner",
+      "name": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "head": "v1",
+      "inventorySha512": "618d04b0bf2f8494d9ed1704bfce30d67d454fcc9c3b376fb109f627fbf8c705fc447f65d83d914ddd0febff4057f0820685519c5072ea050069072ad5697c96",
+      "status": "active"
+    },
+    {
+      "id": "sheaf:zvian67sbspmcpiprumlwjavb5wlfc4aqypl6meh2gqrxikj7mpa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "kind": "collection",
+      "name": "zvian67sbspmcpiprumlwjavb5wlfc4aqypl6meh2gqrxikj7mpa",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "head": "v1",
+      "inventorySha512": "105ada2a45777849eceb7895e89e6bea1765db737ed83eeae831dc020f16484ee5a3eb8f17f8bcb060bb0e1cfb818a7f2a990ed76cc05593d397fedb718f4982",
+      "status": "active",
+      "label": "reading"
     }
   ],
   "drafts": [
@@ -88,13 +90,13 @@
   ],
   "tombstones": [
     {
-      "id": "sheaf:3du3fsvb7o6xchidsduicmkhwbtvy4zr2pq4qn7dsfotylaxft4q:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "id": "sheaf:ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
       "kind": "document",
-      "name": "3du3fsvb7o6xchidsduicmkhwbtvy4zr2pq4qn7dsfotylaxft4q",
-      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
-      "genesisName": "3du3fsvb7o6xchidsduicmkhwbtvy4zr2pq4qn7dsfotylaxft4q",
+      "name": "ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq",
+      "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+      "genesisName": "ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq",
       "lastVersion": "v1",
-      "inventorySha512": "592779e348541558545974a6f32b973fbbba2c8cd7fd2dfe1204fc890736529d4764e0e2d9328bd2f1f67d1c56578e185495c09e725f557985cfab732e7de3b8",
+      "inventorySha512": "a844ee75a7d91ed7e0a14b4f0645a68d48d8ecb8d2fcaec59908ec7e0acca97b4b54ac710ae89bbfe7b18609d52080b875c98abf80c02ad720db89eb3e6f8f89",
       "date": "2026-11-22",
       "reason": "Taken down for the tests."
     }

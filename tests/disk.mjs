@@ -47,7 +47,7 @@ export function idOf(label, archive = 'archive') {
 }
 
 export const ALPHA = idOf('alpha'), BETA = idOf('beta'), GAMMA = idOf('gamma'), MAIN = idOf('main'), READING = idOf('reading');
-export const OWNER = DISCOVERY.archive.owners[0];
+export const OWNER = DISCOVERY.archive.owners[0].owner;
 
 export function folder(id, archive = 'archive') {
   const [, name, owner] = id.split(':');

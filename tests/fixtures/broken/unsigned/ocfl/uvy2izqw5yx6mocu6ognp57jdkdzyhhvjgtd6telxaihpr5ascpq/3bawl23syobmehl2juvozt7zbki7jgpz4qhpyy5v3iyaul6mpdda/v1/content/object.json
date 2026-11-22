@@ -1,0 +1,17 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "3bawl23syobmehl2juvozt7zbki7jgpz4qhpyy5v3iyaul6mpdda",
+  "owner": "uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
+  "documentVersion": 1,
+  "mainSource": "gamma-1.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active"
+}

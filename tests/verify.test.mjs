@@ -138,7 +138,7 @@ test('the layout, the home page and the profile website', async () => {
 });
 
 test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
-  const shard = (await fixture('archive/opensheaf.json')).owners[0].slice(0, 2);
+  const shard = (await fixture('archive/opensheaf.json')).owners[0].owner.slice(0, 2);
   const url = `${ORIGIN}archive/owners/${shard}.json`;
   const text = await (await diskFetch()(url)).text();
   for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {

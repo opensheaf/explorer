@@ -1,0 +1,58 @@
+{
+  "digestAlgorithm": "sha512",
+  "head": "v2",
+  "id": "sheaf:4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq:4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq",
+  "manifest": {
+    "f3ec1643f38c45805e71dff48b5598e53eb0906473e3e46c7de475921a1726ebd579c45e0a8fb2c8b3f808d5ba458fc36265a756535f9f010cfbb9ead0639918": [
+      "v1/content/genesis.json"
+    ],
+    "96c1f7adc487da38e9c3c14c3b54609770e4260c424e5d4d32a22f7f7df04dc4ebb7c1aa6d9a7a628c35f8c2cda4d5bd326fa37c3d76a52aab82496532d62e1a": [
+      "v1/content/keys.json"
+    ],
+    "f493a462b985f7b5669b39ff7b0dfc9ac2ef338b7a3bdc91b200d1969f32f8e34fb1ab589f045a0bf9d49cfd6164e0f7f43511bd8d6d4727a4f6d0b8b6b49e38": [
+      "v1/content/object.json"
+    ],
+    "659230fa56b369639539cd9229fed0af3ec6d38f35fce10ade2e8a20675913e45ee382c58acb345db291e033b0f98be99293c6737f1d0c8b3316ec455a1ac2b0": [
+      "v2/content/keys.json"
+    ],
+    "f54cbea73e03352dfd7a842f1b10e46e3313fe7d76feafa72c68fbc2754369f2df0a93f4df9cf72831c70178133628bbbdf8d2046358d58af173b9890307600e": [
+      "v2/content/object.json"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-22T10:29:06Z",
+      "state": {
+        "f3ec1643f38c45805e71dff48b5598e53eb0906473e3e46c7de475921a1726ebd579c45e0a8fb2c8b3f808d5ba458fc36265a756535f9f010cfbb9ead0639918": [
+          "genesis.json"
+        ],
+        "96c1f7adc487da38e9c3c14c3b54609770e4260c424e5d4d32a22f7f7df04dc4ebb7c1aa6d9a7a628c35f8c2cda4d5bd326fa37c3d76a52aab82496532d62e1a": [
+          "keys.json"
+        ],
+        "f493a462b985f7b5669b39ff7b0dfc9ac2ef338b7a3bdc91b200d1969f32f8e34fb1ab589f045a0bf9d49cfd6164e0f7f43511bd8d6d4727a4f6d0b8b6b49e38": [
+          "object.json"
+        ]
+      }
+    },
+    "v2": {
+      "created": "2026-11-22T10:29:06Z",
+      "state": {
+        "f3ec1643f38c45805e71dff48b5598e53eb0906473e3e46c7de475921a1726ebd579c45e0a8fb2c8b3f808d5ba458fc36265a756535f9f010cfbb9ead0639918": [
+          "genesis.json"
+        ],
+        "659230fa56b369639539cd9229fed0af3ec6d38f35fce10ade2e8a20675913e45ee382c58acb345db291e033b0f98be99293c6737f1d0c8b3316ec455a1ac2b0": [
+          "keys.json"
+        ],
+        "f54cbea73e03352dfd7a842f1b10e46e3313fe7d76feafa72c68fbc2754369f2df0a93f4df9cf72831c70178133628bbbdf8d2046358d58af173b9890307600e": [
+          "object.json"
+        ]
+      },
+      "message": "Keys changed",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/forked/"
+      }
+    }
+  }
+}

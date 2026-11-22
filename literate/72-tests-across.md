@@ -42,7 +42,7 @@ Statuses on the fixtures
 The statuses of section 7.3 as the fixtures hold them: every version of
 `archive/`'s lines is signed; in `other/`, `exposed` was signed only with
 the key exposed afterwards, and is contested, as are both versions of the
-main catalogue, which pins it; the first version of `vouched` lost its
+owner catalogue, which pins it; the first version of `vouched` lost its
 signature file and is vouched for by the second, signed with the new key;
 in `forked/`, `before` is signed against the first version of the key
 log, and `after` against the second, from the fork point on, and is
@@ -175,7 +175,7 @@ The statuses of pins
 
 Each status of section 8.5, from `other/`'s resolver: the pin of
 `alpha` that `shelf` holds, verified in `archive/`; the pin of `exposed`
-that `other/`'s main catalogue holds, contested; a pin with another
+that `other/`'s owner catalogue holds, contested; a pin with another
 digest, a mismatch; the line `delta`, taken down in `archive/`, removed;
 a version of `beta` without its signature files (in a broken copy), not
 a version, for a resolver that knows no other copy, and verified for

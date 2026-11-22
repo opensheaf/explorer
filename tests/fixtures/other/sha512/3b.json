@@ -1,0 +1,12 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "sha512",
+  "entries": [
+    {
+      "inventorySha512": "3bde17d7e209c9b19169d49970390d6386b4f8f0038b3d9b8aa69175b95a840f4cd06aa945cae563eb90ea78c2c94b79aeae4670c9c4752b089637976304a5a8",
+      "id": "sheaf:vcl5y7dpjmnf5f7ftloi3m6zi6zxsbgw3hbav7mucvzadg2h2l6a:5fpcy7vrqok74bagfajv3w7ookim3lvqvz56hgvbqgrvvwszfxra",
+      "version": "v1",
+      "status": "active"
+    }
+  ]
+}

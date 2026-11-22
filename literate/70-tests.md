@@ -35,7 +35,7 @@ which `osheaf` is told to read from the folder of the fixtures
   a document with a version found later (which writes the history) and a
   notice; a document deposited without its sources, then completed; a
   withdrawn document; a document taken down, of which a tombstone is
-  left; a draft; its main catalogue, and a selection vetting two
+  left; a draft; its owner catalogue, and a selection vetting two
   revisions; its indexes and its website.
 - `forked/` has an owner whose key log forks: a twin of the archive
   signs another version 2 of the key log with other rotation keys, and
@@ -192,11 +192,11 @@ fork point, version 2, and `after` is contested.
     $F owner pull "work/twin/ocfl/$OWNER_F/$OWNER_F"
     $F index
 
-The second archive, in the hashed layout, with a curated main catalogue.
+The second archive, in the hashed layout, with a curated owner catalogue.
 Its owner deposits `exposed` and `vouched`, both signed with its first
-key, and lists `exposed` in its main catalogue; then makes a new key and
+key, and lists `exposed` in its owner catalogue; then makes a new key and
 exposes the first (section 6.3), so that `exposed` and the two versions
-of the main catalogue are contested; then deposits a second version of
+of the owner catalogue are contested; then deposits a second version of
 `vouched`, signed with the new key, which `osheaf` asks to acknowledge
 (`--i-know`, section 7.3). The signature file of the first version of
 `vouched` is then removed: that version is no longer signed directly, but
@@ -273,7 +273,7 @@ Each broken copy breaks one rule, as a damaged or tampered archive would:
 - `dropped-notice`: a later version without the notice of an earlier one;
 - `wrong-pin`: a selection pinning a digest that is not the inventory's;
 - `unsigned`: a version whose signature file is gone, so that it is not a
-  version of its line, and the main catalogue pins it;
+  version of its line, and the owner catalogue pins it;
 - `bad-signature`: a signature that does not verify;
 - `no-key-log`: the archive without the key log of its owner;
 - `key-log`: a key log whose second version lost its signature files;
@@ -517,7 +517,7 @@ an archive in the owner-name layout.
     }
 
     export const ALPHA = idOf('alpha'), BETA = idOf('beta'), GAMMA = idOf('gamma'), MAIN = idOf('main'), READING = idOf('reading');
-    export const OWNER = DISCOVERY.archive.owners[0];
+    export const OWNER = DISCOVERY.archive.owners[0].owner;
 
     export function folder(id, archive = 'archive') {
       const [, name, owner] = id.split(':');
@@ -1856,7 +1856,7 @@ function of the old one), or to `null` for a file that is missing.
 
 An inventory copy with another head, or fewer versions; a storage root
 with an `ocfl_layout.json` in the owner-name layout; a home page that
-does not show the pins of the main catalogue, which is an error for an
+does not show the pins of the owner catalogue, which is an error for an
 archive declaring the profile `website` and a warning otherwise; a key
 log without the signature files of its second version; a tombstone of an
 object listed; a label given twice; an index file that starts with a
@@ -1894,7 +1894,7 @@ byte order mark, or holds bytes that are not UTF-8, which is not JSON for
     });
 
     test('an index file with a byte order mark, or bytes that are not UTF-8', async () => {
-      const shard = (await fixture('archive/opensheaf.json')).owners[0].slice(0, 2);
+      const shard = (await fixture('archive/opensheaf.json')).owners[0].owner.slice(0, 2);
       const url = `${ORIGIN}archive/owners/${shard}.json`;
       const text = await (await diskFetch()(url)).text();
       for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
