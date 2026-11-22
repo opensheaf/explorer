@@ -585,7 +585,7 @@ The tests themselves:
     test('object.json: kinds, notes, withdrawal, extensions, previous', async () => {
       const obj = await file(ALPHA, 'v4/content/object.json');
       assert.deepEqual(messages('object', { ...obj, kind: 'collection' }), [
-        ': must not have mainSource, sourceFormat, sourcesMissing, renditions, toolchain, changes, stage, history, notices, licence',
+        ': must not have mainSource, sourceFormat, sourcesMissing, licence',
       ]);
       assert.deepEqual(messages('object', { ...obj, status: 'withdrawn' }), [': "withdrawal" is a required property']);
       assert.deepEqual(messages('object', { ...obj, changes: { path: 'x.md' } }), ['/changes: "mediaType" is required with "path"']);
@@ -1210,6 +1210,36 @@ number of the version it completes; each rule broken gives its message.
         'v3 history does not list each document version once',
         'v4 lacks the history of earlier versions',
       ]);
+    });
+
+    test('the fields of a document version and its external records (section 4.2)', () => {
+      const pdf = { path: 'p.pdf', mediaType: 'application/pdf' };
+      const arxiv = { role: 'source', service: 'arXiv', record: 'https://arxiv.org/abs/2601.00001v1' };
+      const zenodo = { role: 'deposit', service: 'Zenodo', record: 'https://zenodo.org/records/1' };
+      const { inv, objOf } = make([
+        { obj: { documentVersion: 1, renditions: [pdf], external: [arxiv] }, files: { 'a.tex': 'a1', 'p.pdf': 'p1' } },
+        { obj: { documentVersion: 1, renditions: [pdf], external: [arxiv, zenodo] }, files: { 'a.tex': 'a1', 'p.pdf': 'p1' } },
+        { obj: { documentVersion: 1, renditions: [{ ...pdf, mediaType: 'application/octet-stream' }], toolchain: [{ name: 'TeX', version: '3' }], external: [zenodo] }, files: { 'a.tex': 'a1', 'p.pdf': 'p1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v3 changes renditions of document version 1, which belongs to it (section 4.2)',
+        'v3 changes toolchain of document version 1, which belongs to it (section 4.2)',
+        'v3 drops or changes an external record of document version 1 (section 4.2)',
+      ]);
+    });
+
+    test('a collection follows the rules of documents (section 4.2)', () => {
+      const c = (n) => ({ kind: 'collection', documentVersion: n });
+      const { inv, objOf } = make([
+        { obj: c(1), files: { 'members.json': 'm1' } },
+        { obj: c(2), files: { 'members.json': 'm2' } },
+        { obj: c(1), files: { 'members.json': 'm1' } },
+        { obj: c(2), files: { 'members.json': 'm3' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v4 has other files than document version 2',
+      ]);
+      assert.deepEqual(rolesOf(inv, objOf), { v1: 'new', v2: 'new', v3: 'description', v4: 'description' });
     });
 
     test('a description-only version may add the file of the licence terms (sections 7.3 and 9)', () => {

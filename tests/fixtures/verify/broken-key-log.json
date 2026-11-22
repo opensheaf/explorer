@@ -1,18 +1,18 @@
 [
   {
     "severity": "error",
-    "place": "owner gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha",
+    "place": "owner v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
     "message": "v2: signed by 0 rotation keys of v1, which needs 2 (section 6.1)"
   },
   {
     "severity": "warning",
-    "place": "owner gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha",
+    "place": "owner v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
     "message": "v3: follows a version that is not a version of the key log"
   },
   {
     "severity": "result",
-    "place": "owner gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha",
-    "message": "key log of gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha: latest version v1"
+    "place": "owner v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
+    "message": "key log of v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga: latest version v1"
   },
   {
     "severity": "result",

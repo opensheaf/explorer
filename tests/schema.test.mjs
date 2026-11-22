@@ -46,7 +46,7 @@ test('a discovery document breaking the schema', async () => {
 test('object.json: kinds, notes, withdrawal, extensions, previous', async () => {
   const obj = await file(ALPHA, 'v4/content/object.json');
   assert.deepEqual(messages('object', { ...obj, kind: 'collection' }), [
-    ': must not have mainSource, sourceFormat, sourcesMissing, renditions, toolchain, changes, stage, history, notices, licence',
+    ': must not have mainSource, sourceFormat, sourcesMissing, licence',
   ]);
   assert.deepEqual(messages('object', { ...obj, status: 'withdrawn' }), [': "withdrawal" is a required property']);
   assert.deepEqual(messages('object', { ...obj, changes: { path: 'x.md' } }), ['/changes: "mediaType" is required with "path"']);

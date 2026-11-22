@@ -1,12 +1,12 @@
 [
   {
     "severity": "result",
-    "place": "owner gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha",
-    "message": "key log of gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha: latest version v3"
+    "place": "owner v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
+    "message": "key log of v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga: latest version v3"
   },
   {
     "severity": "result",
-    "place": "owner gv5xe3zvbnu4lw2p3sx3lpa3ssc7oeumlacw55h57dij3h2bbxha",
+    "place": "owner v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
     "message": "ended by a fork of its key log at v2 (section 6.3)"
   },
   {

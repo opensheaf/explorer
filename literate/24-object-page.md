@@ -418,7 +418,7 @@ it is.
     }
 
     const ROLES = { new: 'new document version', description: 'description only', completion: 'completion',
-                    collection: 'collection version', unknown: 'unreadable' };
+                    owner: 'key-log version', unknown: 'unreadable' };
 
     function objectVersions(s, name, shown, rec) {
       return section('Object versions',

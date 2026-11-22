@@ -1,13 +1,8 @@
 [
   {
     "severity": "result",
-    "place": "owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
-    "message": "key log of 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "beta",
-    "message": "latest signed version v2"
+    "place": "owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+    "message": "key log of h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja: latest version v1"
   },
   {
     "severity": "warning",
@@ -26,6 +21,16 @@
   },
   {
     "severity": "result",
+    "place": "main",
+    "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
     "place": "gamma",
     "message": "latest signed version v2"
   },
@@ -36,13 +41,8 @@
   },
   {
     "severity": "result",
-    "place": "main",
+    "place": "beta",
     "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
   },
   {
     "severity": "error",
@@ -52,6 +52,6 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:3nf3facim3uo5bkyre7pvsbodjl3ztkvfts5ckozxidjoxjakerq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq (2026-11-21: Taken down for the tests.)"
+    "message": "removed: sheaf:3du3fsvb7o6xchidsduicmkhwbtvy4zr2pq4qn7dsfotylaxft4q:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja (2026-11-22: Taken down for the tests.)"
   }
 ]

@@ -1,0 +1,98 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "catalogue",
+  "order": "manual",
+  "members": [
+    {
+      "kind": "document",
+      "name": "7xz6uaxoan4nwfc54a2kxn4nuegbyrm2bziziyum3bswqch2lslq",
+      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v4",
+      "inventorySha512": "79c27c188c6f9714280b5c87fec8d258acb237ded8a793abdf5de69b5ab9f8ccdf4f67b4cefaf328ccf1a6cebb04979326f2b2db494a4f06a8ff94f6386af4c3",
+      "follow": "latest",
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "hegljapy6ki4r2hrtvrk2brfgwpgapticr43skehzdty3rvuqraq",
+      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v2",
+      "inventorySha512": "1e70f690f7351cb21845036699ddd9691a0a21e4061430391b79dcc531a9752c2e428ca6b21cb4c654340bcf05436dde2db74950d0aae9bf91235f1716c0acb1",
+      "cite": {
+        "title": "Gamma",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2022,
+        "issued": "2022-02-02"
+      }
+    },
+    {
+      "kind": "collection",
+      "name": "gm6i33pen6glelqovvzdin7emx7z77ywa37crsepjr4xwjxbafwa",
+      "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+      "at": [
+        "https://fixtures.example.org/archive/"
+      ],
+      "version": "v1",
+      "inventorySha512": "421a71a3ef0495008d37c0a113bb9f4e50d1325f12d9444e2127366009fbd32016d63adf8326558b5795f9931b70c4524726592841d628094b905e556da7f227",
+      "cite": {
+        "title": "A reading list",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2026,
+        "issued": "2026-11-22"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "7xz6uaxoan4nwfc54a2kxn4nuegbyrm2bziziyum3bswqch2lslq",
+      "owner": "lmaz6cmuq76uhhy2gfq4rsity4rpmlzc7enpigb3jgorkseix25a",
+      "at": [
+        "https://fixtures.example.org/other/"
+      ],
+      "version": "v1",
+      "inventorySha512": "eebfca1049b56f52d3b0e414f7c8d9ededf4d32aa2e69aedf42fd466da81c6a532717a54ca528d8bb5c72b76f964f839cd0d17eaf4095443a8032f4277e0cacf",
+      "cite": {
+        "title": "Alpha: $\\alpha$-stable laws",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2024,
+        "issued": "2024-01-10"
+      }
+    },
+    {
+      "kind": "document",
+      "name": "47svxx3uewi5pddevdtqsgquq24ml64e6j2lohp7ilfzj74uogpa",
+      "owner": "v4lurmpdd7wokhvtuccvwpyc25yttdw7iuw4xfeh2w6eiuyi3rga",
+      "at": [
+        "https://fixtures.example.org/forked/"
+      ],
+      "version": "v1",
+      "inventorySha512": "0e37ae46a146de4c777c97e8ac55ca2cd12d0c155c6d3353b10c09a2b802674b46107dd99815c716fd77ebde067dd549dcd8cbfd9a2703289466cdb460b690f3",
+      "cite": {
+        "title": "Signed before the fork",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2026,
+        "issued": "2026-11-22"
+      }
+    }
+  ]
+}

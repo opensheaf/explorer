@@ -3,10 +3,10 @@
   "index": "sha512",
   "entries": [
     {
-      "inventorySha512": "1eae72af0d2deda194c0ddca6045a8aedcdbce66e7515e1f3e2e22a81dd5928d86ccd44d0c79183fc8c5411d813dff0ebf024de1e14ca89916cf632d06540ae1",
-      "id": "sheaf:wbcw3yuyknftgxketbg7gnvw2e3kipfigq7i7a6ety2eqf3r7gtq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq",
+      "inventorySha512": "1e70f690f7351cb21845036699ddd9691a0a21e4061430391b79dcc531a9752c2e428ca6b21cb4c654340bcf05436dde2db74950d0aae9bf91235f1716c0acb1",
+      "id": "sheaf:hegljapy6ki4r2hrtvrk2brfgwpgapticr43skehzdty3rvuqraq:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
       "version": "v2",
-      "status": "active"
+      "status": "withdrawn"
     }
   ]
 }

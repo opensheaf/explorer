@@ -1,0 +1,55 @@
+{
+  "titles": [
+    {
+      "title": "Gamma"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Example, Ada",
+      "nameType": "Personal",
+      "familyName": "Example",
+      "givenName": "Ada"
+    }
+  ],
+  "publisher": {
+    "name": "A fixture archive"
+  },
+  "publicationYear": 2022,
+  "types": {
+    "resourceTypeGeneral": "Preprint"
+  },
+  "version": "1",
+  "url": "https://fixtures.example.org/archive/paper/gamma/",
+  "dates": [
+    {
+      "date": "2022-02-02",
+      "dateType": "Issued"
+    },
+    {
+      "date": "2022-02-02",
+      "dateType": "Available"
+    },
+    {
+      "date": "2026-11-22",
+      "dateType": "Withdrawn"
+    },
+    {
+      "date": "2026-11-22",
+      "dateType": "Updated"
+    }
+  ],
+  "language": "en",
+  "formats": [
+    "application/x-tex",
+    "application/pdf"
+  ],
+  "rightsList": [
+    {
+      "rights": "Creative Commons Attribution 4.0 International",
+      "rightsUri": "https://creativecommons.org/licenses/by/4.0/",
+      "rightsIdentifier": "cc-by-4.0",
+      "rightsIdentifierScheme": "SPDX"
+    }
+  ]
+}

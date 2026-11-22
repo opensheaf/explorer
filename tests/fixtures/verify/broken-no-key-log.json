@@ -1,38 +1,8 @@
 [
   {
     "severity": "error",
-    "place": "beta",
-    "message": "the key log of its owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq is not in the storage root (section 6.5)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v1",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v1",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v2",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "beta v2",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "beta",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "error",
     "place": "alpha",
-    "message": "the key log of its owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq is not in the storage root (section 6.5)"
+    "message": "the key log of its owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
@@ -81,38 +51,8 @@
   },
   {
     "severity": "error",
-    "place": "gamma",
-    "message": "the key log of its owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq is not in the storage root (section 6.5)"
-  },
-  {
-    "severity": "warning",
-    "place": "gamma v1",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "gamma v1",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "gamma v2",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "gamma v2",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "gamma",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "error",
     "place": "main",
-    "message": "the key log of its owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq is not in the storage root (section 6.5)"
+    "message": "the key log of its owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
@@ -142,7 +82,7 @@
   {
     "severity": "error",
     "place": "reading",
-    "message": "the key log of its owner 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq is not in the storage root (section 6.5)"
+    "message": "the key log of its owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja is not in the storage root (section 6.5)"
   },
   {
     "severity": "warning",
@@ -157,6 +97,66 @@
   {
     "severity": "warning",
     "place": "reading",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "gamma",
+    "message": "the key log of its owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "gamma",
+    "message": "the line has no signed version (section 7.3)"
+  },
+  {
+    "severity": "error",
+    "place": "beta",
+    "message": "the key log of its owner h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja is not in the storage root (section 6.5)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "beta v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "beta",
     "message": "the line has no signed version (section 7.3)"
   },
   {
@@ -192,36 +192,36 @@
   {
     "severity": "error",
     "place": "opensheaf.json",
-    "message": "lists sheaf:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq, which is not an object of the storage root (section 3.1)"
+    "message": "lists sheaf:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja, which is not an object of the storage root (section 3.1)"
   },
   {
     "severity": "warning",
     "place": "opensheaf.json",
-    "message": "owners lists 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq, whose key log is not held here (section 3.1)"
+    "message": "owners lists h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja, whose key log is not held here (section 3.1)"
   },
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:3nf3facim3uo5bkyre7pvsbodjl3ztkvfts5ckozxidjoxjakerq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq (2026-11-21: Taken down for the tests.)"
+    "message": "removed: sheaf:3du3fsvb7o6xchidsduicmkhwbtvy4zr2pq4qn7dsfotylaxft4q:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja (2026-11-22: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "names/",
-    "message": "an entry the storage root does not justify: sheaf:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq  (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "no entry, or a stale one, for 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq  (section 12.5)"
+    "message": "no entry, or a stale one, for h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "an entry the storage root does not justify: 22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq  (section 12.5)"
+    "message": "an entry the storage root does not justify: h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq:22b4id6o4y4dx4wvgcgqvlzqecu77gihhurynv7cex7ul4lssjyq v1 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja:h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja v1 (section 12.5)"
   }
 ]

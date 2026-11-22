@@ -1,0 +1,24 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "hegljapy6ki4r2hrtvrk2brfgwpgapticr43skehzdty3rvuqraq",
+  "owner": "h3ms53f62vomjdhiqnzdblg42r5t5b63wlur7k5nvb4wcytddtja",
+  "documentVersion": 1,
+  "mainSource": "gamma-1.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "withdrawn",
+  "withdrawal": {
+    "date": "2026-11-22",
+    "reason": {
+      "text": "Withdrawn for the tests."
+    }
+  },
+  "previous": "1b8a327a90cdefdb6001d64b20fa82611c096c1756274f154d9058731aeaa8ed8a2e4c508cd68fef2507776525b21d121966aa77ae5e7ea179f6e8d785073666"
+}
