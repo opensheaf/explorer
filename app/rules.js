@@ -22,10 +22,16 @@ export function descriptionErrors(inv, ver, obj, dc) {
   for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
     if (!Object.hasOwn(dc, k)) out.push(`datacite.json lacks ${k}`);
   }
+  // Section 4.4: an entry with rightsIdentifier or rightsUri is a licence, one with neither a
+  // rights statement; an identifier is an SPDX identifier in lower case. Whether a licence
+  // allows a copy is not checked (section 11.2).
   for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
-    const rights = typeof r?.rights === 'string' ? r.rights.toLowerCase() : '';
-    if (r?.rightsIdentifier == null && (rights.startsWith('creative') || rights.startsWith('arxiv')) && !r?.rightsUri) {
-      out.push('licence without SPDX identifier and without rightsUri');
+    const ident = r?.rightsIdentifier;
+    if (ident == null) continue;
+    if (r?.rightsIdentifierScheme !== 'SPDX') {
+      out.push(`rightsList: ${ident} is not given as an SPDX identifier (section 4.4)`);
+    } else if (String(ident) !== String(ident).toLowerCase()) {
+      out.push(`rightsList: ${ident} is not in lower case (section 4.4)`);
     }
   }
   const notes = [obj.changes, obj.sourcesMissing, obj.licence, ...(Array.isArray(obj.notices) ? obj.notices : []), obj.withdrawal?.reason];
