@@ -1,18 +1,18 @@
 [
   {
     "severity": "result",
-    "place": "owner uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
-    "message": "key log of uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq: latest version v1"
+    "place": "owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+    "message": "key log of kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa: latest version v1"
   },
   {
     "severity": "result",
-    "place": "gamma",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "beta",
     "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "result",
@@ -26,13 +26,18 @@
   },
   {
     "severity": "result",
-    "place": "beta",
+    "place": "gamma",
     "message": "latest signed version v2"
   },
   {
     "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
+  },
+  {
+    "severity": "result",
+    "place": "main v2 member gamma v2",
+    "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   },
   {
     "severity": "error",
@@ -42,11 +47,6 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq (2026-11-22: Taken down for the tests.)"
-  },
-  {
-    "severity": "result",
-    "place": "main v2 member gamma v2",
-    "message": "document version 1 is withdrawn, in v2 (section 13.1)"
+    "message": "removed: sheaf:sha7xconwn2g2pi4f2evyomwj5kjgoe3apfhaaw5ethfa4w2mpcq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa (2026-11-22: Taken down for the tests.)"
   }
 ]

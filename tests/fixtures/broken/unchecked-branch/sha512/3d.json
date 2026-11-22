@@ -3,9 +3,9 @@
   "index": "sha512",
   "entries": [
     {
-      "inventorySha512": "3d6095cd8605a35b2d2892cc58b273247582fb5cc7c778b3062f5c9554570aa76c523f74806ad5a3427a2d5aad86696a78d43cdc01a44d0369b038a40bb56f40",
-      "id": "sheaf:jhydtwpceutovyw24y4eqzfykdzgzsglx5jd42u5pady6a4reogq:5fpcy7vrqok74bagfajv3w7ookim3lvqvz56hgvbqgrvvwszfxra",
-      "version": "v1",
+      "inventorySha512": "3d5e96f76743614996f8a32a852c5f65dee9a62d800454219c7d8c0e28231e9b233b03117645d372acdf82bfec03d5787faec45ba1013204661df75242a56eaf",
+      "id": "sheaf:u7svreojmb7qbrua7r5lpljqzwzzp2lhwawmp6adtk7v7fu76xja:vxamc5yijyos2apr4qjglo3orwobcgl6pmkvg4y6wnbedfvurb7a",
+      "version": "v2",
       "status": "active"
     }
   ]

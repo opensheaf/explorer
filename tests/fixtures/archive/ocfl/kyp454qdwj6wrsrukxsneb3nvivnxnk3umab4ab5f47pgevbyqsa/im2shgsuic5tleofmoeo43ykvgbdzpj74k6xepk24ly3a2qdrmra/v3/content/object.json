@@ -1,0 +1,32 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra",
+  "owner": "kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+  "documentVersion": 2,
+  "mainSource": "alpha-2.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "changes": {
+    "text": "Second version."
+  },
+  "stage": {
+    "scheme": "NISO-JAV",
+    "value": "AM"
+  },
+  "notices": [
+    {
+      "text": "Lemma 2 of version 1 is wrong as stated; corrected in version 2.",
+      "documentVersion": 1,
+      "date": "2026-11-22"
+    }
+  ],
+  "previous": "30c4d852e1e9f75de76ce886ae6c33c8cfd0572e105c484a1ad2baaacb9197c0b84d0da5c6d424ff12ea45c0a00edaca4d4b2647f7636b7aee2f9cfda9623178"
+}

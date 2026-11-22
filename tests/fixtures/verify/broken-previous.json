@@ -16,18 +16,18 @@
   },
   {
     "severity": "result",
-    "place": "owner uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq",
-    "message": "key log of uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq: latest version v1"
+    "place": "owner kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+    "message": "key log of kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa: latest version v1"
   },
   {
     "severity": "result",
-    "place": "gamma",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "beta",
     "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "gamma",
-    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "warning",
@@ -71,18 +71,13 @@
   },
   {
     "severity": "result",
-    "place": "beta",
+    "place": "gamma",
     "message": "latest signed version v2"
   },
   {
     "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "error",
-    "place": "main v2 member alpha v4",
-    "message": "mismatch: the inventory held here has another digest (section 8.5)"
+    "place": "gamma",
+    "message": "withdrawn (section 13.1)"
   },
   {
     "severity": "error",
@@ -90,43 +85,48 @@
     "message": "mismatch: the inventory held here has another digest (section 8.5)"
   },
   {
-    "severity": "result",
-    "place": "opensheaf.json",
-    "message": "removed: sheaf:ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq (2026-11-22: Taken down for the tests.)"
-  },
-  {
     "severity": "error",
-    "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v2 (section 12.5)"
-  },
-  {
-    "severity": "error",
-    "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v3 (section 12.5)"
-  },
-  {
-    "severity": "error",
-    "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v4 (section 12.5)"
-  },
-  {
-    "severity": "error",
-    "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v3 (section 12.5)"
-  },
-  {
-    "severity": "error",
-    "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v2 (section 12.5)"
-  },
-  {
-    "severity": "error",
-    "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v4 (section 12.5)"
+    "place": "main v2 member alpha v4",
+    "message": "mismatch: the inventory held here has another digest (section 8.5)"
   },
   {
     "severity": "result",
     "place": "main v2 member gamma v2",
     "message": "document version 1 is withdrawn, in v2 (section 13.1)"
+  },
+  {
+    "severity": "result",
+    "place": "opensheaf.json",
+    "message": "removed: sheaf:sha7xconwn2g2pi4f2evyomwj5kjgoe3apfhaaw5ethfa4w2mpcq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa (2026-11-22: Taken down for the tests.)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "no entry, or a stale one, for sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v2 (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "no entry, or a stale one, for sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v3 (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "no entry, or a stale one, for sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v4 (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "an entry the storage root does not justify: sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v4 (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "an entry the storage root does not justify: sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v2 (section 12.5)"
+  },
+  {
+    "severity": "error",
+    "place": "sha512/",
+    "message": "an entry the storage root does not justify: sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa v3 (section 12.5)"
   }
 ]

@@ -1,0 +1,86 @@
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "6c67719ff157e5a2194e2b8a28c7ec38": [
+        "v1/content/alpha-1.tex"
+      ],
+      "3e75eef7458aed8e105d7ba11c210bd4": [
+        "v1/content/datacite.json"
+      ],
+      "02e82e014f8a53ea724d39a78dd38f3a": [
+        "v1/content/genesis.json"
+      ],
+      "c1345b31a7f6b79ba24ac67bf88f417a": [
+        "v1/content/object.json"
+      ],
+      "3b48e959dde46787fdb4a83968fc6b26": [
+        "v1/content/paper.pdf"
+      ]
+    },
+    "sha256": {
+      "d09686f96421a1ed77557f5bf8ff25672ec2a80127049c3ffb00c53c107565a4": [
+        "v1/content/alpha-1.tex"
+      ],
+      "e5fa46d046aea312e5074ad01fdf1ad8aa2836d95493efb75faf56d9f6a28f45": [
+        "v1/content/datacite.json"
+      ],
+      "afc28778cd259a6887aa28ef742bbeb7498304240c4e6dff222b587b15009913": [
+        "v1/content/genesis.json"
+      ],
+      "7b58d2bbac291103a89439b09aa320940f5a912f8533dd6f7fbd5ab98f6971f5": [
+        "v1/content/object.json"
+      ],
+      "a275d4ca594f414f18efc41f14983895fa9e2cf6188a5ccbe6aa4f2478490aad": [
+        "v1/content/paper.pdf"
+      ]
+    }
+  },
+  "head": "v1",
+  "id": "sheaf:im2shgsuic5tleofmoeo43ykvgbdzpj74k6xepk24ly3a2qdrmra:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+  "manifest": {
+    "47944813ba96711a78b6a2d1dd40da4757653b9e1b10589627098a02ae222405deadf1518ed2332f469b291017b7d5618f6f75a52676bfca3db7516868a38aa4": [
+      "v1/content/alpha-1.tex"
+    ],
+    "d36afb0d8568c234f033f5189101385d6d4ed65d768038f27044cf842970b24598ea4e7b790a3e4ad54471ee9c083f40ae2d8e208be7f8622697c3eae0358e7a": [
+      "v1/content/datacite.json"
+    ],
+    "7e7ab391834ee767814405ae42909f33a85c516cfa25a37e2dffa4d9d201c516d9f10261a28440de1a1f9c8eeef4cef2e3edfa41816b02828ebaa4bae963fbde": [
+      "v1/content/genesis.json"
+    ],
+    "82e70ae7342d47499cdcfac10a3bc7f929829e62a36a3489e296691fc01de91627fd173511194228920d6e2a93e4acd966184437dec71cab3dcdf158e78d28db": [
+      "v1/content/object.json"
+    ],
+    "0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0": [
+      "v1/content/paper.pdf"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-22T12:27:34Z",
+      "state": {
+        "47944813ba96711a78b6a2d1dd40da4757653b9e1b10589627098a02ae222405deadf1518ed2332f469b291017b7d5618f6f75a52676bfca3db7516868a38aa4": [
+          "alpha-1.tex"
+        ],
+        "d36afb0d8568c234f033f5189101385d6d4ed65d768038f27044cf842970b24598ea4e7b790a3e4ad54471ee9c083f40ae2d8e208be7f8622697c3eae0358e7a": [
+          "datacite.json"
+        ],
+        "7e7ab391834ee767814405ae42909f33a85c516cfa25a37e2dffa4d9d201c516d9f10261a28440de1a1f9c8eeef4cef2e3edfa41816b02828ebaa4bae963fbde": [
+          "genesis.json"
+        ],
+        "82e70ae7342d47499cdcfac10a3bc7f929829e62a36a3489e296691fc01de91627fd173511194228920d6e2a93e4acd966184437dec71cab3dcdf158e78d28db": [
+          "object.json"
+        ],
+        "0926268aef9ef3dd059ccd182bff08fcdb896f8aeee8a7760c2370af3c4626b34bb6811fbdf0aa7518c4f0a7c64c3776231d453230d9e829c23895e9363da6d0": [
+          "paper.pdf"
+        ]
+      },
+      "message": "Deposit: document version 1",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/archive/"
+      }
+    }
+  }
+}

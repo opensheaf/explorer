@@ -1,0 +1,18 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "sha512",
+  "entries": [
+    {
+      "inventorySha512": "015da06680adcb158018028fcaeac04da5db8c0ee69679f1d82377f0dc44c34bb661429e44714cea030fd772bf4afcfa583e2fcedb1d53a65c1d196c534ab93a",
+      "id": "sheaf:53y5eayfk2ermcmvqkbvant4numkvuxt2lwomg5fkwh3y6k3bmrq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+      "version": "v1",
+      "status": "active"
+    },
+    {
+      "inventorySha512": "01c72360596d3dc503c6beb44a32930f3f122650397b0b64dc87078c90b248a8645ade506495b8b1d3dcc1a73df3cbecadd70b6234b47fa2bddc2f80d3f026ff",
+      "id": "sheaf:xt3ovockvic2diuo7sty4p6ejjjn35ytkuuyjnzxlzdptgnv5brq:kyp454qdwj6wrsrukxsneb3nvivnxnk3umab4ab5f47pgevbyqsa",
+      "version": "v2",
+      "status": "active"
+    }
+  ]
+}

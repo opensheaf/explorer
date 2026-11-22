@@ -1,22 +1,27 @@
 [
   {
     "severity": "error",
-    "place": "owner 4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq",
+    "place": "owner xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa",
     "message": "v2: signed by 0 rotation keys of v1, which needs 2 (section 6.1)"
   },
   {
     "severity": "warning",
-    "place": "owner 4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq",
+    "place": "owner xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa",
     "message": "v3: follows a version that is not a version of the key log"
   },
   {
     "severity": "result",
-    "place": "owner 4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq",
-    "message": "key log of 4dntrr24zahahx7q2c775i3f2y26kwtdxvnhraf3dulqemjtnjiq: latest version v1"
+    "place": "owner xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa",
+    "message": "key log of xdiacal73v65kfz4fwqaaqweiklym6lp7odu55hexvi52skjt6aa: latest version v1"
   },
   {
     "severity": "result",
     "place": "before",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "main",
     "message": "latest signed version v1"
   },
   {
@@ -33,10 +38,5 @@
     "severity": "warning",
     "place": "after",
     "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "result",
-    "place": "main",
-    "message": "latest signed version v1"
   }
 ]

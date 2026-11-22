@@ -1,0 +1,19 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "u7svreojmb7qbrua7r5lpljqzwzzp2lhwawmp6adtk7v7fu76xja",
+  "owner": "vxamc5yijyos2apr4qjglo3orwobcgl6pmkvg4y6wnbedfvurb7a",
+  "documentVersion": 2,
+  "sourcesMissing": {
+    "text": "x"
+  },
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "previous": "3743b84e546c1d6d905d5ca10a1fd54c457eecd71c2d2089266d01bf491348cc96cbc78d5c5c21c17fe8f6c68cb1aaf0bcf7910e583d865cd0a7fc57536044df"
+}
