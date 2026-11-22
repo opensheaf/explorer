@@ -33,6 +33,7 @@ export class Archive {
     const disc = parseJson(await http.cached(where, options), where);
     if (!isObject(disc)) throw new FetchError('json', where, 'is not a JSON object');
     const archive = new Archive(http, base, disc);
+    if (!archive.old && Object.hasOwn(disc, 'objectPages')) await archive.loadPages(options);
     if (!archive.old) {
       const ids = [...archive.objects().map((o) => o.id), ...archive.drafts().map((d) => d.id),
                    ...archive.tombstones().map((t) => t.id).filter(isObjectId)];
@@ -61,9 +62,13 @@ export class Archive {
     this.lines = new Map();
   }
 
+  listed() {
+    if (Array.isArray(this.paged)) return this.paged;
+    return Array.isArray(this.disc.objects) ? this.disc.objects : [];
+  }
+
   objects() {
-    const list = Array.isArray(this.disc.objects) ? this.disc.objects : [];
-    return list.filter((o) => isObject(o) && isObjectId(o.id) && !parseId(o.id).draft);
+    return this.listed().filter((o) => isObject(o) && isObjectId(o.id) && !parseId(o.id).draft);
   }
 
   entry(id) {
@@ -91,6 +96,34 @@ export class Archive {
 
   byLabel(label) {
     return this.objects().find((o) => o.label === label)?.id ?? null;
+  }
+
+  async loadPages(options = {}) {
+    const ok = (path) => typeof path === 'string' && path.endsWith('.json') && !path.startsWith('/') &&
+      !path.includes('\\') && !path.split('/')[0].includes(':') &&
+      path.split('/').every((x) => x !== '' && x !== '.' && x !== '..');
+    this.pages = [];
+    this.pageProblems = [];
+    const entries = [];
+    for (const path of Array.isArray(this.disc.objectPages) ? this.disc.objectPages : []) {
+      if (!ok(path)) {
+        this.pageProblems.push(`${JSON.stringify(path)} is not the path of a page below the discovery document (section 3.1)`);
+        continue;
+      }
+      let page;
+      try {
+        page = parseJson(await this.http.cached(this.base + path, options), this.base + path);
+      } catch (error) {
+        if (error?.kind === 'aborted') throw error;
+        this.pageProblems.push(error?.kind === 'not-found' ? `the page of objects ${path} is missing (section 3.1)`
+          : `the page of objects ${path} is not JSON`);
+        continue;
+      }
+      this.pages.push({ path, page });
+      if (isObject(page) && Array.isArray(page.objects)) entries.push(...page.objects);
+      else this.pageProblems.push(`${path} is not a page of objects (section 3.1)`);
+    }
+    this.paged = entries;
   }
 
   where(id) {

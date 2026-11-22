@@ -164,6 +164,8 @@ of lines.
       async run() {
         const a = this.archive;
         this.schema('opensheaf.json', a.disc, 'archive');
+        for (const problem of a.pageProblems || []) this.add('error', 'opensheaf.json', problem);
+        for (const { path, page } of a.pages || []) this.schema(path, page, 'objects');
         await this.storageRoot();
         const ids = [...a.objects().map((o) => o.id), ...a.drafts().map((d) => d.id)];
         const entries = [...new Set(ids)].slice(0, LIMITS.objects);
@@ -788,7 +790,7 @@ unlisted.
         const a = this.archive;
         const disc = a.disc;
         const listed = new Map();
-        for (const e of Array.isArray(disc.objects) ? disc.objects : []) {
+        for (const e of a.listed()) {
           if (!isObject(e)) continue;
           if (listed.has(e.id)) this.add('error', 'opensheaf.json', `lists ${this.where(e.id)} twice`);
           listed.set(e.id, e);

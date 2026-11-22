@@ -179,3 +179,34 @@ test('cancelling keeps what was found', async () => {
     progress: ({ done }) => { if (done === 1) controller.abort(); } });
   assert.ok(report.cancelled);
 });
+
+test('an archive whose objects are in pages (section 3.1)', async () => {
+  const inner = diskFetch();
+  const pagedFetch = (missing) => async (url, init = {}) => {
+    if (!url.startsWith(`${ORIGIN}paged/`)) return inner(url, init);
+    const rest = url.slice(`${ORIGIN}paged/`.length);
+    const disc = JSON.parse(await (await inner(`${ORIGIN}archive/opensheaf.json`)).text());
+    const half = Math.ceil(disc.objects.length / 2);
+    const pages = { 'objects/a.json': disc.objects.slice(0, half), 'objects/b.json': disc.objects.slice(half) };
+    const json = (value) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(value));
+      return new Response(init.method === 'HEAD' ? null : bytes, { status: 200, headers: { 'content-length': String(bytes.length) } });
+    };
+    if (rest === 'opensheaf.json') {
+      const { objects, ...paged } = disc;
+      return json({ ...paged, objectPages: Object.keys(pages) });
+    }
+    if (Object.hasOwn(pages, rest)) {
+      return rest === missing ? new Response('not found', { status: 404 })
+        : json({ format: 'opensheaf-objects/0.2', objects: pages[rest] });
+    }
+    return inner(`${ORIGIN}archive/${rest}`, init);
+  };
+  const open = (missing) => Archive.open(new Http({ fetch: pagedFetch(missing) }), ORIGIN + 'paged/');
+  const plain = await Archive.open(new Http({ fetch: diskFetch() }), ORIGIN + 'archive/');
+  const paged = await open();
+  assert.deepEqual(paged.objects().map((o) => o.id), plain.objects().map((o) => o.id));
+  assert.deepEqual(errors(await verify(paged, { schemas })), []);
+  const broken = await open('objects/b.json');
+  assert.ok(errors(await verify(broken, { schemas })).some((t) => t.includes('the page of objects objects/b.json is missing (section 3.1)')));
+});

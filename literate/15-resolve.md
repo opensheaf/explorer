@@ -236,6 +236,10 @@ page of a collection shows under "What was met" and a verification under
               this.note('warning', `unavailable: ${where}: not an archive of specification 0.2`);
               return null;
             }
+            if (archive.pageProblems?.length) {
+              this.note('warning', `unavailable: ${where}: ${archive.pageProblems[0]}`);
+              return null;
+            }
             return archive;
           }, (error) => {
             if (error?.kind === 'aborted') {
