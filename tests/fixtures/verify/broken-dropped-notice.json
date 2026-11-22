@@ -68,5 +68,10 @@
     "severity": "error",
     "place": "sha512/",
     "message": "an entry the storage root does not justify: sheaf:a62v7bottdedydfcfvpttyyubdbpuocgt36b46pywwix5nd7idxa:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq v4 (section 12.5)"
+  },
+  {
+    "severity": "result",
+    "place": "main v2 member gamma v2",
+    "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   }
 ]

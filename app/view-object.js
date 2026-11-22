@@ -4,7 +4,7 @@ import { rich } from './text.js';
 import { facts, chip, statusChip, verdictChip, section, jsonView, jsonText, errorBox, loading, noteView, pages, elsewhere,
          ref } from './ui.js';
 import { summary } from './summary.js';
-import { versionsOf, filesOf, dateOf, titleOf, creatorsOf, abstractOf, isEvidence } from './versions.js';
+import { versionsOf, filesOf, dateOf, titleOf, creatorsOf, abstractOf, isEvidence, withdrawnVersions } from './versions.js';
 import { parseId, readGenesis, objectId, isObject } from './names.js';
 import { verdict, levelOfVersion } from './branches.js';
 import { versionNumber } from './paths.js';
@@ -264,6 +264,7 @@ function filesTable(ctx, s, id, ver, obj) {
 function documentVersions(s, id, shown, descs, name, rec) {
   const latest = s.latest ? s.objOf(s.latest) : s.head;
   const notices = Array.isArray(latest?.notices) ? latest.notices : [];
+  const withdrawn = withdrawnVersions(s.inv, s.objOf, s.latest || s.inv.head);
   const recorded = Array.isArray(latest?.history);
   return section('Document versions',
     h('p', { class: 'muted small' }, 'In the order of the history, ',
@@ -281,6 +282,7 @@ function documentVersions(s, id, shown, descs, name, rec) {
       return h('li', { class: v === shown ? 'shown' : '' },
         h('a', { href: pages.object(name, v) }, `Version ${n ?? '?'}`), ' ',
         v === s.current ? chip('current', 'ok') : null, ' ',
+        withdrawn.has(n) ? [chip(`withdrawn in ${withdrawn.get(n)}`, 'bad'), ' '] : null,
         h('span', { class: 'muted' }, `object version ${v}`),
         labels.length ? [' · ', labels.join(', ')] : null,
         obj?.stage?.value ? [' · ', String(obj.stage.value)] : null,

@@ -1147,7 +1147,7 @@ is given by its document version and its own files.
     // in tests/versions.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins, filesOf } from '../app/versions.js';
+    import { documentVersionErrors, defaultHistory, historyOf, currentVersion, rolesOf, memberPins, filesOf, withdrawnVersions } from '../app/versions.js';
 
     function make(versions) {
       const inv = { head: `v${versions.length}`, manifest: {}, versions: {} };
@@ -1225,6 +1225,34 @@ number of the version it completes; each rule broken gives its message.
         'v3 changes renditions of document version 1, which belongs to it (section 4.2)',
         'v3 changes toolchain of document version 1, which belongs to it (section 4.2)',
         'v3 drops or changes an external record of document version 1 (section 4.2)',
+      ]);
+    });
+
+    test('a withdrawal is kept until a new document version, which reinstates the line (section 13.1)', () => {
+      const gone = { date: '2026-03-01', reason: { text: 'An error.' } };
+      const ok = make([
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, status: 'withdrawn', withdrawal: gone }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, status: 'withdrawn', withdrawal: gone, notices: [{ documentVersion: 1, date: '2026-03-02', text: 'n' }] }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 2, notices: [{ documentVersion: 1, date: '2026-03-02', text: 'n' }] }, files: { 'a.tex': 'a2' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(ok.inv, ok.objOf), []);
+      assert.deepEqual([...withdrawnVersions(ok.inv, ok.objOf)], [[1, 'v2']]);
+      const bad = make([
+        { obj: { documentVersion: 1, status: 'withdrawn', withdrawal: gone }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(bad.inv, bad.objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v1 is a new document version and a withdrawal: a withdrawal is a description-only version (section 13.1)',
+        'v2 drops or changes the withdrawal of v1: only a new document version reinstates a line (section 13.1)',
+      ]);
+      const dropped = make([
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, status: 'withdrawn', withdrawal: gone }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(dropped.inv, dropped.objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v3 drops or changes the withdrawal of v2: only a new document version reinstates a line (section 13.1)',
       ]);
     });
 

@@ -43,5 +43,10 @@
     "severity": "result",
     "place": "opensheaf.json",
     "message": "removed: sheaf:ngaqxgpb44c5xgtv4q4te3o5qntpvgkqgfng72qhye23alfaxbyq:uvy2izqw5yx6mocu6ognp57jdkdzyhhvjgtd6telxaihpr5ascpq (2026-11-22: Taken down for the tests.)"
+  },
+  {
+    "severity": "result",
+    "place": "main v2 member gamma v2",
+    "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   }
 ]

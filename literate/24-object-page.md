@@ -30,7 +30,7 @@ The module is `app/view-object.js`.
     import { facts, chip, statusChip, verdictChip, section, jsonView, jsonText, errorBox, loading, noteView, pages, elsewhere,
              ref } from './ui.js';
     import { summary } from './summary.js';
-    import { versionsOf, filesOf, dateOf, titleOf, creatorsOf, abstractOf, isEvidence } from './versions.js';
+    import { versionsOf, filesOf, dateOf, titleOf, creatorsOf, abstractOf, isEvidence, withdrawnVersions } from './versions.js';
     import { parseId, readGenesis, objectId, isObject } from './names.js';
     import { verdict, levelOfVersion } from './branches.js';
     import { versionNumber } from './paths.js';
@@ -384,8 +384,9 @@ The versions
 
 The document versions, in the order of the history of the latest signed
 version (section 4.2), each with its object version, its external labels
-(arXiv's `v3`), its stage, its date, the notices about it, its change
-note, and its pin; and every object version, newest first, with its
+(arXiv's `v3`), its stage, its date, whether it is withdrawn and by which
+object version (also after a reinstatement, section 13.1), the notices
+about it, its change note, and its pin; and every object version, newest first, with its
 deposit, its document version, what it did (chapter
 [13](13-versions.md)), the status of its signatures, and its pin, the
 digest of its inventory. A version that is not a version of the line is
@@ -396,6 +397,7 @@ it is.
     function documentVersions(s, id, shown, descs, name, rec) {
       const latest = s.latest ? s.objOf(s.latest) : s.head;
       const notices = Array.isArray(latest?.notices) ? latest.notices : [];
+      const withdrawn = withdrawnVersions(s.inv, s.objOf, s.latest || s.inv.head);
       const recorded = Array.isArray(latest?.history);
       return section('Document versions',
         h('p', { class: 'muted small' }, 'In the order of the history, ',
@@ -413,6 +415,7 @@ it is.
           return h('li', { class: v === shown ? 'shown' : '' },
             h('a', { href: pages.object(name, v) }, `Version ${n ?? '?'}`), ' ',
             v === s.current ? chip('current', 'ok') : null, ' ',
+            withdrawn.has(n) ? [chip(`withdrawn in ${withdrawn.get(n)}`, 'bad'), ' '] : null,
             h('span', { class: 'muted' }, `object version ${v}`),
             labels.length ? [' · ', labels.join(', ')] : null,
             obj?.stage?.value ? [' · ', String(obj.stage.value)] : null,
