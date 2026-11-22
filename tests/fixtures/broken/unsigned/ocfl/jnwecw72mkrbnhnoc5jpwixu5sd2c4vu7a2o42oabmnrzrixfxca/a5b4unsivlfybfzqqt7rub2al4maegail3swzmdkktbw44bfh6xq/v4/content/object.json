@@ -1,0 +1,33 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq",
+  "owner": "jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca",
+  "documentVersion": 3,
+  "mainSource": "alpha-0.tex",
+  "sourceFormat": "application/x-tex",
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "changes": {
+    "text": "The submitted manuscript, found later."
+  },
+  "notices": [
+    {
+      "text": "Lemma 2 of version 1 is wrong as stated; corrected in version 2.",
+      "documentVersion": 1,
+      "date": "2026-11-22"
+    }
+  ],
+  "history": [
+    "v1",
+    "v4",
+    "v3"
+  ],
+  "previous": "78be6fd0f05fb80e86eddf46baea6035a028ddd7874c7720327318a62bc542e7afb03e95273c9dcc17b38924c5cd70d7efa60f6046566a787376f886394643f7"
+}

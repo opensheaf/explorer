@@ -1,0 +1,26 @@
+{
+  "format": "opensheaf-collection/0.2",
+  "type": "catalogue",
+  "order": "manual",
+  "members": [
+    {
+      "kind": "document",
+      "name": "myymye7h3gondsxgurcfqle6fq43flnxd2a3j464tsshlc764t5a",
+      "owner": "hm2irjud5n2awdn23hdm3cycryo7lr36vcbznlwgzsfvga4e45fa",
+      "at": [
+        "https://fixtures.example.org/other/"
+      ],
+      "version": "v1",
+      "inventorySha512": "9f87d87a816d99407c4ad581455df92c86f13b852f7f7901585f1dbd194fff1ad00c50d9690b57715b18cdbad26414a50cbee2ebee557341c7b569a0432de6de",
+      "cite": {
+        "title": "Signed with a key exposed later",
+        "creators": [
+          "Ada Example"
+        ],
+        "year": 2026,
+        "issued": "2026-11-22",
+        "available": "2026-11-22"
+      }
+    }
+  ]
+}

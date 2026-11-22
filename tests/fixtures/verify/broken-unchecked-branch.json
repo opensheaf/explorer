@@ -1,83 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a",
-    "message": "key log of iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a: latest version v2"
+    "place": "owner hm2irjud5n2awdn23hdm3cycryo7lr36vcbznlwgzsfvga4e45fa",
+    "message": "key log of hm2irjud5n2awdn23hdm3cycryo7lr36vcbznlwgzsfvga4e45fa: latest version v2"
   },
   {
     "severity": "result",
-    "place": "owner iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a",
+    "place": "owner hm2irjud5n2awdn23hdm3cycryo7lr36vcbznlwgzsfvga4e45fa",
     "message": "exposed key did:key:z6Mkggf1Q3MsbJ9kBEaAdPqsSiRQxH1ofT8G9R21um2PXffS"
-  },
-  {
-    "severity": "result",
-    "place": "shelf",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "warning",
-    "place": "alpha-accepted v1",
-    "message": "unchecked branch point: the parent version is unchecked (section 9.3)"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "a branch of sheaf:5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq: unchecked (section 9.3)"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "the parent's line: verified at https://fixtures.example.org/archive/"
-  },
-  {
-    "severity": "result",
-    "place": "alpha-accepted",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
-    "place": "exposed v1",
-    "message": "contested (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "exposed",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "error",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
-    "message": "the key log of its owner ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq is not in the storage root (section 6.5)"
-  },
-  {
-    "severity": "warning",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v2",
-    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
-  },
-  {
-    "severity": "warning",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v2",
-    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
-  },
-  {
-    "severity": "warning",
-    "place": "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq",
-    "message": "the line has no signed version (section 7.3)"
-  },
-  {
-    "severity": "result",
-    "place": "vouched",
-    "message": "latest signed version v2"
   },
   {
     "severity": "result",
@@ -95,29 +25,79 @@
     "message": "the line has no signed version (section 7.3)"
   },
   {
+    "severity": "warning",
+    "place": "alpha-accepted v1",
+    "message": "unchecked branch point: the parent version is unchecked (section 9.3)"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "a branch of sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca: unchecked (section 9.3)"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "the parent's line: verified at https://fixtures.example.org/archive/"
+  },
+  {
+    "severity": "result",
+    "place": "alpha-accepted",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "vouched",
+    "message": "latest signed version v2"
+  },
+  {
     "severity": "result",
     "place": "issue",
     "message": "latest signed version v2"
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:5ua4btb4qng6mjwaeife5566ifjpscjtpttrox5fdkyycfocaqaa:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v4",
-    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+    "place": "exposed v1",
+    "message": "contested (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "exposed",
+    "message": "the line has no signed version (section 7.3)"
   },
   {
     "severity": "result",
-    "place": "shelf v1 member sheaf:hvj622bobgvdaxvlj33rewixrmdv7c6shbibtr3vhawrxf2s2tla:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v2",
-    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+    "place": "shelf",
+    "message": "latest signed version v1"
   },
   {
-    "severity": "result",
-    "place": "shelf v1 member sheaf:nysuqsm7ljrqhv4qpchka4tp5yqwic7rntibj26mwuj7fekc4ssa:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1",
-    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+    "severity": "error",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca",
+    "message": "the key log of its owner jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca is not in the storage root (section 6.5)"
   },
   {
-    "severity": "result",
-    "place": "shelf v1 member sheaf:wk4cba7js6abfwpsdwehhjcilttjvtxbqleofqv4mtzshjmnokxa:36ghfoxeaimdocopc7jxqisjxyvaklupwhxy2ajw4f47vusg7o5a v1",
-    "message": "verified at https://fixtures.example.org/forked/ (section 8.5)"
+    "severity": "warning",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v2",
+    "message": "signature-uil2umeotl2zacvz.json: unchecked: v1 of the key log, with that digest, is not reached"
+  },
+  {
+    "severity": "warning",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v2",
+    "message": "unchecked: the version of the key log its signatures name is not reached (section 7.3)"
+  },
+  {
+    "severity": "warning",
+    "place": "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca",
+    "message": "the line has no signed version (section 7.3)"
   },
   {
     "severity": "warning",
@@ -125,23 +105,43 @@
     "message": "contested (section 8.5)"
   },
   {
+    "severity": "result",
+    "place": "shelf v1 member sheaf:a5b4unsivlfybfzqqt7rub2al4maegail3swzmdkktbw44bfh6xq:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v4",
+    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+  },
+  {
+    "severity": "result",
+    "place": "shelf v1 member sheaf:2f776h5vb6g3j27hacx4oyaqzgk2of5yzmsin7gtwzc5qg72lv5q:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v2",
+    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+  },
+  {
+    "severity": "result",
+    "place": "shelf v1 member sheaf:clzmea7cx77kyko3pa2ek62bp574u3gcw5y7rc5wkuqqwwtrcjwa:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1",
+    "message": "verified at https://fixtures.example.org/archive/ (section 8.5)"
+  },
+  {
+    "severity": "result",
+    "place": "shelf v1 member sheaf:43jw7x7swd2vg3rbw6cd4vsp6t2aqlyjffwe37f2isdnieifbiua:7rmz54pdph5j4ei34hbc6succp54wcrjas6kyzvw7lbkhc7tuzma v1",
+    "message": "verified at https://fixtures.example.org/forked/ (section 8.5)"
+  },
+  {
     "severity": "error",
     "place": "names/",
-    "message": "an entry the storage root does not justify: sheaf:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "no entry, or a stale one, for ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
+    "message": "no entry, or a stale one, for jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "owners/",
-    "message": "an entry the storage root does not justify: ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq  (section 12.5)"
+    "message": "an entry the storage root does not justify: jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca  (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq v1 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca v1 (section 12.5)"
   }
 ]

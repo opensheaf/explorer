@@ -2037,3 +2037,23 @@ the pieces, joined, give back the text.
       assert.deepEqual(kinds('number'), ['-1500']);
       assert.deepEqual(kinds('literal'), ['true', 'null']);
     });
+
+The entries of `rightsList` are read by their fields, never by their
+names (section 4.4): a name alone is a rights statement, a URL makes a
+licence, and an identifier must be an SPDX identifier in lower case.
+
+    // in tests/names.test.mjs:
+    test('rightsList entries are read by their fields, not their names (section 4.4)', async () => {
+      const { descriptionErrors } = await import('../app/rules.js');
+      const inv = { head: 'v1', versions: { v1: { state: {} } }, manifest: {} };
+      const obj = { documentVersion: 1 };
+      const dc = (rightsList) => ({ titles: [], creators: [], publicationYear: 2026, types: {}, version: '1', publisher: {}, rightsList });
+      const rights = (list) => descriptionErrors(inv, 'v1', obj, dc(list)).filter((m) => m.startsWith('rightsList'));
+      assert.deepEqual(rights([{ rights: 'Creative Commons Attribution 4.0 International' }]), []);
+      assert.deepEqual(rights([{ rights: 'Open Government Licence', rightsUri: 'https://example.org/ogl' }]), []);
+      assert.deepEqual(rights([{ rights: 'All rights reserved' }]), []);
+      assert.deepEqual(rights([{ rightsIdentifier: 'CC-BY-4.0', rightsIdentifierScheme: 'SPDX' }]),
+        ['rightsList: CC-BY-4.0 is not in lower case (section 4.4)']);
+      assert.deepEqual(rights([{ rightsIdentifier: 'cc-by-4.0' }]),
+        ['rightsList: cc-by-4.0 is not given as an SPDX identifier (section 4.4)']);
+    });

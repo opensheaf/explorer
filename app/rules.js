@@ -22,9 +22,6 @@ export function descriptionErrors(inv, ver, obj, dc) {
   for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
     if (!Object.hasOwn(dc, k)) out.push(`datacite.json lacks ${k}`);
   }
-  // Section 4.4: an entry with rightsIdentifier or rightsUri is a licence, one with neither a
-  // rights statement; an identifier is an SPDX identifier in lower case. Whether a licence
-  // allows a copy is not checked (section 11.2).
   for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
     const ident = r?.rightsIdentifier;
     if (ident == null) continue;

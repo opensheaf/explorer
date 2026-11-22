@@ -165,14 +165,6 @@ export class Archive {
     return sidecarDigest(await this.sidecarBytes(id, ver, options)) ?? '';
   }
 
-  async pin(id, ver, options = {}) {
-    const digest = await sha512(await this.inventoryBytes(id, ver, options));
-    if ((await this.sidecar(id, ver, options)) !== digest) {
-      throw new FetchError('digest', this.inventoryUrl(id, ver), 'the inventory does not match its checksum file');
-    }
-    return digest;
-  }
-
   fileUrl(id, inv, ver, logical) {
     const cp = contentPath(inv, ver, logical);
     return cp ? this.contentUrl(id, inv, cp) : null;

@@ -1,5 +1,5 @@
 {
-  "owner": "iu5onspog7k7kzws327tapi25a3reisqybwu4jvns3gilvdcax4a",
+  "owner": "hm2irjud5n2awdn23hdm3cycryo7lr36vcbznlwgzsfvga4e45fa",
   "name": "Another fixture archive",
   "contact": "https://fixtures.example.org/other/",
   "baseUrl": "https://fixtures.example.org/other/",
@@ -23,7 +23,7 @@
     }
   },
   "mirrors": {
-    "sheaf:uxjqwjywlvxu4d4d7reiqe53ojfoajc7drkhyb4g4sn7vu2cly7a:ic2ckhsbmeqo7xneebyqkou7xmekfnvemrhedhzws5a3lkrvivtq": [
+    "sheaf:ppykykkrqo7rvwgjypwxvf25pw4afk23vqjunvy6xcuwcnh23f4a:jnwecw72mkrbnhnoc5jpwixu5sd2c4vu7a2o42oabmnrzrixfxca": [
       "https://fixtures.example.org/archive/"
     ]
   }

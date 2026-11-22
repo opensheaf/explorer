@@ -277,6 +277,45 @@ version of the key log is contested wherever it is found.
       assert.deepEqual(r.ownerNotes(after.owner), [`owner ${after.owner} ended by a fork of its key log at v2`]);
     });
 
+A pin is decided by the bytes of the inventory (section 12.3). Two
+copies of `archive/` are made on the fly: `nocheck/` serves no checksum
+files, and still matches, with a warning naming it; `tampered/` serves the
+head inventory of `alpha` changed, which does not match, and is reported
+with its location, while the copy of `archive/` decides the status; alone,
+it is a mismatch.
+
+    // in tests of the statuses of pins:
+    test('copies that disagree with a pin (section 12.3)', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const inner = diskFetch();
+      const fetch = async (url, init = {}) => {
+        if (url.startsWith(`${ORIGIN}nocheck/`)) {
+          if (url.endsWith('inventory.json.sha512')) return new Response('not found', { status: 404 });
+          return inner(url.replace('nocheck/', 'archive/'), init);
+        }
+        if (url.startsWith(`${ORIGIN}tampered/`)) {
+          const real = url.replace('tampered/', 'archive/');
+          const res = await inner(real, init);
+          if (res.ok && init.method !== 'HEAD' && real.endsWith(`/${alpha.head}/inventory.json`)) {
+            const bytes = new Uint8Array([...new Uint8Array(await res.arrayBuffer()), 32]);
+            return new Response(bytes, { status: 200, headers: { 'content-length': String(bytes.length) } });
+          }
+          return res;
+        }
+        return inner(url, init);
+      };
+      const fresh = () => new Resolver(new Http({ fetch }));
+      const messages = (r) => r.notes.map((n) => n.message);
+      let r = fresh();
+      assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('nocheck')])).status, 'verified');
+      assert.ok(messages(r).some((m) => m.startsWith(at('nocheck')) && m.includes('the checksum file of its inventory is missing')));
+      r = fresh();
+      assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('tampered'), at('archive')])).status, 'verified');
+      assert.ok(messages(r).includes(`${at('tampered')}: ${ALPHA} ${alpha.head} does not match the pin (section 12.3)`));
+      r = fresh();
+      assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('tampered')])).status, 'mismatch');
+    });
+
 Branch points
 -------------
 
