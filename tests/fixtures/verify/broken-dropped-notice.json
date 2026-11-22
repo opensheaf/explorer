@@ -7,7 +7,7 @@
   {
     "severity": "error",
     "place": "alpha",
-    "message": "v4 drops or changes an earlier notice"
+    "message": "v4 drops, changes or moves an earlier notice"
   },
   {
     "severity": "warning",

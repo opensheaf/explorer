@@ -24,7 +24,7 @@ The module is `app/verify.js`.
     // in app/verify.js:
     import { sha512, pool, LIMITS, parseJson } from './http.js';
     import { Archive } from './archive.js';
-    import { versionsOf, filesOf, documentVersionErrors, historyOf } from './versions.js';
+    import { versionsOf, filesOf, documentVersionErrors, noticeWarnings, historyOf } from './versions.js';
     import { versionNumber, logicalPathProblem, OWNER_NAME_LAYOUT, HASHED_LAYOUT, LAYOUT_FILE } from './paths.js';
     import { finding, schemaFindings, descriptionErrors, memberErrors, memberPins, indexEntries, INDEX_KEY } from './rules.js';
     import { readGenesis, nameOf, isNameOf, algorithm, objectId, parseId, isObject } from './names.js';
@@ -495,6 +495,7 @@ collections are then checked (14.5).
           }
           if (head.kind === 'document' || head.kind === 'collection') {
             for (const e of documentVersionErrors(o.inv, (v) => o.objs.get(v) ?? null)) this.add('error', place, `${e.ver} ${e.message}`, { object: id, ver: e.ver });
+            for (const e of noticeWarnings(o.inv, (v) => o.objs.get(v) ?? null)) this.add('warning', place, `${e.ver} ${e.message}`, { object: id, ver: e.ver });
           }
           let log = this.logs.get(owner) ?? null;
           if (!log) {

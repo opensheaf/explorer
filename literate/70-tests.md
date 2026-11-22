@@ -1205,7 +1205,7 @@ number of the version it completes; each rule broken gives its message.
       ]);
       assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
         'v2 document version 3 breaks the numbering (expected 2)',
-        'v2 drops or changes an earlier notice',
+        'v2 drops, changes or moves an earlier notice',
         'v3 has other files than document version 1',
         'v3 history does not list each document version once',
         'v4 lacks the history of earlier versions',
@@ -1225,6 +1225,22 @@ number of the version it completes; each rule broken gives its message.
         'v3 changes renditions of document version 1, which belongs to it (section 4.2)',
         'v3 changes toolchain of document version 1, which belongs to it (section 4.2)',
         'v3 drops or changes an external record of document version 1 (section 4.2)',
+      ]);
+    });
+
+    test('notices are numbered, and replace earlier ones once (section 4.2)', () => {
+      const first = { documentVersion: 1, date: '2026-02-01', text: 'Theorem 2 is wrong as stated.' };
+      const fix = { documentVersion: 1, date: '2026-03-01', text: 'Theorem 2 is right.', replaces: 1 };
+      const { inv, objOf } = make([
+        { obj: { documentVersion: 1, notices: [first] }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, notices: [first, fix] }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, notices: [first, fix, { ...fix, text: 'Again.' }, { ...fix, replaces: 4 }] }, files: { 'a.tex': 'a1' } },
+        { obj: { documentVersion: 1, notices: [fix, first] }, files: { 'a.tex': 'a1' } },
+      ]);
+      assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+        'v3 notice 3 replaces notice 1, which is already replaced',
+        'v3 notice 4 replaces no earlier notice (4)',
+        'v4 drops, changes or moves an earlier notice',
       ]);
     });
 

@@ -350,6 +350,7 @@ state. Alerts and errors stand on a tint, without a frame.
     .note { overflow-wrap: anywhere; }
     ul.notices { padding-left: 1.2em; }
     ul.notices li.about-this { font-weight: 600; }
+    ul.notices li.replaced { opacity: 0.7; }
     .unsafe-link { color: var(--bad); }
     li::marker { color: var(--faint); }
 

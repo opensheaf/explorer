@@ -131,10 +131,13 @@ function objectState(ctx, s, id, shown, obj, fileUrl, status) {
   }
   const notices = Array.isArray(latest?.notices) ? latest.notices : [];
   if (notices.length) {
-    parts.push(section('Notices', h('ul', { class: 'notices' }, notices.map((n) => h('li', {
-      class: n?.documentVersion === obj?.documentVersion ? 'about-this' : '' },
-      h('strong', {}, `About version ${n?.documentVersion ?? '?'}`), n?.date ? ` (${n.date})` : '', ': ',
-      noteView(n, fileUrl(at)))))));
+    const by = new Map(notices.map((n, k) => [n?.replaces, k + 1]));
+    parts.push(section('Notices', h('ul', { class: 'notices' }, notices.map((n, k) => h('li', {
+      class: [n?.documentVersion === obj?.documentVersion ? 'about-this' : '', by.has(k + 1) ? 'replaced' : ''].join(' ').trim() },
+      h('strong', {}, `Notice ${k + 1}, about version ${n?.documentVersion ?? '?'}`), n?.date ? ` (${n.date})` : '',
+      n?.replaces ? `, replacing notice ${n.replaces}` : '', ': ',
+      noteView(n, fileUrl(at)),
+      by.has(k + 1) ? h('span', { class: 'muted' }, ` Replaced by notice ${by.get(k + 1)}.`) : null)))));
   }
   return parts;
 }
@@ -272,7 +275,8 @@ function documentVersions(s, id, shown, descs, name, rec) {
       const n = obj?.documentVersion;
       const labels = (Array.isArray(obj?.external) ? obj.external : []).filter((e) => e?.label)
         .map((e) => `${e.service} ${e.label}`);
-      const about = notices.filter((x) => x?.documentVersion === n).length;
+      const replaced = new Set(notices.map((x) => x?.replaces));
+      const about = notices.filter((x, k) => x?.documentVersion === n && !replaced.has(k + 1)).length;
       const pin = pinUri(s, id, v, rec);
       return h('li', { class: v === shown ? 'shown' : '' },
         h('a', { href: pages.object(name, v) }, `Version ${n ?? '?'}`), ' ',

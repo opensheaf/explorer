@@ -164,7 +164,9 @@ The state of a line
 What belongs to the line rather than to the version shown: its
 withdrawal and its notices, read from its latest signed version (the
 status of a line is that of its latest signed version, section 13.1,
-and every later version keeps the notices, section 4.2); a line without
+and every later version keeps the notices, section 4.2), each with its
+number, a notice replaced by a later one shown dimmed and saying so, since
+only the others are current (section 4.2); a line without
 a signed version, on which nothing may rely (section 7.3); a version
 shown that is contested, or not a version of the line; whether the line
 is listed in the discovery document; and, when the version shown is not
@@ -210,10 +212,13 @@ the current one, where the current one is.
       }
       const notices = Array.isArray(latest?.notices) ? latest.notices : [];
       if (notices.length) {
-        parts.push(section('Notices', h('ul', { class: 'notices' }, notices.map((n) => h('li', {
-          class: n?.documentVersion === obj?.documentVersion ? 'about-this' : '' },
-          h('strong', {}, `About version ${n?.documentVersion ?? '?'}`), n?.date ? ` (${n.date})` : '', ': ',
-          noteView(n, fileUrl(at)))))));
+        const by = new Map(notices.map((n, k) => [n?.replaces, k + 1]));
+        parts.push(section('Notices', h('ul', { class: 'notices' }, notices.map((n, k) => h('li', {
+          class: [n?.documentVersion === obj?.documentVersion ? 'about-this' : '', by.has(k + 1) ? 'replaced' : ''].join(' ').trim() },
+          h('strong', {}, `Notice ${k + 1}, about version ${n?.documentVersion ?? '?'}`), n?.date ? ` (${n.date})` : '',
+          n?.replaces ? `, replacing notice ${n.replaces}` : '', ': ',
+          noteView(n, fileUrl(at)),
+          by.has(k + 1) ? h('span', { class: 'muted' }, ` Replaced by notice ${by.get(k + 1)}.`) : null)))));
       }
       return parts;
     }
@@ -402,7 +407,8 @@ it is.
           const n = obj?.documentVersion;
           const labels = (Array.isArray(obj?.external) ? obj.external : []).filter((e) => e?.label)
             .map((e) => `${e.service} ${e.label}`);
-          const about = notices.filter((x) => x?.documentVersion === n).length;
+          const replaced = new Set(notices.map((x) => x?.replaces));
+          const about = notices.filter((x, k) => x?.documentVersion === n && !replaced.has(k + 1)).length;
           const pin = pinUri(s, id, v, rec);
           return h('li', { class: v === shown ? 'shown' : '' },
             h('a', { href: pages.object(name, v) }, `Version ${n ?? '?'}`), ' ',
