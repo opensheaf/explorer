@@ -465,6 +465,30 @@ is a fork, at 2.
       assert.equal((await forked.meet(twin)).forkPoint, 2);
     });
 
+A key log answers only once checked (chapter [07](07-owners.md)): a copy
+of `other`'s key log holding its second version without the signature
+files refuses to answer before its check, and after it takes that
+version for no version. Met with the valid copy, the broken copy stays
+as it is, as opensheaf-py's `met` keeps a key log with errors.
+
+    // in tests of key logs:
+    test('a key log answers once checked; a broken copy meets no other (section 6.5)', async () => {
+      const log = await keyLogOf('other');
+      const [v1, v2] = log.versions;
+      const forged = await Version.make(2, v2.files, v2.inventory, v2.sidecar, new Map());
+      const copy = new KeyLog(log.genesis, log.owner, [v1, forged]);
+      assert.throws(() => copy.lookup(2, forged.digest), /before it is checked/);
+      assert.throws(() => copy.side(), /before it is checked/);
+      assert.throws(() => copy.latest(), /before it is checked/);
+      const { errors } = await copy.check();
+      assert.ok(errors.some((e) => e.startsWith('v2: signed by 0 rotation keys')), errors.join('\n'));
+      assert.deepEqual(copy.side().map((v) => v.number), [1]);
+      const met = await copy.meet(log);
+      assert.equal(met, copy);
+      assert.deepEqual(met.side().map((v) => v.number), [1]);
+      assert.deepEqual((await log.meet(copy)).side().map((v) => v.number), [1, 2]);
+    });
+
 The statuses of versions
 ------------------------
 

@@ -241,6 +241,13 @@ record excluded), its latest version with keys, the fork record and fork
 point, whether the owner has ended, its successor, the keys it exposes,
 and the version a signature names (`lookup`).
 
+These answers hold only once the key log is checked: before, every
+version held counts as a version, and a forged one would be taken for
+one. opensheaf-py checks the key log at each of these questions; here the
+check is asynchronous and the questions are not, so a question asked
+before the check is over is refused (`ready`) rather than answered from
+versions not yet checked.
+
     // in app/owners.js:
     export class KeyLog {
       static async of(genesis, versions = null, problems = []) {
@@ -262,7 +269,14 @@ and the version a signature names (`lookup`).
         return keyLogPin(this.owner, number, this.versions[number - 1].digest);
       }
 
+      ready() {
+        if (!this.checked?.result) {
+          throw new Error(`the key log of ${this.owner} is read before it is checked (check() first)`);
+        }
+      }
+
       side() {
+        this.ready();
         return this.versions.filter((v) => v.isVersion && !v.forkRecord);
       }
 
@@ -274,6 +288,7 @@ and the version a signature names (`lookup`).
       }
 
       get forkRecord() {
+        this.ready();
         return this.versions.find((v) => v.forkRecord && v.isVersion) || this.met || null;
       }
 
@@ -297,6 +312,7 @@ and the version a signature names (`lookup`).
       }
 
       lookup(number, digest) {
+        this.ready();
         for (const v of this.versions) if (v.number === number && v.digest === digest) return v;
         for (const c of this.forkRecord?.carried || []) if (c.number === number && c.digest === digest) return c;
         return null;
@@ -323,11 +339,18 @@ is not a version of the key log, nor is anything held after it, after a
 fork record, or after an ending version but a fork record; those after a
 fork record or an ending version are warnings (section 14.3, rule 4).
 The answer is the lists of errors and warnings, and the versions keep
-what was found.
+what was found; the answer is also kept on the promise of the check
+(`result`), which the questions above read.
 
     // in app/owners.js:
       async check() {
-        if (!this.checked) this.checked = this.checkNow();
+        if (!this.checked) {
+          const checking = this.checkNow().then((result) => {
+            checking.result = result;
+            return result;
+          });
+          this.checked = checking;
+        }
         return this.checked;
       }
 
@@ -503,13 +526,15 @@ opensheaf-py's resolver does when it meets copies in memory: the key log
 it uses then has the other side as carried versions, so that the fork
 point, the keys the other side exposes, and the versions signatures name
 on either side are known. `meet` answers the key log a reader uses after
-meeting OTHER, both checked.
+meeting OTHER, both checked. A first copy with errors is kept as it is,
+whatever the other: as opensheaf-py's `met`, a reader does not extend a
+key log it found broken.
 
     // in app/owners.js:
       async meet(other) {
-        await this.check();
+        const { errors } = await this.check();
         await other.check();
-        if (!sameBytes(this.genesis, other.genesis)) return this;
+        if (errors.length || !sameBytes(this.genesis, other.genesis)) return this;
         const mine = this.side(), theirs = other.side();
         for (let k = 0; k < Math.min(mine.length, theirs.length); k++) {
           if (mine[k].digest !== theirs[k].digest) return this.withFork(theirs.slice(k));
@@ -518,7 +543,8 @@ meeting OTHER, both checked.
         if (theirs.length > mine.length) {
           if (this.forkRecord) return this;
           const log = new KeyLog(this.genesis, this.owner, [...mine, ...theirs.slice(mine.length), ...(theirFork ? [theirFork] : [])]);
-          log.checked = Promise.resolve({ errors: [], warnings: [] });
+          const result = { errors: [], warnings: [] };
+          log.checked = Object.assign(Promise.resolve(result), { result });
           log.met = other.met;
           return log;
         }

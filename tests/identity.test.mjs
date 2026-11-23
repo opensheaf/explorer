@@ -293,6 +293,23 @@ test('two copies of a key log met by a reader (sections 6.3 and 6.5)', async () 
   assert.equal((await forked.meet(twin)).forkPoint, 2);
 });
 
+test('a key log answers once checked; a broken copy meets no other (section 6.5)', async () => {
+  const log = await keyLogOf('other');
+  const [v1, v2] = log.versions;
+  const forged = await Version.make(2, v2.files, v2.inventory, v2.sidecar, new Map());
+  const copy = new KeyLog(log.genesis, log.owner, [v1, forged]);
+  assert.throws(() => copy.lookup(2, forged.digest), /before it is checked/);
+  assert.throws(() => copy.side(), /before it is checked/);
+  assert.throws(() => copy.latest(), /before it is checked/);
+  const { errors } = await copy.check();
+  assert.ok(errors.some((e) => e.startsWith('v2: signed by 0 rotation keys')), errors.join('\n'));
+  assert.deepEqual(copy.side().map((v) => v.number), [1]);
+  const met = await copy.meet(log);
+  assert.equal(met, copy);
+  assert.deepEqual(met.side().map((v) => v.number), [1]);
+  assert.deepEqual((await log.meet(copy)).side().map((v) => v.number), [1, 2]);
+});
+
 const good = (key, n = 1, threshold = 1) => ({ status: GOOD, key, keyLog: [n, 'd'], threshold });
 
 test('the statuses of the versions of a line (section 7.3)', () => {
