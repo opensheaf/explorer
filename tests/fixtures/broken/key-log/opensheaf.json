@@ -11,8 +11,8 @@
   "extensions": [],
   "owners": [
     {
-      "owner": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "catalogue": "sheaf:nbaaullchkilv44utfac7n74vi7nufcffwzyiwxvdwndhz5gpida:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a"
+      "owner": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "catalogue": "sheaf:2egk3sj4q4rzkffhxtgjfykfaprcoyfbhq5mxlkcdwjnrcbjcexa:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za"
     }
   ],
   "indexes": {
@@ -22,43 +22,43 @@
   },
   "objects": [
     {
-      "id": "sheaf:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "kind": "owner",
-      "name": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "owner": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "head": "v3",
-      "inventorySha512": "8128dd7c12584dd0d474d907900b2b3dad269e8d2424cec2a0092c2188356267db65fcce13e849e0a53c60faf8af7e8bb54c3610f0f2001a124d0a10ac67e2fd",
-      "status": "active"
+      "id": "sheaf:2egk3sj4q4rzkffhxtgjfykfaprcoyfbhq5mxlkcdwjnrcbjcexa:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "kind": "collection",
+      "name": "2egk3sj4q4rzkffhxtgjfykfaprcoyfbhq5mxlkcdwjnrcbjcexa",
+      "owner": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "head": "v1",
+      "inventorySha512": "be8f55f9181e5cdbc3f437245c22b9dc6eb93c9b2288d6b19155112a641f510f15c77260e435dbd8bb5ae4dd08ee08cefca86693c0f1c896bf4fc649c21564ef",
+      "status": "active",
+      "label": "main"
     },
     {
-      "id": "sheaf:5vhyezxkpejinwkhkjijilyom6oehdfei25s27d5cccfazwaikyq:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
+      "id": "sheaf:hrnjyeugqekvt2gwwdebf3w2puy4hg6coq7odtbrvld3crszexaq:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
       "kind": "document",
-      "name": "5vhyezxkpejinwkhkjijilyom6oehdfei25s27d5cccfazwaikyq",
-      "owner": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
+      "name": "hrnjyeugqekvt2gwwdebf3w2puy4hg6coq7odtbrvld3crszexaq",
+      "owner": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
       "head": "v1",
-      "inventorySha512": "311b16aff62105f8d45a8fc417a4e61a1d36d7c3027f657e53f3bbd381c75683d16008286a1a6fa58a403f6fa249b9bcdfde0ebe70cf2278f500dc87e570f19e",
+      "inventorySha512": "eddb0a595d4557638328d4619f172c6f1402566525698d0a957c607cce1ad3b545c6b602761504148bebae7cb4dfddd4232ee0e3bf8e6642dc7a44deb54dbf33",
       "status": "active",
       "label": "before"
     },
     {
-      "id": "sheaf:ljlfpsdiztrsy4henfo6oghocd7n3o5grmmqk5fivw5d5omjbzba:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
+      "id": "sheaf:vidvgwxzlidsnc37kh77cgbgkfkrjb5vkhg47fwonj7dupvi52ea:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
       "kind": "document",
-      "name": "ljlfpsdiztrsy4henfo6oghocd7n3o5grmmqk5fivw5d5omjbzba",
-      "owner": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
+      "name": "vidvgwxzlidsnc37kh77cgbgkfkrjb5vkhg47fwonj7dupvi52ea",
+      "owner": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
       "head": "v1",
-      "inventorySha512": "9418180581e9be8c3655703082d6b8a1f41b5db773fc068db51137ae73df4d978d1e06db7fee3ca248e897b086b8dab334c191ca0b9e57a7c434a56f83b587c4",
+      "inventorySha512": "40d2586c0d6907fa892236e7eb7295df46285c660f2629f788cce4955f6e72991a1f6851ee70d7efd27e37289206fdb61e9b3f33a34219e3a553560c11d543ca",
       "status": "active",
       "label": "after"
     },
     {
-      "id": "sheaf:nbaaullchkilv44utfac7n74vi7nufcffwzyiwxvdwndhz5gpida:3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "kind": "collection",
-      "name": "nbaaullchkilv44utfac7n74vi7nufcffwzyiwxvdwndhz5gpida",
-      "owner": "3wkayu7aa7h7sm6lxifujkf7ktqths7ws4jyeue2jn6op2mjje6a",
-      "head": "v1",
-      "inventorySha512": "d54bad58683a09ba40cc89c3cf5316ef140bd21debdfc4b546356f707a88fbc75d699b1006f9f260afd13897fe87c88345f136fc18bcc4533d1abd17c0cbbf1a",
-      "status": "active",
-      "label": "main"
+      "id": "sheaf:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "kind": "owner",
+      "name": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "owner": "wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+      "head": "v3",
+      "inventorySha512": "ddd6f0ce5d31eb60928d192638a4abdb853b93d12b733cadc18e5831886ada874f7607d1c8520ad0a167558deb59a4746a4d0d7aa4b98bf20de3a8e0b77ec13e",
+      "status": "active"
     }
   ]
 }

@@ -1,0 +1,107 @@
+{
+  "digestAlgorithm": "sha512",
+  "head": "v3",
+  "id": "sheaf:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za:wbkw5ujrqqh7oaksuzynnfpyhetgldz2kn76fttttmwvyjpvu7za",
+  "manifest": {
+    "d3a9da7633c93d3fda128cbe02a89a6069e5ad39e32a3d30b1ba60c85a316fefa0054ab1a81f475bb2d388de8afa5f3f8a16b96fb769b1e9d92ce183ce2e8a05": [
+      "v1/content/genesis.json"
+    ],
+    "96c1f7adc487da38e9c3c14c3b54609770e4260c424e5d4d32a22f7f7df04dc4ebb7c1aa6d9a7a628c35f8c2cda4d5bd326fa37c3d76a52aab82496532d62e1a": [
+      "v1/content/keys.json"
+    ],
+    "ac60b9e0fa7d9025869cd994c0069e46eb628e8a5f96ce13426960ba901ccc564f07213de6af6c34dc4fbd297565879a22af6a2659d75f4a56ba1e179120f6ad": [
+      "v1/content/object.json"
+    ],
+    "659230fa56b369639539cd9229fed0af3ec6d38f35fce10ade2e8a20675913e45ee382c58acb345db291e033b0f98be99293c6737f1d0c8b3316ec455a1ac2b0": [
+      "v2/content/keys.json"
+    ],
+    "efe8e0ff9037eaadc5a63ac4fda981f4bd3b73fbbaa36bd51c255d4c6e6dfbb76a8920aa420febcca314b2f565a479e97adc5de9a381e3a4d164188b36fd9082": [
+      "v2/content/object.json"
+    ],
+    "507a060659a2433ca590a3f626c1056043aa549e784e10f8b1a1543eac9a96e9418a2075730630ce136ae1aac59c49705bb00e684fd0414c9834626b118f056e": [
+      "v3/content/forked/ry3pvtfh4vt3vz2o/inventory.json"
+    ],
+    "4c067385a1ba2254518745a259d092d2e9aa6e3692edf17f0db37c4db53ee00f8d23b36f4961ad918d90a4c25d54ad40ba123ba8cdaad9a180eb8a63bfa12129": [
+      "v3/content/forked/ry3pvtfh4vt3vz2o/inventory.json.sha512"
+    ],
+    "7df570a41897e7820222141216b12fe797ae339c07f135e8f6986750f36b012edc9725bef164e263cc9a77ec0aa8c345224b6681c9dff628ba44c57edbe3978d": [
+      "v3/content/forked/ry3pvtfh4vt3vz2o/keys.json"
+    ],
+    "747a29bb8f1395442ed9d5ba0cf2cd9b16206d8a6aa3a4223e9d198146e336073c354684b9fe6be5b49064f53ef9447817c2f0ca636aa560f101f91a1feaea89": [
+      "v3/content/forked/ry3pvtfh4vt3vz2o/signature-tr3sb4jl3sfpdonr.json"
+    ],
+    "6fab9e962985ed70247cabe7406487e0b0e9daa1614e810ae0488bd8fe530208fa16f3e958040ddd1da8dc49b5048470307024cab7bf955aa50dc0f31a6417fe": [
+      "v3/content/forked/ry3pvtfh4vt3vz2o/signature-z7647mpyubnuvswu.json"
+    ],
+    "d833634182397fbdabda1efa8d010bd7cf62be14997b86db86f5ee1173e20e8facfa403ac6c8b6a9f30c30951a5143cbd09d2b4d101590fd8d102f8eae8512c3": [
+      "v3/content/object.json"
+    ]
+  },
+  "type": "https://ocfl.io/1.1/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2026-11-23T01:10:20Z",
+      "state": {
+        "d3a9da7633c93d3fda128cbe02a89a6069e5ad39e32a3d30b1ba60c85a316fefa0054ab1a81f475bb2d388de8afa5f3f8a16b96fb769b1e9d92ce183ce2e8a05": [
+          "genesis.json"
+        ],
+        "96c1f7adc487da38e9c3c14c3b54609770e4260c424e5d4d32a22f7f7df04dc4ebb7c1aa6d9a7a628c35f8c2cda4d5bd326fa37c3d76a52aab82496532d62e1a": [
+          "keys.json"
+        ],
+        "ac60b9e0fa7d9025869cd994c0069e46eb628e8a5f96ce13426960ba901ccc564f07213de6af6c34dc4fbd297565879a22af6a2659d75f4a56ba1e179120f6ad": [
+          "object.json"
+        ]
+      }
+    },
+    "v2": {
+      "created": "2026-11-23T01:10:20Z",
+      "state": {
+        "d3a9da7633c93d3fda128cbe02a89a6069e5ad39e32a3d30b1ba60c85a316fefa0054ab1a81f475bb2d388de8afa5f3f8a16b96fb769b1e9d92ce183ce2e8a05": [
+          "genesis.json"
+        ],
+        "659230fa56b369639539cd9229fed0af3ec6d38f35fce10ade2e8a20675913e45ee382c58acb345db291e033b0f98be99293c6737f1d0c8b3316ec455a1ac2b0": [
+          "keys.json"
+        ],
+        "efe8e0ff9037eaadc5a63ac4fda981f4bd3b73fbbaa36bd51c255d4c6e6dfbb76a8920aa420febcca314b2f565a479e97adc5de9a381e3a4d164188b36fd9082": [
+          "object.json"
+        ]
+      },
+      "message": "Keys changed",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/forked/"
+      }
+    },
+    "v3": {
+      "created": "2026-11-23T01:10:20Z",
+      "state": {
+        "507a060659a2433ca590a3f626c1056043aa549e784e10f8b1a1543eac9a96e9418a2075730630ce136ae1aac59c49705bb00e684fd0414c9834626b118f056e": [
+          "forked/ry3pvtfh4vt3vz2o/inventory.json"
+        ],
+        "4c067385a1ba2254518745a259d092d2e9aa6e3692edf17f0db37c4db53ee00f8d23b36f4961ad918d90a4c25d54ad40ba123ba8cdaad9a180eb8a63bfa12129": [
+          "forked/ry3pvtfh4vt3vz2o/inventory.json.sha512"
+        ],
+        "7df570a41897e7820222141216b12fe797ae339c07f135e8f6986750f36b012edc9725bef164e263cc9a77ec0aa8c345224b6681c9dff628ba44c57edbe3978d": [
+          "forked/ry3pvtfh4vt3vz2o/keys.json"
+        ],
+        "747a29bb8f1395442ed9d5ba0cf2cd9b16206d8a6aa3a4223e9d198146e336073c354684b9fe6be5b49064f53ef9447817c2f0ca636aa560f101f91a1feaea89": [
+          "forked/ry3pvtfh4vt3vz2o/signature-tr3sb4jl3sfpdonr.json"
+        ],
+        "6fab9e962985ed70247cabe7406487e0b0e9daa1614e810ae0488bd8fe530208fa16f3e958040ddd1da8dc49b5048470307024cab7bf955aa50dc0f31a6417fe": [
+          "forked/ry3pvtfh4vt3vz2o/signature-z7647mpyubnuvswu.json"
+        ],
+        "d3a9da7633c93d3fda128cbe02a89a6069e5ad39e32a3d30b1ba60c85a316fefa0054ab1a81f475bb2d388de8afa5f3f8a16b96fb769b1e9d92ce183ce2e8a05": [
+          "genesis.json"
+        ],
+        "d833634182397fbdabda1efa8d010bd7cf62be14997b86db86f5ee1173e20e8facfa403ac6c8b6a9f30c30951a5143cbd09d2b4d101590fd8d102f8eae8512c3": [
+          "object.json"
+        ]
+      },
+      "message": "Fork record: another version met",
+      "user": {
+        "name": "Ada Example",
+        "address": "https://fixtures.example.org/forked/"
+      }
+    }
+  }
+}

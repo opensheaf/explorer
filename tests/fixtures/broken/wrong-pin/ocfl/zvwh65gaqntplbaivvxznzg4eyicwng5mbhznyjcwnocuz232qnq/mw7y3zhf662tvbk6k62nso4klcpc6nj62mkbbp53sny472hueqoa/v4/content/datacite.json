@@ -1,0 +1,62 @@
+{
+  "titles": [
+    {
+      "title": "Alpha: $\\alpha$-stable laws"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Example, Ada",
+      "nameType": "Personal",
+      "familyName": "Example",
+      "givenName": "Ada",
+      "affiliation": [
+        {
+          "name": "University of Nowhere"
+        }
+      ]
+    }
+  ],
+  "publisher": {
+    "name": "A fixture archive"
+  },
+  "publicationYear": 2024,
+  "types": {
+    "resourceTypeGeneral": "Preprint"
+  },
+  "version": "3",
+  "url": "https://fixtures.example.org/archive/paper/mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa/",
+  "dates": [
+    {
+      "date": "2024-01-10",
+      "dateType": "Issued"
+    },
+    {
+      "date": "2026-11-23",
+      "dateType": "Available"
+    },
+    {
+      "date": "2024-02-01",
+      "dateType": "Created"
+    }
+  ],
+  "language": "en",
+  "formats": [
+    "application/x-tex",
+    "application/pdf"
+  ],
+  "rightsList": [
+    {
+      "rights": "Creative Commons Attribution 4.0 International",
+      "rightsUri": "https://creativecommons.org/licenses/by/4.0/",
+      "rightsIdentifier": "cc-by-4.0",
+      "rightsIdentifierScheme": "SPDX"
+    }
+  ],
+  "descriptions": [
+    {
+      "description": "We study $\\alpha$-stable laws on $\\mathbb{R}^d$.",
+      "descriptionType": "Abstract"
+    }
+  ]
+}

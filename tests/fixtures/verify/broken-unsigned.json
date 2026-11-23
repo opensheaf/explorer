@@ -1,13 +1,18 @@
 [
   {
     "severity": "result",
-    "place": "owner hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
-    "message": "key log of hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q: latest version v1"
+    "place": "owner zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq",
+    "message": "key log of zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq: latest version v1"
   },
   {
     "severity": "result",
     "place": "alpha",
     "message": "latest signed version v4"
+  },
+  {
+    "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
   },
   {
     "severity": "result",
@@ -26,11 +31,6 @@
   },
   {
     "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
     "place": "gamma",
     "message": "latest signed version v2"
   },
@@ -38,6 +38,11 @@
     "severity": "result",
     "place": "gamma",
     "message": "withdrawn (section 13.1)"
+  },
+  {
+    "severity": "error",
+    "place": "reading v1 member beta v2",
+    "message": "not a version: a collection pins only signed versions (section 8.5)"
   },
   {
     "severity": "error",
@@ -50,13 +55,8 @@
     "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   },
   {
-    "severity": "error",
-    "place": "reading v1 member beta v2",
-    "message": "not a version: a collection pins only signed versions (section 8.5)"
-  },
-  {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:cedibszyfb2j5reu4fqicrllymunwqgrav6nisvnlurldav25kzq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:xx4kbbzhrgaz3gbarqmkpavy2xlts5rcgmkqpnrx7n7y547jis6a:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq (2026-11-23: Taken down for the tests.)"
   }
 ]

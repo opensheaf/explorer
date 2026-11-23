@@ -11,8 +11,8 @@
   },
   {
     "severity": "result",
-    "place": "owner hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q",
-    "message": "key log of hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q: latest version v1"
+    "place": "owner zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq",
+    "message": "key log of zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq: latest version v1"
   },
   {
     "severity": "error",
@@ -76,6 +76,11 @@
   },
   {
     "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
     "place": "main",
     "message": "latest signed version v2"
   },
@@ -83,11 +88,6 @@
     "severity": "result",
     "place": "beta",
     "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
   },
   {
     "severity": "result",
@@ -101,6 +101,11 @@
   },
   {
     "severity": "error",
+    "place": "reading v1 member alpha v3",
+    "message": "mismatch: the inventory held here has another digest (section 8.5)"
+  },
+  {
+    "severity": "error",
     "place": "main v2 member alpha v4",
     "message": "mismatch: the inventory held here has another digest (section 8.5)"
   },
@@ -110,43 +115,38 @@
     "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   },
   {
-    "severity": "error",
-    "place": "reading v1 member alpha v3",
-    "message": "mismatch: the inventory held here has another digest (section 8.5)"
-  },
-  {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:cedibszyfb2j5reu4fqicrllymunwqgrav6nisvnlurldav25kzq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q (2026-11-22: Taken down for the tests.)"
+    "message": "removed: sheaf:xx4kbbzhrgaz3gbarqmkpavy2xlts5rcgmkqpnrx7n7y547jis6a:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq (2026-11-23: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v2 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v2 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v3 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v3 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v4 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v4 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v3 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v2 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v2 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v4 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:4lohnmrhwdx5sbtnwh2dv6wzmviq5tlhpm26mzz55invbrljdhkq:hm6yi7kmcgdbbjsfuw6ydxiunng3wy4cqu4nqnquomjedv3wlw7q v4 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v3 (section 12.5)"
   }
 ]

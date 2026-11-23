@@ -1,0 +1,16 @@
+{
+  "format": "opensheaf-genesis/0.2",
+  "kind": "owner",
+  "created": "2026-11-23T01:10:20Z",
+  "nonce": "d98472335a77afc0f637f2818cea8f8e",
+  "keys": [
+    "did:key:z6MkmKpiwKuMirtSBKCyWqsuMyWmRtkertNtKLn4rDbMRxJi"
+  ],
+  "threshold": 1,
+  "next": [
+    "tr3sb4jl3sfpdonrtrkml64rfg2fcohromfexrvm2by3qvfhqtgq",
+    "xpod4ftz7nyigfb6omz6lrhotnziu5o2flou442ixftqe474g76q",
+    "z7647mpyubnuvswuf3uaokqvtmjk4h6l7msminzbyincuunasnxq"
+  ],
+  "nextThreshold": 2
+}
