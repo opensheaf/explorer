@@ -202,6 +202,37 @@ match the pin will do, section 8.5); a version whose key log is missing
       assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('nowhere')])).status, 'unavailable');
     });
 
+A pin of a key-log version resolves only to a version of the key log
+(chapter [07](07-owners.md)), as opensheaf-py's
+`test_a_pin_to_a_key_log_version_that_is_not_one`: a copy of `other/`
+made on the fly, `nowitness/`, serves the second version of its owner's
+key log without its signature files. That version is still held with
+the number and digest pinned, but it is no longer a version of the key
+log: the pin is *not a version*, never verified.
+
+    // in tests of the statuses of pins:
+    test('a pin to a key-log version that is not one', async () => {
+      const owner = DISCOVERY.other.owners[0].owner;
+      const inner = diskFetch();
+      const fetch = async (url, init = {}) => {
+        if (!url.startsWith(`${ORIGIN}nowitness/`)) return inner(url, init);
+        const real = url.replace('nowitness/', 'other/');
+        if (decodeURIComponent(real).includes(`sheaf%3a${owner}%3a`) && real.includes('/extensions/opensheaf-witnesses/v2/')) {
+          return new Response('not found', { status: 404 });
+        }
+        return inner(real, init);
+      };
+      const other = await open('other/');
+      const digest = await sha512(await other.inventoryBytes(`sheaf:${owner}:${owner}`, 'v2'));
+      const fresh = () => new Resolver(new Http({ fetch }));
+      assert.equal((await fresh().pin(owner, owner, 'v2', digest, [at('other')])).status, 'verified');
+      const r = fresh();
+      assert.equal((await r.pin(owner, owner, 'v2', digest, [at('nowitness')])).status, 'not a version');
+      const log = await r.keyLog(owner, [at('nowitness')]);
+      assert.ok(log.lookup(2, digest) !== null && log.verified(2, digest) === null);
+      assert.equal((await fresh().pin(owner, owner, 'v2', '0'.repeat(128), [at('other')])).status, 'mismatch');
+    });
+
 Locations on local or private hosts, named by archive data, are not
 fetched from an archive on a public host (nor by a resolver with no
 home), and the note says why; from an archive on a local host (here a

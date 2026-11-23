@@ -119,6 +119,28 @@ test('the statuses of pins (section 8.5)', async () => {
   assert.equal((await fresh().pin(beta.name, beta.owner, 'v2', beta.inventorySha512, [at('nowhere')])).status, 'unavailable');
 });
 
+test('a pin to a key-log version that is not one', async () => {
+  const owner = DISCOVERY.other.owners[0].owner;
+  const inner = diskFetch();
+  const fetch = async (url, init = {}) => {
+    if (!url.startsWith(`${ORIGIN}nowitness/`)) return inner(url, init);
+    const real = url.replace('nowitness/', 'other/');
+    if (decodeURIComponent(real).includes(`sheaf%3a${owner}%3a`) && real.includes('/extensions/opensheaf-witnesses/v2/')) {
+      return new Response('not found', { status: 404 });
+    }
+    return inner(real, init);
+  };
+  const other = await open('other/');
+  const digest = await sha512(await other.inventoryBytes(`sheaf:${owner}:${owner}`, 'v2'));
+  const fresh = () => new Resolver(new Http({ fetch }));
+  assert.equal((await fresh().pin(owner, owner, 'v2', digest, [at('other')])).status, 'verified');
+  const r = fresh();
+  assert.equal((await r.pin(owner, owner, 'v2', digest, [at('nowitness')])).status, 'not a version');
+  const log = await r.keyLog(owner, [at('nowitness')]);
+  assert.ok(log.lookup(2, digest) !== null && log.verified(2, digest) === null);
+  assert.equal((await fresh().pin(owner, owner, 'v2', '0'.repeat(128), [at('other')])).status, 'mismatch');
+});
+
 test('local and private hosts are fetched only from an archive on one', async () => {
   const local = ['localhost', 'a.localhost', 'printer.local', 'printer.local.', '127.0.0.1', '10.1.2.3', '172.16.0.1',
                  '172.31.255.255', '192.168.1.5', '169.254.169.254', '0.0.0.0', '[::1]', '[::]', '[fd12:3456::1]',
