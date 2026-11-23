@@ -159,6 +159,18 @@ test('an index file with a byte order mark, or bytes that are not UTF-8', async 
   }
 });
 
+test('JSON nested too deep is a finding (section 15.2)', async () => {
+  const deep = '['.repeat(20000) + ']'.repeat(20000);
+  const patch = {};
+  for (const p of ['', 'v1/', 'v2/', 'v3/', 'v4/']) {
+    const url = `${folder(ALPHA)}${p}inventory.json`;
+    const text = (await (await diskFetch()(url)).text()).replace(/"state": \{/, `"state": { "x": ${deep},`);
+    Object.assign(patch, { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` });
+  }
+  const found = errors(await run('archive/', { patch }));
+  assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
+});
+
 test('labels given twice, a tombstone of an object listed', async () => {
   const twice = (text) => {
     const disc = JSON.parse(text);

@@ -1945,6 +1945,27 @@ byte order mark, or holds bytes that are not UTF-8, which is not JSON for
       }
     });
 
+JSON nested deeper than `LIMITS.nesting` is a finding, as the HTTP
+client refuses it (chapter [10](10-http.md)), and as the readers of bytes
+at hand refuse it (`jsonOrNull`, chapter [07](07-owners.md)), not a stack
+overflow of the verification: the inventories of `alpha`, in the root and
+in the folder of every version, served with arrays nested twenty thousand
+deep and with checksum files that state their digests, make an object
+without a readable inventory (a port of the test of opensheaf-js).
+
+    // in tests of the verification:
+    test('JSON nested too deep is a finding (section 15.2)', async () => {
+      const deep = '['.repeat(20000) + ']'.repeat(20000);
+      const patch = {};
+      for (const p of ['', 'v1/', 'v2/', 'v3/', 'v4/']) {
+        const url = `${folder(ALPHA)}${p}inventory.json`;
+        const text = (await (await diskFetch()(url)).text()).replace(/"state": \{/, `"state": { "x": ${deep},`);
+        Object.assign(patch, { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` });
+      }
+      const found = errors(await run('archive/', { patch }));
+      assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
+    });
+
     test('labels given twice, a tombstone of an object listed', async () => {
       const twice = (text) => {
         const disc = JSON.parse(text);
