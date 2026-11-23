@@ -26,7 +26,7 @@ The module is `app/verify.js`.
     import { Archive } from './archive.js';
     import { versionsOf, filesOf, documentVersionErrors, noticeWarnings, historyOf, withdrawnVersions } from './versions.js';
     import { versionNumber, logicalPathProblem, OWNER_NAME_LAYOUT, HASHED_LAYOUT, LAYOUT_FILE } from './paths.js';
-    import { finding, schemaFindings, descriptionErrors, memberErrors, memberPins, indexEntries, INDEX_KEY } from './rules.js';
+    import { finding, schemaFindings, descriptionErrors, landingDescriptionGaps, memberErrors, memberPins, indexEntries, INDEX_KEY } from './rules.js';
     import { readGenesis, nameOf, isNameOf, algorithm, objectId, parseId, isObject, OWNER_NAME } from './names.js';
     import { sidecarDigest, jsonOrNull } from './owners.js';
     import { latestSigned, GOOD, SIGNED, VOUCHED, CONTESTED, UNCHECKED, UNSIGNED, INVALID } from './signatures.js';
@@ -1001,7 +1001,11 @@ and which never changes; the one checked is the one opensheaf-py writes,
 `paper/<name>/` for the originator's line, `paper/<name>-<owner>/` for
 another (a label may give a second address, which is not checked). The URI is in canonical form,
 `sheaf:<name>` for the originator's line (sections 12.1 and 12.2), and
-`sheaf:<name>:<owner>` for another.
+`sheaf:<name>:<owner>` for another. A landing page also carries a
+description for programs (appendix A.3, #77): the Signposting links every
+page has (`cite-as`, `describedby`, `type`) and a schema.org record in
+JSON-LD, which must parse and have a type and identifiers; what they say is
+not compared with the files, as `osheaf verify` does not.
 
     // in app/verify.js:
       async presentation() {
@@ -1036,6 +1040,11 @@ another (a label may give a second address, which is not checked). The URI is in
           const words = text ? new TextDecoder().decode(text) : '';
           if (originator ? !new RegExp(`sheaf:${m.name}(?![a-z0-9:/])`).test(words) : !words.includes(mid)) {
             this.add(level, landing, `no landing page giving the sheaf: URI of ${this.where(mid)} (appendix A.3)` + note);
+          } else {
+            const missing = landingDescriptionGaps(words);
+            if (missing.length) {
+              this.add(level, landing, `the landing page of ${this.where(mid)} lacks ${missing.join(', ')} (appendix A.3)` + note);
+            }
           }
         }
       }

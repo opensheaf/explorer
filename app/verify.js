@@ -3,7 +3,7 @@ import { sha512, pool, LIMITS, parseJson } from './http.js';
 import { Archive } from './archive.js';
 import { versionsOf, filesOf, documentVersionErrors, noticeWarnings, historyOf, withdrawnVersions } from './versions.js';
 import { versionNumber, logicalPathProblem, OWNER_NAME_LAYOUT, HASHED_LAYOUT, LAYOUT_FILE } from './paths.js';
-import { finding, schemaFindings, descriptionErrors, memberErrors, memberPins, indexEntries, INDEX_KEY } from './rules.js';
+import { finding, schemaFindings, descriptionErrors, landingDescriptionGaps, memberErrors, memberPins, indexEntries, INDEX_KEY } from './rules.js';
 import { readGenesis, nameOf, isNameOf, algorithm, objectId, parseId, isObject, OWNER_NAME } from './names.js';
 import { sidecarDigest, jsonOrNull } from './owners.js';
 import { latestSigned, GOOD, SIGNED, VOUCHED, CONTESTED, UNCHECKED, UNSIGNED, INVALID } from './signatures.js';
@@ -821,6 +821,11 @@ class Verification {
       const words = text ? new TextDecoder().decode(text) : '';
       if (originator ? !new RegExp(`sheaf:${m.name}(?![a-z0-9:/])`).test(words) : !words.includes(mid)) {
         this.add(level, landing, `no landing page giving the sheaf: URI of ${this.where(mid)} (appendix A.3)` + note);
+      } else {
+        const missing = landingDescriptionGaps(words);
+        if (missing.length) {
+          this.add(level, landing, `the landing page of ${this.where(mid)} lacks ${missing.join(', ')} (appendix A.3)` + note);
+        }
       }
     }
   }

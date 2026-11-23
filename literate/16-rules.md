@@ -56,10 +56,28 @@ folders, section 14.2).
 The descriptions of an object version
 -------------------------------------
 
+A landing page of the profile website carries a description for
+programs (appendix A.3, #77). What it lacks of it is read from the text of
+the page alone: the Signposting links every page has, and a schema.org
+record in JSON-LD that parses and has a type and identifiers. The answer
+is a list of what is missing, in the words of `osheaf verify`.
+
+    // in app/rules.js:
+    export function landingDescriptionGaps(text) {
+      const rels = new Set([...text.matchAll(/<link rel="([a-z-]+)"/g)].map((x) => x[1]));
+      const missing = ['cite-as', 'describedby', 'type'].filter((r) => !rels.has(r)).map((r) => `the Signposting link ${r}`);
+      const record = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(text);
+      let ld = null;
+      try { ld = record ? JSON.parse(record[1]) : null; } catch { ld = null; }
+      if (!isObject(ld) || !ld['@type'] || !ld.identifier) missing.push('a schema.org record in JSON-LD with a type and identifiers');
+      return missing;
+    }
+
 The rules of sections 4.3 and 4.4 that the files of one version decide:
 `object.json` and `datacite.json` agree on the document version and the
 date of a withdrawal; `datacite.json` has the properties section 4.4
-requires; an SPDX identifier of a licence is given as one, in lower case
+requires, among them at least one licence or rights statement in
+`rightsList` (#79); an SPDX identifier of a licence is given as one, in lower case
 (section 4.4: an entry with `rightsIdentifier` or `rightsUri` is a licence,
 one with neither a rights statement, read from the fields, never from the
 name; whether a licence allows a copy is not checked, section 11.2); the files of
@@ -75,6 +93,9 @@ collection has its member list. The answer is a list of messages.
       if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== (obj.withdrawal?.date ?? null)) out.push('withdrawal dates disagree');
       for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
         if (!Object.hasOwn(dc, k)) out.push(`datacite.json lacks ${k}`);
+      }
+      if (!Array.isArray(dc.rightsList) || dc.rightsList.length === 0) {
+        out.push('datacite.json has no licence or rights statement in rightsList (section 4.4)');
       }
       for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
         const ident = r?.rightsIdentifier;

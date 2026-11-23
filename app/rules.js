@@ -13,6 +13,16 @@ export function schemaFindings(place, data, schema, level = 'error', context = {
   return validate(schema, data).map((e) => finding(level, place, `${e.path ? e.path + ': ' : ''}${e.message}`, context));
 }
 
+export function landingDescriptionGaps(text) {
+  const rels = new Set([...text.matchAll(/<link rel="([a-z-]+)"/g)].map((x) => x[1]));
+  const missing = ['cite-as', 'describedby', 'type'].filter((r) => !rels.has(r)).map((r) => `the Signposting link ${r}`);
+  const record = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(text);
+  let ld = null;
+  try { ld = record ? JSON.parse(record[1]) : null; } catch { ld = null; }
+  if (!isObject(ld) || !ld['@type'] || !ld.identifier) missing.push('a schema.org record in JSON-LD with a type and identifiers');
+  return missing;
+}
+
 export function descriptionErrors(inv, ver, obj, dc) {
   const out = [];
   const logical = Object.keys(filesOf(inv, ver));
@@ -21,6 +31,9 @@ export function descriptionErrors(inv, ver, obj, dc) {
   if (obj.status === 'withdrawn' && dateOf(dc, 'Withdrawn') !== (obj.withdrawal?.date ?? null)) out.push('withdrawal dates disagree');
   for (const k of ['titles', 'creators', 'publicationYear', 'types', 'version', 'publisher']) {
     if (!Object.hasOwn(dc, k)) out.push(`datacite.json lacks ${k}`);
+  }
+  if (!Array.isArray(dc.rightsList) || dc.rightsList.length === 0) {
+    out.push('datacite.json has no licence or rights statement in rightsList (section 4.4)');
   }
   for (const r of Array.isArray(dc.rightsList) ? dc.rightsList : []) {
     const ident = r?.rightsIdentifier;

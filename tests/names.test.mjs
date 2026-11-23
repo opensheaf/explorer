@@ -58,3 +58,24 @@ test('rightsList entries are read by their fields, not their names (section 4.4)
   assert.deepEqual(rights([{ rightsIdentifier: 'cc-by-4.0' }]),
     ['rightsList: cc-by-4.0 is not given as an SPDX identifier (section 4.4)']);
 });
+
+test('a rights entry is required (section 4.4)', async () => {
+  const { descriptionErrors } = await import('../app/rules.js');
+  const inv = { head: 'v1', versions: { v1: { state: {} } }, manifest: {} };
+  const obj = { documentVersion: 1 };
+  const base = { titles: [], creators: [], publicationYear: 2026, types: {}, version: '1', publisher: {} };
+  const missing = 'datacite.json has no licence or rights statement in rightsList (section 4.4)';
+  assert.ok(descriptionErrors(inv, 'v1', obj, base).includes(missing));
+  assert.ok(descriptionErrors(inv, 'v1', obj, { ...base, rightsList: [] }).includes(missing));
+  assert.ok(!descriptionErrors(inv, 'v1', obj, { ...base, rightsList: [{ rights: 'All rights reserved' }] }).includes(missing));
+});
+
+test('a landing page describes itself to programs (appendix A.3)', async () => {
+  const { landingDescriptionGaps } = await import('../app/rules.js');
+  const links = '<link rel="cite-as" href="x"><link rel="describedby" href="y"><link rel="type" href="z">';
+  const record = '<script type="application/ld+json">{"@type": "ScholarlyArticle", "identifier": ["sheaf:a"]}</script>';
+  assert.deepEqual(landingDescriptionGaps(links + record), []);
+  assert.deepEqual(landingDescriptionGaps(record), ['the Signposting link cite-as', 'the Signposting link describedby', 'the Signposting link type']);
+  assert.deepEqual(landingDescriptionGaps(links + '<script type="application/ld+json">{oops</script>'),
+    ['a schema.org record in JSON-LD with a type and identifiers']);
+});
