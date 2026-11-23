@@ -76,7 +76,7 @@ const { showCollection } = await import('../app/view-collection.js');
 const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
 const { showVerify } = await import('../app/view-verify.js');
 const { showOwner } = await import('../app/view-owner.js');
-const { clear } = await import('../app/dom.js');
+const { clear, h, external, identifierLink } = await import('../app/dom.js');
 
 async function session(base = 'archive/', delay = 15) {
   const log = [];
@@ -225,4 +225,18 @@ test('a contested line, an ended owner, the statuses of members', async () => {
   const report = other.main.all('p').find((p) => /pins? resolved/.test(p.textContent));
   assert.match(report.textContent, /verified/);
   assert.doesNotMatch(report.textContent, /mismatch|unavailable|not a version/);
+});
+
+test('only safe addresses from archives become links', () => {
+  for (const bad of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'vbscript:x']) {
+    const el = external(bad, 'licence');
+    assert.equal(el.tagName, 'span', bad);
+    assert.ok(!('href' in el.attributes), bad);
+    assert.ok(!('href' in h('a', { href: bad }, 'x').attributes), bad);
+  }
+  assert.equal(identifierLink('javascript:alert(1)', 'URL'), 'javascript:alert(1)');
+  const good = external('https://creativecommons.org/licenses/by/4.0/', 'licence');
+  assert.deepEqual([good.tagName, good.attributes.href, good.attributes.rel],
+                   ['a', 'https://creativecommons.org/licenses/by/4.0/', 'noopener noreferrer']);
+  assert.equal(h('a', { href: '#/verify' }).attributes.href, '#/verify');
 });

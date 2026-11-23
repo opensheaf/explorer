@@ -1424,7 +1424,7 @@ on fixtures served slowly, so that the reader can leave in the middle.
     const { showArchive, ROWS_AT_ONCE } = await import('../app/view-archive.js');
     const { showVerify } = await import('../app/view-verify.js');
     const { showOwner } = await import('../app/view-owner.js');
-    const { clear } = await import('../app/dom.js');
+    const { clear, h, external, identifierLink } = await import('../app/dom.js');
 
     <<a session of the explorer on slow fixtures>>
 
@@ -1715,6 +1715,28 @@ are, with the statuses of section 8.5.
       const report = other.main.all('p').find((p) => /pins? resolved/.test(p.textContent));
       assert.match(report.textContent, /verified/);
       assert.doesNotMatch(report.textContent, /mismatch|unavailable|not a version/);
+    });
+
+Addresses from archives (the `url` and `rightsUri` of a description, the
+record of an external service, a related identifier, a keeper) become
+links only with a safe scheme (chapter [20](20-dom.md)), as opensheaf-js's
+`safeUrl` lets only `http` and `https` through on its websites: a
+`javascript:` or `data:` address is shown as text, and an element given
+one has no `href`.
+
+    // in tests of what the pages show:
+    test('only safe addresses from archives become links', () => {
+      for (const bad of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'vbscript:x']) {
+        const el = external(bad, 'licence');
+        assert.equal(el.tagName, 'span', bad);
+        assert.ok(!('href' in el.attributes), bad);
+        assert.ok(!('href' in h('a', { href: bad }, 'x').attributes), bad);
+      }
+      assert.equal(identifierLink('javascript:alert(1)', 'URL'), 'javascript:alert(1)');
+      const good = external('https://creativecommons.org/licenses/by/4.0/', 'licence');
+      assert.deepEqual([good.tagName, good.attributes.href, good.attributes.rel],
+                       ['a', 'https://creativecommons.org/licenses/by/4.0/', 'noopener noreferrer']);
+      assert.equal(h('a', { href: '#/verify' }).attributes.href, '#/verify');
     });
 
 Verification
