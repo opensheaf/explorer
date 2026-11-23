@@ -277,12 +277,14 @@ shows, when that is enough to know the current version: the inventory,
 the `object.json` of the head and, when it has `history`, the
 descriptions of the last entry of that history, which is the current
 version (section 4.2): the row reads the head, not the signatures, which
-the page of the object reads. Without `history`, the current version is the
+the page of the object reads. The inventory is the copy in the folder
+of the head version (`headInventory`, chapter [14](14-archive.md)), as
+the whole summary reads it, never the unsigned root inventory. Without `history`, the current version is the
 last object version of the highest document version, which only the
 `object.json` of every version tells; the row summary is then the whole
 summary, read as before. A whole summary already known is used as it is.
 So the values a row shows are those the whole summary gives, read in
-four requests (or fewer) for an object with `history`, instead of one per
+five requests (or fewer) for an object with `history`, instead of one per
 object version.
 
 The head is read as the whole summary reads it: an `object.json` that
@@ -300,7 +302,7 @@ under a key that is not an identifier.
     async function loadRow(ctx, id, signal) {
       const archive = ctx.archive;
       const options = { signal };
-      const inv = await archive.inventory(id, null, options);
+      const inv = await archive.headInventory(id, options);
       let head = null;
       if (versionsOf(inv).includes(inv.head)) {
         head = await archive.json(id, inv, inv.head, 'object.json', options).catch((error) => {

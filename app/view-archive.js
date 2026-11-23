@@ -117,7 +117,7 @@ function objectList(ctx) {
   if (catalogues.length) {
     Promise.all(catalogues.map(async (cat) => {
       try {
-        const inv = await a.inventory(cat, null, { signal: ctx.signal });
+        const inv = await a.headInventory(cat, { signal: ctx.signal });
         const mem = await a.json(cat, inv, inv.head, 'members.json', { signal: ctx.signal });
         return (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
       } catch {

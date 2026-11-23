@@ -16,7 +16,7 @@ points, confirmed, unchecked and inconsistent.
     // in tests/across.test.mjs:
     import { test } from 'node:test';
     import assert from 'node:assert/strict';
-    import { Http, LIMITS } from '../app/http.js';
+    import { Http, LIMITS, sha512 } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { Resolver, Copy, localKind } from '../app/resolve.js';
     import { verdict, levelOfVersion, level, CONFIRMED, UNCHECKED, INCONSISTENT } from '../app/branches.js';
@@ -314,6 +314,68 @@ it is a mismatch.
       assert.ok(messages(r).includes(`${at('tampered')}: ${ALPHA} ${alpha.head} does not match the pin (section 12.3)`));
       r = fresh();
       assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('tampered')])).status, 'mismatch');
+    });
+
+What a mirror serves is believed only as far as the signed inventories
+bind it (section 12.3), as opensheaf-js and opensheaf-py check every file
+they read. Two copies of `archive/` are made on the fly: `rootinv/`
+serves a root inventory of its own for `alpha`, which maps
+`datacite.json` of every version to other bytes, which it also serves;
+it is not read, since a line is read through the copy of the inventory
+in the folder of the head version, and the title is the genuine one.
+`swapped/` serves other bytes at the content paths of `datacite.json`,
+which are refused, since they do not have the digest the inventory
+states.
+
+    // in tests of the statuses of pins:
+    test('a mirror serving a root inventory or content of its own (section 12.3)', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const dir = `${ORIGIN}archive/ocfl/${alpha.owner}/${alpha.name}/`;
+      const inner = diskFetch();
+      const read = async (path) => new Uint8Array(await (await inner(dir + path)).arrayBuffer());
+      const parse = (bytes) => JSON.parse(new TextDecoder().decode(bytes));
+      const genuine = parse(await read('inventory.json')), root = parse(await read('inventory.json'));
+      const paths = Object.values(genuine.versions).flatMap((v) =>
+        Object.entries(v.state).filter(([, ps]) => ps.includes('datacite.json')).flatMap(([d]) => genuine.manifest[d]));
+      const forged = new TextEncoder().encode(JSON.stringify({ ...parse(await read(paths[0])), titles: [{ title: 'A forged title' }] }));
+      const d = await sha512(forged);
+      for (const v of Object.values(root.versions)) {
+        for (const [k, ps] of Object.entries(v.state)) {
+          if (!ps.includes('datacite.json')) continue;
+          v.state[k] = ps.filter((p) => p !== 'datacite.json');
+          if (!v.state[k].length) delete v.state[k];
+          v.state[d] = ['datacite.json'];
+        }
+      }
+      root.manifest[d] = ['v1/content/forged.json'];
+      const served = {
+        rootinv: { 'inventory.json': new TextEncoder().encode(JSON.stringify(root)), 'v1/content/forged.json': forged },
+        swapped: Object.fromEntries(paths.map((p) => [p, forged])),
+      };
+      const fetch = async (url, init = {}) => {
+        for (const [mirror, files] of Object.entries(served)) {
+          if (!url.startsWith(`${ORIGIN}${mirror}/`)) continue;
+          const real = url.replace(`${mirror}/`, 'archive/');
+          for (const [rel, bytes] of Object.entries(files)) {
+            if (real === dir + rel) return new Response(bytes, { status: 200, headers: { 'content-length': String(bytes.length) } });
+          }
+          return inner(real, init);
+        }
+        return inner(url, init);
+      };
+      const fresh = () => new Resolver(new Http({ fetch }));
+      const genuineTitle = (await (async () => {
+        const r = new Resolver(new Http({ fetch: diskFetch() }));
+        return r.describe(await r.latest(alpha.name, alpha.owner, [at('archive')]));
+      })()).title;
+      let r = fresh();
+      let res = await r.latest(alpha.name, alpha.owner, [at('rootinv')]);
+      assert.equal(res.status, 'verified');
+      assert.equal((await r.describe(res)).title, genuineTitle);
+      assert.notEqual(genuineTitle, 'A forged title');
+      r = fresh();
+      res = await r.latest(alpha.name, alpha.owner, [at('swapped')]);
+      await assert.rejects(r.describe(res), (e) => e.kind === 'digest' && /does not have the digest/.test(e.message));
     });
 
 Branch points

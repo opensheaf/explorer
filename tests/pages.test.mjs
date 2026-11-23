@@ -140,7 +140,7 @@ test('the page of an archive reads only what its rows show', async () => {
   for (let t = 0; /descriptions read|^$/.test(status()) && t < 3000; t++) await wait(1);
   await wait(20);
   const alpha = log.filter((u) => u.startsWith(folder(ALPHA))).map((u) => u.slice(folder(ALPHA).length)).sort();
-  assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json']);
+  assert.deepEqual(alpha, ['inventory.json', 'v3/content/datacite.json', 'v3/content/object.json', 'v4/content/object.json', 'v4/inventory.json']);
   const row = main.all('li').find((li) => li.all('code').some((c) => c.textContent === 'alpha'));
   assert.match(row.textContent, /version 2 · head v4/);
 });
@@ -160,7 +160,7 @@ test('the rows of a large archive are read a few at a time, and filtered in line
   };
   const archive = { name: 'Synthetic', base: ORIGIN + 'synthetic/', root: ORIGIN + 'synthetic/ocfl/',
                     disc: { objects }, objects: () => objects, tombstones: () => [], owners: () => [], drafts: () => [],
-                    inventory: read, history: read };
+                    inventory: read, headInventory: read, history: read };
   const ctx = { archive, summaries: new Map(), signal: new AbortController().signal };
   const main = new FakeElement('main');
   const normalize = String.prototype.normalize;

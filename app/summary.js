@@ -63,7 +63,7 @@ export function rowSummary(ctx, id, signal = ctx.signal) {
 async function loadRow(ctx, id, signal) {
   const archive = ctx.archive;
   const options = { signal };
-  const inv = await archive.inventory(id, null, options);
+  const inv = await archive.headInventory(id, options);
   let head = null;
   if (versionsOf(inv).includes(inv.head)) {
     head = await archive.json(id, inv, inv.head, 'object.json', options).catch((error) => {

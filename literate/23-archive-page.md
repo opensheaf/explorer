@@ -206,7 +206,8 @@ The controls, and the filtering:
 
 The members of the heads of the owner catalogues are read (their
 inventories and member lists only: the order of a list does not wait for
-signatures); those held in this archive are put first, the catalogues in
+signatures, through the inventory of the head version, not the
+unsigned root inventory); those held in this archive are put first, the catalogues in
 the order of `owners` and the members of each in its order, with their
 cached citations, and the other objects follow in the order of the
 discovery document. A catalogue that cannot be read is passed over; if
@@ -218,7 +219,7 @@ none can, the list stays in the order of the discovery document.
     if (catalogues.length) {
       Promise.all(catalogues.map(async (cat) => {
         try {
-          const inv = await a.inventory(cat, null, { signal: ctx.signal });
+          const inv = await a.headInventory(cat, { signal: ctx.signal });
           const mem = await a.json(cat, inv, inv.head, 'members.json', { signal: ctx.signal });
           return (Array.isArray(mem?.members) ? mem.members : []).filter(isObject);
         } catch {
