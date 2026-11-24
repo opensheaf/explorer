@@ -89,9 +89,11 @@ export function localKind(hostname) {
 }
 
 export class Resolver {
-  constructor(http, home = null) {
+  constructor(http, home = null, { pins = LIMITS.pins } = {}) {
     this.http = http;
     this.home = home;
+    this.pins = pins;
+    this.pinned = 0;
     this.archives = new Map();
     this.logs = new Map();
     this.notes = [];
@@ -99,7 +101,7 @@ export class Resolver {
   }
 
   again() {
-    const fresh = new Resolver(this.http.another());
+    const fresh = new Resolver(this.http.another(), null, { pins: this.pins });
     if (this.home) fresh.home = this.home;
     return fresh;
   }
@@ -278,6 +280,10 @@ export class Resolver {
   }
 
   async pin(name, owner, version, digest, where = [], options = {}) {
+    if (++this.pinned > this.pins) {
+      this.note('warning', `at most ${this.pins} pins are resolved in one run (section 15.2): the others are not`);
+      return found('unavailable', null, version, digest, []);
+    }
     if (name === owner) {
       const log = await this.keyLog(owner, where, options);
       const v = log && isVersion(version) ? log.lookup(versionNumber(version), digest) : null;

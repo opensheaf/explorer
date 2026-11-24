@@ -141,6 +141,21 @@ test('a pin to a key-log version that is not one', async () => {
   assert.equal((await fresh().pin(owner, owner, 'v2', '0'.repeat(128), [at('other')])).status, 'mismatch');
 });
 
+test('one resolver resolves a bounded number of pins', async () => {
+  const alpha = pinOf('archive', 'alpha');
+  const inner = diskFetch();
+  let fetched = 0;
+  const fetch = (url, init) => { fetched++; return inner(url, init); };
+  assert.equal(new Resolver(new Http({ fetch })).pins, LIMITS.pins);
+  const r = new Resolver(new Http({ fetch }), null, { pins: 1 });
+  assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('archive')])).status, 'verified');
+  const before = fetched;
+  assert.equal((await r.pin(alpha.name, alpha.owner, 'v1', '0'.repeat(128), [at('archive')])).status, 'unavailable');
+  assert.equal(fetched, before);
+  assert.ok(r.notes.some((n) => n.message.startsWith('at most 1 pins are resolved in one run')), JSON.stringify(r.notes));
+  assert.equal(r.again().pins, 1);
+});
+
 test('local and private hosts are fetched only from an archive on one', async () => {
   const local = ['localhost', 'a.localhost', 'printer.local', 'printer.local.', '127.0.0.1', '10.1.2.3', '172.16.0.1',
                  '172.31.255.255', '192.168.1.5', '169.254.169.254', '0.0.0.0', '[::1]', '[::]', '[fd12:3456::1]',

@@ -233,6 +233,27 @@ log: the pin is *not a version*, never verified.
       assert.equal((await fresh().pin(owner, owner, 'v2', '0'.repeat(128), [at('other')])).status, 'mismatch');
     });
 
+One resolver resolves at most its number of pins (`LIMITS.pins` by
+default, as opensheaf-js b26b69d and opensheaf-py's
+`test_addresses_given_by_others`): past it a pin is unavailable, noted,
+and nothing is fetched for it; `again()` keeps the limit.
+
+    // in tests of the statuses of pins:
+    test('one resolver resolves a bounded number of pins', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const inner = diskFetch();
+      let fetched = 0;
+      const fetch = (url, init) => { fetched++; return inner(url, init); };
+      assert.equal(new Resolver(new Http({ fetch })).pins, LIMITS.pins);
+      const r = new Resolver(new Http({ fetch }), null, { pins: 1 });
+      assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('archive')])).status, 'verified');
+      const before = fetched;
+      assert.equal((await r.pin(alpha.name, alpha.owner, 'v1', '0'.repeat(128), [at('archive')])).status, 'unavailable');
+      assert.equal(fetched, before);
+      assert.ok(r.notes.some((n) => n.message.startsWith('at most 1 pins are resolved in one run')), JSON.stringify(r.notes));
+      assert.equal(r.again().pins, 1);
+    });
+
 Locations on local or private hosts, named by archive data, are not
 fetched from an archive on a public host (nor by a resolver with no
 home), and the note says why; from an archive on a local host (here a

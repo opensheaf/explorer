@@ -188,11 +188,21 @@ resolver for the same home, with nothing kept and an
 [HTTP client](10-http.md) of its own, whose cache is empty (it shares the
 pool and the page budget of the first).
 
+A resolver resolves at most `pins` pins (`LIMITS.pins`, 2000, as
+opensheaf-py's `MAX_PINS` and opensheaf-js); the others are
+*unavailable*, noted. A verification makes a resolver of its own, so the
+limit is per verification. The resolver of the pages lasts as long as the
+explorer is open, and is given no such limit: the walks through
+collections it serves have a budget (below)
+each, and the pages one of their own.
+
     // in app/resolve.js:
     export class Resolver {
-      constructor(http, home = null) {
+      constructor(http, home = null, { pins = LIMITS.pins } = {}) {
         this.http = http;
         this.home = home;
+        this.pins = pins;
+        this.pinned = 0;
         this.archives = new Map();
         this.logs = new Map();
         this.notes = [];
@@ -200,7 +210,7 @@ pool and the page budget of the first).
       }
 
       again() {
-        const fresh = new Resolver(this.http.another());
+        const fresh = new Resolver(this.http.another(), null, { pins: this.pins });
         if (this.home) fresh.home = this.home;
         return fresh;
       }
@@ -439,6 +449,10 @@ with that number and digest that fails the checks of the key log (section
 
     // in app/resolve.js:
       async pin(name, owner, version, digest, where = [], options = {}) {
+        if (++this.pinned > this.pins) {
+          this.note('warning', `at most ${this.pins} pins are resolved in one run (section 15.2): the others are not`);
+          return found('unavailable', null, version, digest, []);
+        }
         if (name === owner) {
           const log = await this.keyLog(owner, where, options);
           const v = log && isVersion(version) ? log.lookup(versionNumber(version), digest) : null;
