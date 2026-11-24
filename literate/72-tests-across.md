@@ -254,6 +254,26 @@ and nothing is fetched for it; `again()` keeps the limit.
       assert.equal(r.again().pins, 1);
     });
 
+A pin that is not one (an object version `latest`, a name that is a
+path, a digest of upper-case digits, a version that is no string) is
+*not a version*, noted, and nothing is fetched for it (opensheaf-js
+ba134a2, opensheaf-py's `test_a_pin_that_is_not_one`).
+
+    // in tests of the statuses of pins:
+    test('a pin that is not one', async () => {
+      const asked = [];
+      const r = new Resolver(new Http({ fetch: async (url) => { asked.push(url); throw new TypeError('no network'); }, budget: null }));
+      const name = 'a'.repeat(52), owner = 'b'.repeat(51) + 'a', dig = 'c'.repeat(128);
+      const where = ['https://example.org/papers/'];
+      assert.equal((await r.pin(name, owner, 'latest', dig, where)).status, 'not a version');
+      assert.equal((await r.pin('../x', owner, 'v1', dig, where)).status, 'not a version');
+      assert.equal((await r.pin(name, owner, 'v1', dig.toUpperCase(), where)).status, 'not a version');
+      assert.equal((await r.pin(name, owner, 1, dig, where)).status, 'not a version');
+      assert.equal((await r.pin(owner, owner, 'v0', dig, where)).status, 'not a version');
+      assert.deepEqual(asked, []);
+      assert.ok(r.notes.some((n) => /the pin 'latest' sha512='c+' is not a line, an object version and a digest/.test(n.message)));
+    });
+
 Locations on local or private hosts, named by archive data, are not
 fetched from an archive on a public host (nor by a resolver with no
 home), and the note says why; from an archive on a local host (here a

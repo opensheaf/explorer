@@ -156,6 +156,20 @@ test('one resolver resolves a bounded number of pins', async () => {
   assert.equal(r.again().pins, 1);
 });
 
+test('a pin that is not one', async () => {
+  const asked = [];
+  const r = new Resolver(new Http({ fetch: async (url) => { asked.push(url); throw new TypeError('no network'); }, budget: null }));
+  const name = 'a'.repeat(52), owner = 'b'.repeat(51) + 'a', dig = 'c'.repeat(128);
+  const where = ['https://example.org/papers/'];
+  assert.equal((await r.pin(name, owner, 'latest', dig, where)).status, 'not a version');
+  assert.equal((await r.pin('../x', owner, 'v1', dig, where)).status, 'not a version');
+  assert.equal((await r.pin(name, owner, 'v1', dig.toUpperCase(), where)).status, 'not a version');
+  assert.equal((await r.pin(name, owner, 1, dig, where)).status, 'not a version');
+  assert.equal((await r.pin(owner, owner, 'v0', dig, where)).status, 'not a version');
+  assert.deepEqual(asked, []);
+  assert.ok(r.notes.some((n) => /the pin 'latest' sha512='c+' is not a line, an object version and a digest/.test(n.message)));
+});
+
 test('local and private hosts are fetched only from an archive on one', async () => {
   const local = ['localhost', 'a.localhost', 'printer.local', 'printer.local.', '127.0.0.1', '10.1.2.3', '172.16.0.1',
                  '172.31.255.255', '192.168.1.5', '169.254.169.254', '0.0.0.0', '[::1]', '[::]', '[fd12:3456::1]',
