@@ -2,6 +2,7 @@
 import { validate } from './schema.js';
 import { filesOf, dateOf } from './versions.js';
 import { isObject } from './names.js';
+import { nesting, LIMITS } from './http.js';
 
 export function finding(level, place, message, { object = null, ver = null } = {}) {
   const section = /\(sections? ([0-9A-Z][^)]*)\)/.exec(message)?.[1]?.split(/,| and /)[0].trim() ?? null;
@@ -18,7 +19,7 @@ export function landingDescriptionGaps(text) {
   const missing = ['cite-as', 'describedby', 'type'].filter((r) => !rels.has(r)).map((r) => `the Signposting link ${r}`);
   const record = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(text);
   let ld = null;
-  try { ld = record ? JSON.parse(record[1]) : null; } catch { ld = null; }
+  try { ld = record && nesting(record[1]) <= LIMITS.nesting ? JSON.parse(record[1]) : null; } catch { ld = null; }
   if (!isObject(ld) || !ld['@type'] || !ld.identifier) missing.push('a schema.org record in JSON-LD with a type and identifiers');
   return missing;
 }

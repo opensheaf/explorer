@@ -18,6 +18,7 @@ The module is `app/rules.js`.
     import { validate } from './schema.js';
     import { filesOf, dateOf } from './versions.js';
     import { isObject } from './names.js';
+    import { nesting, LIMITS } from './http.js';
 
 Findings
 --------
@@ -59,7 +60,9 @@ The descriptions of an object version
 A landing page of the profile website carries a description for
 programs (appendix A.3, #77). What it lacks of it is read from the text of
 the page alone: the Signposting links every page has, and a schema.org
-record in JSON-LD that parses and has a type and identifiers. The answer
+record in JSON-LD that parses and has a type and identifiers (read as
+every JSON file is, nested no deeper than `LIMITS.nesting`; a deeper one
+is no record). The answer
 is a list of what is missing, in the words of `osheaf verify`.
 
     // in app/rules.js:
@@ -68,7 +71,7 @@ is a list of what is missing, in the words of `osheaf verify`.
       const missing = ['cite-as', 'describedby', 'type'].filter((r) => !rels.has(r)).map((r) => `the Signposting link ${r}`);
       const record = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(text);
       let ld = null;
-      try { ld = record ? JSON.parse(record[1]) : null; } catch { ld = null; }
+      try { ld = record && nesting(record[1]) <= LIMITS.nesting ? JSON.parse(record[1]) : null; } catch { ld = null; }
       if (!isObject(ld) || !ld['@type'] || !ld.identifier) missing.push('a schema.org record in JSON-LD with a type and identifiers');
       return missing;
     }

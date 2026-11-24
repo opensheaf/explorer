@@ -2151,6 +2151,8 @@ A landing page is read for its description for programs (appendix A.3,
       assert.deepEqual(landingDescriptionGaps(record), ['the Signposting link cite-as', 'the Signposting link describedby', 'the Signposting link type']);
       assert.deepEqual(landingDescriptionGaps(links + '<script type="application/ld+json">{oops</script>'),
         ['a schema.org record in JSON-LD with a type and identifiers']);
+      const deep = record.replace('}</script>', `, "x": ${'['.repeat(70)}${']'.repeat(70)}}</script>`);
+      assert.deepEqual(landingDescriptionGaps(links + deep), ['a schema.org record in JSON-LD with a type and identifiers']);
     });
 
 An archive that pages its objects (section 3.1) is read and verified like
