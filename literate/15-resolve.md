@@ -400,6 +400,7 @@ records the line (section 12.3).
     // in app/resolve.js:
       async identityProblem(archive, id, line, options) {
         if (line.inv.id !== id) return 'its inventory names another object';
+        if (line.inventoriesProblem) return line.inventoriesProblem;
         const [, name, owner] = id.split(':');
         let genesis = null;
         try {

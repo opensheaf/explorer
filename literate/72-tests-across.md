@@ -409,6 +409,53 @@ states.
       await assert.rejects(r.describe(res), (e) => e.kind === 'digest' && /does not have the digest/.test(e.message));
     });
 
+An unsigned head cannot restate a signed version (sections 4.1 and 14.2),
+as opensheaf-py's `test_an_unsigned_head_cannot_restate_a_signed_version`
+and opensheaf-js 06206b4: a copy of `archive/`, `restated/`, serves a
+forged version after `alpha`'s head, unsigned, whose inventory gives
+version 1 another PDF. Every version up to the head is still signed, but
+the inventory in the folder of version 1 does not agree with the forged
+head's, so the copy is no copy of the line, and the PDF is never read
+from it.
+
+    // in tests of the statuses of pins:
+    test('an unsigned head cannot restate a signed version (section 14.2)', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const dir = `${ORIGIN}archive/ocfl/${alpha.owner}/${alpha.name}/`;
+      const inner = diskFetch();
+      const read = async (path) => new Uint8Array(await (await inner(dir + path)).arrayBuffer());
+      const forged = JSON.parse(new TextDecoder().decode(await read('inventory.json')));
+      const n = Number(forged.head.slice(1)), next = `v${n + 1}`;
+      const state = forged.versions.v1.state;
+      const pdf = Object.keys(state).find((d) => state[d][0].endsWith('.pdf'));
+      const other = new TextEncoder().encode('%PDF-1.4 forged\n');
+      const od = await sha512(other);
+      state[od] = state[pdf];
+      delete state[pdf];
+      forged.manifest[od] = [`${next}/content/forged.pdf`];
+      forged.versions[next] = { ...forged.versions[forged.head], message: 'forged' };
+      forged.head = next;
+      const inv = new TextEncoder().encode(JSON.stringify(forged));
+      const sc = new TextEncoder().encode(`${await sha512(inv)}  inventory.json\n`);
+      const files = {
+        'inventory.json': inv, 'inventory.json.sha512': sc,
+        [`${next}/inventory.json`]: inv, [`${next}/inventory.json.sha512`]: sc,
+        [`${next}/content/forged.pdf`]: other,
+      };
+      const fetch = async (url, init = {}) => {
+        if (!url.startsWith(`${ORIGIN}restated/`)) return inner(url, init);
+        const real = url.replace('restated/', 'archive/');
+        for (const [rel, bytes] of Object.entries(files)) {
+          if (real === dir + rel) return new Response(init.method === 'HEAD' ? null : bytes, { status: 200, headers: { 'content-length': String(bytes.length) } });
+        }
+        return inner(real, init);
+      };
+      const r = new Resolver(new Http({ fetch }));
+      assert.equal((await r.latest(alpha.name, alpha.owner, [at('restated')])).status, 'unavailable');
+      assert.ok(r.notes.some((note) => note.message.includes('not a copy of the line: v1: its inventory does not record the versions')),
+                JSON.stringify(r.notes));
+    });
+
 Branch points
 -------------
 
