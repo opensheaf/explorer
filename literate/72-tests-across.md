@@ -500,3 +500,34 @@ the level states the right digests but reads a forged
       assert.equal(v3, INCONSISTENT);
       assert.ok(read.includes('parent/object.json is not the object.json the parent inventory records'), read.join('\n'));
     });
+
+Evidence of another form makes a branch point inconsistent, and so does
+evidence the server does not give, instead of stopping the check; a
+cancellation is passed on (opensheaf-js 86caea7, opensheaf-py's
+`test_evidence_of_another_form`).
+
+    // in tests of branch points:
+    test('evidence of another form, or that cannot be read', async () => {
+      const other = await open('other/');
+      const id = idOf('alpha-accepted', 'other');
+      const inv = await other.inventory(id);
+      const obj = await other.json(id, inv, 'v1', 'object.json');
+      const genesis = await other.bytes(id, inv, 'v1', 'genesis.json');
+      const lv = levelOfVersion(other, id, inv, 'v1');
+      const logs = (owner) => other.keyLog(owner);
+      for (const pinv of ['not json', '[1]', '['.repeat(100) + ']'.repeat(100)]) {
+        const bytes = new TextEncoder().encode(pinv);
+        const odd = level(lv.digests, async (p) => (p === 'parent/inventory.json' ? bytes : lv.read(p)));
+        const [v, problems] = await verdict(odd, obj, genesis, logs);
+        assert.equal(v, INCONSISTENT, pinv);
+        assert.ok(problems.some((p) => p.includes('not of the form of an inventory')), problems.join('\n'));
+      }
+      const failing = (kind) => level(lv.digests, async (p) => {
+        if (p.startsWith('parent/signatures/')) throw Object.assign(new Error('HTTP 500'), { kind, detail: `${p}: HTTP 500` });
+        return lv.read(p);
+      });
+      const [v, problems] = await verdict(failing('http'), obj, genesis, logs);
+      assert.equal(v, INCONSISTENT);
+      assert.match(problems[0], /^the evidence of the branch point cannot be read: parent\/signatures\/.*HTTP 500/);
+      await assert.rejects(verdict(failing('aborted'), obj, genesis, logs), (e) => e.kind === 'aborted');
+    });
