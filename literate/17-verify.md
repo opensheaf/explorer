@@ -101,7 +101,9 @@ The verification
 `verify` reads the archive afresh, with an HTTP client of its own that is
 not held to the budget of a page (a verification may read much more than
 a page), and reports as it goes; it can be cancelled, keeping what was
-found. `remote` also resolves the members of other archives and the
+found. A read whose failure is a finding (a file missing, unreadable)
+lets a cancellation through: it stops the verification, and is never
+taken for a file that is not there. `remote` also resolves the members of other archives and the
 parent lines of branches, as `osheaf verify --remote` does; `digests`
 also downloads every content file to check its digest.
 
@@ -293,7 +295,7 @@ with the key logs, below.
           return;
         }
         if (inv.id !== id) {
-          const expected = parseId(inv.id) ? (await a.locate(inv.id).catch(() => null))?.join('/') : null;
+          const expected = parseId(inv.id) ? (await a.locate(inv.id).catch((e) => { if (this.aborted(e)) throw e; return null; }))?.join('/') : null;
           this.add('error', this.where(inv.id), expected
             ? `is at ocfl/${a.paths.get(id).join('/')}, and its identifier puts it at ocfl/${expected} (section 3.2)`
             : `${inv.id}: not the identifier of a line or of a draft (sections 3.2 and 4)`, { object: id });
@@ -321,7 +323,7 @@ with the key logs, below.
         if (!sc || sidecarDigest(sc) !== rootDigest) this.add('error', place, 'the checksum file of the inventory does not state its digest', at());
         o.sidecar = sc ? sidecarDigest(sc) : null;
         const head = typeof inv.head === 'string' ? inv.head : '';
-        const headCopy = /^v[0-9]+$/.test(head) ? await this.fetchOrNull(a.inventoryUrl(id, head)).catch(() => null) : null;
+        const headCopy = /^v[0-9]+$/.test(head) ? await this.fetchOrNull(a.inventoryUrl(id, head)).catch((e) => { if (this.aborted(e)) throw e; return null; }) : null;
         if (!headCopy || await sha512(headCopy) !== rootDigest) this.add('error', place, `the inventory of ${head} is not the root inventory`, at());
         const names = Object.keys(inv.versions).sort((x, y) => (Number(x.slice(1)) || 0) - (Number(y.slice(1)) || 0));
         for (const [k, ver] of names.entries()) {
@@ -453,7 +455,7 @@ collections are then checked (14.5).
           const place = this.where(id);
           const a = this.archive;
           if (o.draft) {
-            const g = await a.bytes(id, o.inv, o.inv.head, 'genesis.json', this.options).catch(() => null);
+            const g = await a.bytes(id, o.inv, o.inv.head, 'genesis.json', this.options).catch((e) => { if (this.aborted(e)) throw e; return null; });
             if (['name', 'owner', 'parent'].some((k) => isObject(head) && k in head) || g) {
               this.add('error', place, 'a draft has no genesis record, and no name, owner or parent (section 10.1)', { object: id });
             }
@@ -627,7 +629,7 @@ warning (section 5.3), and an originator owning a branch an error.
       async movedBranchPoint(id, o, ver, p, old, where) {
         const a = this.archive;
         const before = `v${versionNumber(ver) - 1}`;
-        const read = async (v) => jsonOrNull(await a.bytes(id, o.inv, v, 'parent/inventory.json', this.options).catch(() => null)) || {};
+        const read = async (v) => jsonOrNull(await a.bytes(id, o.inv, v, 'parent/inventory.json', this.options).catch((e) => { if (this.aborted(e)) throw e; return null; })) || {};
         const [oldInv, newInv] = [await read(before), await read(ver)];
         if (p.owner !== old.owner || p.name !== old.name) {
           this.add('error', where, 'a new branch point is a version of the same parent line (section 9.4)', { object: id, ver });
@@ -813,7 +815,7 @@ unlisted.
         for (const kid of needed) {
           if (this.found.has(kid) || listed.has(kid)) continue;
           const owner = parseId(kid).owner;
-          const log = await a.keyLog(owner, this.options).catch(() => null);
+          const log = await a.keyLog(owner, this.options).catch((e) => { if (this.aborted(e)) throw e; return null; });
           if (log) this.add('error', 'opensheaf.json', `does not list ${this.where(kid)}, an object of the storage root (section 3.1)`);
         }
         const fields = ['kind', 'name', 'owner', 'head', 'inventorySha512', 'status'];
@@ -852,7 +854,7 @@ unlisted.
           }
           const held = this.found.get(cat);
           if (!held) continue;
-          const mem = await a.json(cat, held.inv, held.inv.head, 'members.json', this.options).catch(() => null) || {};
+          const mem = await a.json(cat, held.inv, held.inv.head, 'members.json', this.options).catch((e) => { if (this.aborted(e)) throw e; return null; }) || {};
           if (mem.type !== 'catalogue') {
             this.add('error', 'opensheaf.json', `the owner catalogue of ${o}, ${this.where(cat)}, is not a catalogue (section 8.1)`);
           }
@@ -1033,7 +1035,7 @@ not compared with the files, as `osheaf verify` does not.
         for (const e of a.owners()) {
           const cat = this.found.get(e.catalogue);
           if (!cat?.line?.latest) continue;
-          const mem = await a.json(cat.id, cat.inv, cat.line.latest, 'members.json', this.options).catch(() => null);
+          const mem = await a.json(cat.id, cat.inv, cat.line.latest, 'members.json', this.options).catch((e) => { if (this.aborted(e)) throw e; return null; });
           if (Array.isArray(mem?.members)) members = members.concat(mem.members);
         }
         const page = new TextDecoder().decode(home);

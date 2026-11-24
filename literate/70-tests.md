@@ -1772,7 +1772,7 @@ cases the fixtures do not hold, made by changing a file as it is served.
     import { Http } from '../app/http.js';
     import { Archive } from '../app/archive.js';
     import { verify } from '../app/verify.js';
-    import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, idOf } from './disk.mjs';
+    import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, READING, idOf } from './disk.mjs';
 
     const schemas = await readSchemas();
 
@@ -2007,6 +2007,28 @@ without a readable inventory (a port of the test of opensheaf-js).
       const report = await verify(archive, { schemas, signal: controller.signal,
         progress: ({ done }) => { if (done === 1) controller.abort(); } });
       assert.ok(report.cancelled);
+    });
+
+A verification cancelled while it reads a copy of an inventory stops
+there: the cancellation is not taken for a copy that is missing, and
+reported as one (as opensheaf-js ec1cf2e tests it). The copy read is that
+of the head of `reading`, whose only version is its head.
+
+    // in tests of the verification:
+    test('a cancelled verification reports no file missing', async () => {
+      const controller = new AbortController();
+      const plain = diskFetch();
+      const fetch = async (url, init) => {
+        if (String(url) === `${folder(READING)}v1/inventory.json`) {
+          controller.abort();
+          throw new DOMException('cancelled', 'AbortError');
+        }
+        return plain(url, init);
+      };
+      const archive = await Archive.open(new Http({ fetch }), ORIGIN + 'archive/');
+      const report = await verify(archive, { schemas, signal: controller.signal });
+      assert.equal(report.cancelled, true);
+      assert.deepEqual(errors(report), []);
     });
 
 A command

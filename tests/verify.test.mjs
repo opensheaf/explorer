@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { Http } from '../app/http.js';
 import { Archive } from '../app/archive.js';
 import { verify } from '../app/verify.js';
-import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, idOf } from './disk.mjs';
+import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, READING, idOf } from './disk.mjs';
 
 const schemas = await readSchemas();
 
@@ -190,6 +190,22 @@ test('cancelling keeps what was found', async () => {
   const report = await verify(archive, { schemas, signal: controller.signal,
     progress: ({ done }) => { if (done === 1) controller.abort(); } });
   assert.ok(report.cancelled);
+});
+
+test('a cancelled verification reports no file missing', async () => {
+  const controller = new AbortController();
+  const plain = diskFetch();
+  const fetch = async (url, init) => {
+    if (String(url) === `${folder(READING)}v1/inventory.json`) {
+      controller.abort();
+      throw new DOMException('cancelled', 'AbortError');
+    }
+    return plain(url, init);
+  };
+  const archive = await Archive.open(new Http({ fetch }), ORIGIN + 'archive/');
+  const report = await verify(archive, { schemas, signal: controller.signal });
+  assert.equal(report.cancelled, true);
+  assert.deepEqual(errors(report), []);
 });
 
 test('an archive whose objects are in pages (section 3.1)', async () => {
