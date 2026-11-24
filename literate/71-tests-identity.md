@@ -526,6 +526,30 @@ as it is, as opensheaf-py's `met` keeps a key log with errors.
       assert.deepEqual((await log.meet(copy)).side().map((v) => v.number), [1, 2]);
     });
 
+A version that follows an ending version is a problem of the key log
+(section 6.3), not a version signed by no threshold (opensheaf-js
+59c47fb, opensheaf-py's `test_a_version_after_an_ending_one_is_a_problem`):
+`other`'s second version, well signed by the rotation keys of its first,
+is refused when the first is read as ending the key log, or as committing
+to a `nextThreshold` that is not an integer. Without the guard, the
+missing threshold let any count of signatures pass.
+
+    // in tests of key logs:
+    test('a version after an ending one is a problem (section 6.3)', async () => {
+      const log = await keyLogOf('other');
+      await log.check();
+      const [v1, v2] = log.versions;
+      const lookup = (n, d) => (n === v1.number && d === v1.digest ? v1 : null);
+      assert.deepEqual(await log.signatureProblems(v2, v1, lookup, []), []);
+      const { nextThreshold, next, ...rest } = v1.keys;
+      for (const keys of [{ ...rest, ended: true }, { ...v1.keys, nextThreshold: '1' }]) {
+        const prev = { number: v1.number, digest: v1.digest, keys };
+        const problems = await log.signatureProblems(v2, prev, lookup, []);
+        assert.equal(problems.length, 1);
+        assert.match(problems[0], /nothing follows an ending version/);
+      }
+    });
+
 The statuses of versions
 ------------------------
 

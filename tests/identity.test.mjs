@@ -340,6 +340,21 @@ test('a key log answers once checked; a broken copy meets no other (section 6.5)
   assert.deepEqual((await log.meet(copy)).side().map((v) => v.number), [1, 2]);
 });
 
+test('a version after an ending one is a problem (section 6.3)', async () => {
+  const log = await keyLogOf('other');
+  await log.check();
+  const [v1, v2] = log.versions;
+  const lookup = (n, d) => (n === v1.number && d === v1.digest ? v1 : null);
+  assert.deepEqual(await log.signatureProblems(v2, v1, lookup, []), []);
+  const { nextThreshold, next, ...rest } = v1.keys;
+  for (const keys of [{ ...rest, ended: true }, { ...v1.keys, nextThreshold: '1' }]) {
+    const prev = { number: v1.number, digest: v1.digest, keys };
+    const problems = await log.signatureProblems(v2, prev, lookup, []);
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /nothing follows an ending version/);
+  }
+});
+
 const good = (key, n = 1, threshold = 1) => ({ status: GOOD, key, keyLog: [n, 'd'], threshold });
 
 test('the statuses of the versions of a line (section 7.3)', () => {
