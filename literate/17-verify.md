@@ -378,6 +378,7 @@ with the key logs, below.
           o.objs.set(ver, obj);
           if (!obj || kind === 'owner') continue;
           this.schema(`${where}/object.json`, obj, 'object', 'error', at(ver));
+          for (const message of reservedNameErrors(obj, logical)) this.add('error', where, message, at(ver));
           if (n === 1 || draft) {
             if (isObject(obj) && 'previous' in obj) this.add('error', where, 'a first version, or a draft, has no previous (section 4.3)', at(ver));
           } else if (!isObject(obj) || !('previous' in obj)) {
@@ -1113,6 +1114,27 @@ words (2293a05), rather than reported as a file missing.
           this.progress({ phase: 'digests', done: ++checked, total: files.length, current: cp });
         }));
       }
+    }
+
+The names section 4.1 reserves are used only for the files it defines,
+as opensheaf-py's `reserved_name_errors` and opensheaf-js 6a455d9 check
+them: `members.json` only in a collection, `keys.json` and `forked/` in no
+line, `parent/` only in a branch (whose `object.json` has a `parent`).
+
+    // in app/verify.js:
+    export const RESERVED = ['object.json', 'datacite.json', 'genesis.json', 'members.json', 'keys.json', 'forked', 'parent'];
+
+    export function reservedNameErrors(obj, logical) {
+      const out = [];
+      for (const p of [...logical].sort()) {
+        const top = p.split('/')[0];
+        if (!RESERVED.includes(top)) continue;
+        if (p === top && ['object.json', 'datacite.json', 'genesis.json'].includes(top)) continue;
+        if (p === top && top === 'members.json' && obj?.kind === 'collection') continue;
+        if (top === 'parent' && p !== top && isObject(obj) && 'parent' in obj) continue;
+        out.push(`${p}: the name ${top} is reserved for the file section 4.1 defines`);
+      }
+      return out;
     }
 
 Small helpers: whether a logical path is evidence of a branch point, two

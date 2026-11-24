@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { Http } from '../app/http.js';
 import { Archive } from '../app/archive.js';
-import { verify } from '../app/verify.js';
+import { verify, reservedNameErrors } from '../app/verify.js';
 import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, READING, idOf } from './disk.mjs';
 
 const schemas = await readSchemas();
@@ -180,6 +180,22 @@ test('a content path outside the object is said so, not reported missing', async
   assert.ok(found.includes("alpha: the content path 'v1/content/../../../secret.txt' is not a relative path inside the object " +
                            '(section 4.1): it is not read, nor the object checked further'), found.join('\n'));
   assert.ok(!found.some((e) => e.includes('missing v1/content/..')), found.join('\n'));
+});
+
+test('reserved names in a document (section 4.1)', async () => {
+  const found = reservedNameErrors({ kind: 'document' }, ['object.json', 'datacite.json', 'genesis.json', 'members.json',
+                                                           'keys.json', 'parent/object.json', 'forked/x', 'figs/a.png']);
+  assert.deepEqual(found.map((e) => e.split(':')[0]), ['forked/x', 'keys.json', 'members.json', 'parent/object.json']);
+  assert.deepEqual(reservedNameErrors({ kind: 'collection', parent: {} }, ['members.json', 'parent/object.json']), []);
+  assert.deepEqual(reservedNameErrors({ kind: 'collection' }, ['parent/object.json', 'parent']).length, 2);
+  const url = `${folder(ALPHA)}inventory.json`;
+  const inv = JSON.parse(await (await diskFetch()(url)).text());
+  const state = inv.versions[inv.head].state;
+  const [d] = Object.entries(state).find(([, ps]) => ps.includes('datacite.json'));
+  state[d] = [...state[d], 'keys.json'];
+  const text = JSON.stringify(inv);
+  const errs = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+  assert.ok(errs.includes(`alpha ${inv.head}: keys.json: the name keys.json is reserved for the file section 4.1 defines`), errs.join('\n'));
 });
 
 test('a configuration of the hashed layout that is not JSON is an error', async () => {

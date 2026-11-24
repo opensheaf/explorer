@@ -1788,7 +1788,7 @@ cases the fixtures do not hold, made by changing a file as it is served.
     import { createHash } from 'node:crypto';
     import { Http } from '../app/http.js';
     import { Archive } from '../app/archive.js';
-    import { verify } from '../app/verify.js';
+    import { verify, reservedNameErrors } from '../app/verify.js';
     import { diskFetch, readSchemas, osheaf, fixture, folder, ORIGIN, ALPHA, BETA, READING, idOf } from './disk.mjs';
 
     const schemas = await readSchemas();
@@ -1930,7 +1930,8 @@ archive declaring the profile `website` and a warning otherwise; a key
 log without the signature files of its second version; a tombstone of an
 object listed; a label given twice; a configuration of the hashed layout
 that is not JSON (opensheaf-js 10180cf); a content path that climbs out
-of the object (opensheaf-js 2293a05); an index file that starts with a
+of the object (opensheaf-js 2293a05); a name reserved by section 4.1
+(opensheaf-js 6a455d9); an index file that starts with a
 byte order mark, or holds bytes that are not UTF-8, which is not JSON for
 `osheaf verify` either.
 
@@ -2016,6 +2017,22 @@ without a readable inventory (a port of the test of opensheaf-js).
       assert.ok(found.includes("alpha: the content path 'v1/content/../../../secret.txt' is not a relative path inside the object " +
                                '(section 4.1): it is not read, nor the object checked further'), found.join('\n'));
       assert.ok(!found.some((e) => e.includes('missing v1/content/..')), found.join('\n'));
+    });
+
+    test('reserved names in a document (section 4.1)', async () => {
+      const found = reservedNameErrors({ kind: 'document' }, ['object.json', 'datacite.json', 'genesis.json', 'members.json',
+                                                               'keys.json', 'parent/object.json', 'forked/x', 'figs/a.png']);
+      assert.deepEqual(found.map((e) => e.split(':')[0]), ['forked/x', 'keys.json', 'members.json', 'parent/object.json']);
+      assert.deepEqual(reservedNameErrors({ kind: 'collection', parent: {} }, ['members.json', 'parent/object.json']), []);
+      assert.deepEqual(reservedNameErrors({ kind: 'collection' }, ['parent/object.json', 'parent']).length, 2);
+      const url = `${folder(ALPHA)}inventory.json`;
+      const inv = JSON.parse(await (await diskFetch()(url)).text());
+      const state = inv.versions[inv.head].state;
+      const [d] = Object.entries(state).find(([, ps]) => ps.includes('datacite.json'));
+      state[d] = [...state[d], 'keys.json'];
+      const text = JSON.stringify(inv);
+      const errs = errors(await run('archive/', { patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+      assert.ok(errs.includes(`alpha ${inv.head}: keys.json: the name keys.json is reserved for the file section 4.1 defines`), errs.join('\n'));
     });
 
     test('a configuration of the hashed layout that is not JSON is an error', async () => {
