@@ -463,7 +463,10 @@ The accepted copy of `other/` is a branch of `alpha`'s version 2: its
 branch point is confirmed against the key log of `archive/`'s owner that
 `other/` keeps beside it; unchecked without that key log; and
 inconsistent when its evidence lacks the parent's signatures (the parent
-version is then not a version) or a file of the parent version differs.
+version is then not a version), a file of the parent version differs, or
+the level states the right digests but reads a forged
+`parent/object.json` (its bytes are hashed, as opensheaf-py's
+`test_inconsistent_branch_point` and opensheaf-js 4e55225 check).
 
     // in tests of branch points:
     test('the verdicts of a branch point (section 9.3)', async () => {
@@ -490,4 +493,10 @@ version is then not a version) or a file of the parent version differs.
       assert.ok(more.some((p) => p.startsWith(`${pdf}: a file of the parent version is missing, or differs`)));
       const own = { ...obj, owner: obj.parent.owner };
       assert.ok((await verdict(lv, own, genesis, logs))[1].some((p) => p.includes("neither the parent's owner nor the originator")));
+      const pobj = JSON.parse(new TextDecoder().decode(await lv.read('parent/object.json')));
+      const forged = new TextEncoder().encode(JSON.stringify({ ...pobj, parent: { ...obj.parent } }));
+      const stated = level(lv.digests, async (p) => (p === 'parent/object.json' ? forged : lv.read(p)));
+      const [v3, read] = await verdict(stated, obj, genesis, logs);
+      assert.equal(v3, INCONSISTENT);
+      assert.ok(read.includes('parent/object.json is not the object.json the parent inventory records'), read.join('\n'));
     });

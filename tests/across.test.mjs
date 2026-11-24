@@ -340,4 +340,10 @@ test('the verdicts of a branch point (section 9.3)', async () => {
   assert.ok(more.some((p) => p.startsWith(`${pdf}: a file of the parent version is missing, or differs`)));
   const own = { ...obj, owner: obj.parent.owner };
   assert.ok((await verdict(lv, own, genesis, logs))[1].some((p) => p.includes("neither the parent's owner nor the originator")));
+  const pobj = JSON.parse(new TextDecoder().decode(await lv.read('parent/object.json')));
+  const forged = new TextEncoder().encode(JSON.stringify({ ...pobj, parent: { ...obj.parent } }));
+  const stated = level(lv.digests, async (p) => (p === 'parent/object.json' ? forged : lv.read(p)));
+  const [v3, read] = await verdict(stated, obj, genesis, logs);
+  assert.equal(v3, INCONSISTENT);
+  assert.ok(read.includes('parent/object.json is not the object.json the parent inventory records'), read.join('\n'));
 });
