@@ -276,6 +276,9 @@ test('keepers confirmed, claimed only, or not checked (section 6.6)', async () =
   assert.equal((await checkKeeper(http, 'https://orcid.org/0000-0002-1825-0098', OWNER)).status, NOT_CHECKED);
   assert.equal((await checkKeeper(http, 'https://localhost/', OWNER)).status, NOT_CHECKED);
   assert.equal((await checkKeeper(http, 'https://192.168.1.1/', OWNER)).status, NOT_CHECKED);
+  for (const noDomain of ['https://8.8.8.8/', 'https://a..example.org/', 'https://example/', 'https://-a.org/']) {
+    assert.equal((await checkKeeper(http, noDomain, OWNER)).status, NOT_CHECKED, noDomain);
+  }
   assert.equal(seen.length, 0);
 
   const well = 'https://journal.example.org/.well-known/opensheaf';

@@ -937,7 +937,8 @@ link confirms when its address names the owner as a word of its own, and
 names a successor when another owner follows it; the request asks for
 JSON and carries no credentials. A missing or wrong file is read as the
 keeper not confirming; a network failure leaves the link not checked; an
-ORCID iD whose check digit is wrong, and a domain that is local, are not
+ORCID iD whose check digit is wrong, a domain that is local, and one that
+is no DNS name (a public address, one label, an empty label), are not
 read at all.
 
     // in tests of requests:
@@ -985,6 +986,9 @@ read at all.
       assert.equal((await checkKeeper(http, 'https://orcid.org/0000-0002-1825-0098', OWNER)).status, NOT_CHECKED);
       assert.equal((await checkKeeper(http, 'https://localhost/', OWNER)).status, NOT_CHECKED);
       assert.equal((await checkKeeper(http, 'https://192.168.1.1/', OWNER)).status, NOT_CHECKED);
+      for (const noDomain of ['https://8.8.8.8/', 'https://a..example.org/', 'https://example/', 'https://-a.org/']) {
+        assert.equal((await checkKeeper(http, noDomain, OWNER)).status, NOT_CHECKED, noDomain);
+      }
       assert.equal(seen.length, 0);
 
       const well = 'https://journal.example.org/.well-known/opensheaf';

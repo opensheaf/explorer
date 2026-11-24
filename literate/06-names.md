@@ -345,7 +345,12 @@ Keepers
 
 A keeper is a list of one URI: an ORCID iD, whose last character is a
 check digit (ISO 7064 MOD 11-2), or a domain written `https://<domain>/`
-(section 6.6).
+(section 6.6). What the schema lets through is read as a keeper; the
+explorer fetches the `.well-known` file of a domain only if it is a DNS
+name (`strict`, `keeperDomain`: at least two labels, each of letters,
+digits and inner hyphens, the last not all digits nor `localhost`), as
+opensheaf-py's `keeper_domain` and opensheaf-js decide: no IP address, no
+`localhost`, no empty label.
 
     // in app/names.js:
     const ORCID = /^(?:https:\/\/orcid\.org\/)?([0-9]{4})-([0-9]{4})-([0-9]{4})-([0-9]{3}[0-9X])$/;
@@ -360,7 +365,16 @@ check digit (ISO 7064 MOD 11-2), or a domain written `https://<domain>/`
       return (r === 10 ? 'X' : String(r)) === digits[15];
     }
 
-    export function keeperValid(uri) {
+    export function keeperValid(uri, strict = false) {
       if (uri.startsWith('https://orcid.org/')) return orcidValid(uri);
-      return /^https:\/\/[a-z0-9.-]+\/$/.test(uri);
+      return /^https:\/\/[a-z0-9.-]+\/$/.test(uri) && (!strict || keeperDomain(uri));
+    }
+
+    const DNS_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+    export function keeperDomain(uri) {
+      if (typeof uri !== 'string' || !/^https:\/\/[a-z0-9.-]+\/$/.test(uri)) return false;
+      const labels = uri.slice('https://'.length, -1).split('.');
+      return labels.length >= 2 && labels.every((x) => DNS_LABEL.test(x)) && !/^[0-9]+$/.test(labels.at(-1)) &&
+        labels.at(-1) !== 'localhost' && uri.length - 'https:///'.length <= 253;
     }

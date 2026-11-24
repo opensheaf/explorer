@@ -23,7 +23,7 @@ fixtures, whose fork and exposure the reference implementation made.
     import assert from 'node:assert/strict';
     import { verifyEd25519, strictlyAcceptable, base32, sha256, utf8, unbase64, hex } from '../app/crypto.js';
     import { nameOf, algorithm, isNameOf, readGenesis, didKey, didKeyPublic, keyDigest, keyId, jcs, parseSheaf,
-             orcidValid, keeperValid } from '../app/names.js';
+             orcidValid, keeperValid, keeperDomain } from '../app/names.js';
     import { firstVersion, KeyLog, Version, keyRules, ownerObject, jsonOrNull } from '../app/owners.js';
     import { message, fileName, judge, lineStatuses, latestSigned, readSignatureFile, GOOD, UNCHECKED, INVALID }
       from '../app/signatures.js';
@@ -191,13 +191,20 @@ it a `keys.json` with such a threshold, which it reads as no keys at all.
         `{"format":"opensheaf-object/0.2","kind":"owner","name":"${A}","owner":"${A}","previous":"${KL1}","specification":"0.2","status":"active"}`);
     });
 
-    test('keepers: ORCID check digits and domains (section 6.6)', () => {
+    test('keepers: ORCID check digits and domains, DNS names where fetched (section 6.6)', () => {
       assert.ok(orcidValid('https://orcid.org/0000-0002-1234-5677'));
       assert.ok(!orcidValid('https://orcid.org/0000-0002-1234-5678'));
       assert.ok(orcidValid('0000-0002-1694-006X'));
       assert.ok(orcidValid('https://orcid.org/0000-0002-1825-0097'));
       assert.ok(keeperValid('https://journal.example.org/'));
       assert.ok(!keeperValid('http://journal.example.org/'));
+      for (const noDomain of ['https://127.0.0.1/', 'https://localhost/', 'https://./', 'https://a..b/',
+                              'https://example/', 'https://-a.org/', 'https://10.0.0.1/']) {
+        assert.ok(!keeperValid(noDomain, true), noDomain);
+        assert.ok(!keeperDomain(noDomain), noDomain);
+      }
+      assert.ok(keeperValid('https://127.0.0.1/'));
+      assert.ok(keeperValid('https://unlock.opensheaf.org/', true));
     });
 
 The URIs of section C.7, each parsed and written back; their canonical

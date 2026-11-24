@@ -174,10 +174,12 @@ host, and so is a keeper's domain; one that is local or private
 (`https://localhost/`, `https://192.168.1.1/`), which a hostile genesis
 record could name to have the reader's browser probe its own network,
 is not read, as for the locations named in archive data
-([resolving members](15-resolve.md)).
+([resolving members](15-resolve.md)). Nor is a domain that is no DNS
+name (`keeperDomain`): a public IP address, one label alone, an empty
+label; the schema lets them through, and the tools do not write them.
 
     // in app/keepers.js:
-    import { OWNER_NAME, orcidValid, isObject } from './names.js';
+    import { OWNER_NAME, orcidValid, keeperDomain, isObject } from './names.js';
     import { parseJson } from './http.js';
     import { localKind } from './resolve.js';
 
@@ -206,6 +208,9 @@ because the reader left the page is passed on.
       const answer = (status, reason, successors = []) => ({ status, reason, successors });
       const place = keeperPlace(keeper);
       if (!place) return answer(NOT_CHECKED, 'the keeper is neither an ORCID iD nor a domain (section 6.6)');
+      if (place.kind === 'domain' && !keeperDomain(keeper)) {
+        return answer(NOT_CHECKED, 'the keeper\'s domain is not a DNS name (an address, localhost), which the explorer does not read');
+      }
       const local = localKind(new URL(place.url).hostname);
       if (local) return answer(NOT_CHECKED, `the keeper's domain is ${local}, which the explorer does not read`);
       const missing = place.kind === 'orcid' ? 'the ORCID registry has no record of this iD'
