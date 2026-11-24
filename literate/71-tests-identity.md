@@ -448,6 +448,33 @@ is a fork, at 2.
       assert.notEqual(forked.versions[1].digest, carried.digest);
     });
 
+A version of a key log cannot take its content from a later one (as
+opensheaf-py's `content_path(cp, inv, n)` and opensheaf-js b2f4de7): a
+first version whose inventory puts `genesis.json` in the content of a
+second, served there with the right bytes, has a content path out of the
+object.
+
+    // in tests of key logs:
+    test('a key-log version cannot take its content from a later one', async () => {
+      const inner = diskFetch();
+      const a0 = await Archive.open(new Http({ fetch: inner }), ORIGIN + 'archive/');
+      const owner = a0.owners()[0].owner;
+      const dir = `${ORIGIN}archive/ocfl/${owner}/${owner}/`;
+      const inv = JSON.parse(await (await inner(`${dir}v1/inventory.json`)).text());
+      const [d] = Object.entries(inv.manifest).find(([, ps]) => ps[0] === 'v1/content/genesis.json');
+      inv.manifest[d] = ['v2/content/genesis.json'];
+      const genesis = new Uint8Array(await (await inner(`${dir}v1/content/genesis.json`)).arrayBuffer());
+      const served = { [`${dir}v1/inventory.json`]: new TextEncoder().encode(JSON.stringify(inv)), [`${dir}v2/content/genesis.json`]: genesis };
+      const fetch = async (url, init = {}) => {
+        const bytes = served[url];
+        if (!bytes) return inner(url, init);
+        return new Response(init.method === 'HEAD' ? null : bytes, { status: 200, headers: { 'content-length': String(bytes.length) } });
+      };
+      const a = await Archive.open(new Http({ fetch }), ORIGIN + 'archive/');
+      const log = await a.keyLog(owner);
+      assert.ok(log.problems.includes("v1: a content path out of the object: 'v2/content/genesis.json'"), log.problems.join('\n'));
+    });
+
     test('two copies of a key log met by a reader (sections 6.3 and 6.5)', async () => {
       const forked = await keyLogOf('forked');
       const [v1, v2] = forked.versions;
