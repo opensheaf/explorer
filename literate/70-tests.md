@@ -1929,7 +1929,8 @@ does not show the pins of the owner catalogue, which is an error for an
 archive declaring the profile `website` and a warning otherwise; a key
 log without the signature files of its second version; a tombstone of an
 object listed; a label given twice; a configuration of the hashed layout
-that is not JSON (opensheaf-js 10180cf); an index file that starts with a
+that is not JSON (opensheaf-js 10180cf); a content path that climbs out
+of the object (opensheaf-js 2293a05); an index file that starts with a
 byte order mark, or holds bytes that are not UTF-8, which is not JSON for
 `osheaf verify` either.
 
@@ -2004,6 +2005,17 @@ without a readable inventory (a port of the test of opensheaf-js).
       }
       const found = errors(await run('archive/', { patch }));
       assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
+    });
+
+    test('a content path outside the object is said so, not reported missing', async () => {
+      const url = `${folder(ALPHA)}inventory.json`;
+      const inv = JSON.parse(await (await diskFetch()(url)).text());
+      inv.manifest['0'.repeat(128)] = ['v1/content/../../../secret.txt'];
+      const text = JSON.stringify(inv);
+      const found = errors(await run('archive/', { digests: true, patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+      assert.ok(found.includes("alpha: the content path 'v1/content/../../../secret.txt' is not a relative path inside the object " +
+                               '(section 4.1): it is not read, nor the object checked further'), found.join('\n'));
+      assert.ok(!found.some((e) => e.includes('missing v1/content/..')), found.join('\n'));
     });
 
     test('a configuration of the hashed layout that is not JSON is an error', async () => {

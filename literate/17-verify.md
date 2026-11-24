@@ -1070,7 +1070,10 @@ not compared with the files, as `osheaf verify` does not.
 When asked, every content file of every object held is downloaded and
 checked against the digest of the manifest (section 4.1), as `osheaf
 verify` always does, with its messages; a file too large to be read in
-the browser is a warning, a check not made.
+the browser is a warning, a check not made. A content path that is not a
+relative path inside the object (absolute, with an empty, `.` or `..`
+segment, or a backslash) is not read, and said so in opensheaf-js's
+words (2293a05), rather than reported as a file missing.
 
     // in app/verify.js:
       async contentDigests() {
@@ -1082,7 +1085,12 @@ the browser is a warning, a check not made.
               try {
                 files.push({ id, url: a.contentUrl(id, o.inv, cp), cp, digest });
               } catch {
-                this.add('error', this.where(id), `missing ${cp}`, { object: id });
+                const outside = typeof cp !== 'string' || !cp || cp.startsWith('/') || cp.includes('\\') ||
+                  cp.split('/').some((p) => ['', '.', '..'].includes(p));
+                this.add('error', this.where(id), outside
+                  ? `the content path ${JSON.stringify(cp).replace(/^"(.*)"$/, "'$1'")} is not a relative path inside ` +
+                    'the object (section 4.1): it is not read, nor the object checked further'
+                  : `missing ${cp}`, { object: id });
               }
             }
           }

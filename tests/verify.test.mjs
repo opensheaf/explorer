@@ -171,6 +171,17 @@ test('JSON nested too deep is a finding (section 15.2)', async () => {
   assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
 });
 
+test('a content path outside the object is said so, not reported missing', async () => {
+  const url = `${folder(ALPHA)}inventory.json`;
+  const inv = JSON.parse(await (await diskFetch()(url)).text());
+  inv.manifest['0'.repeat(128)] = ['v1/content/../../../secret.txt'];
+  const text = JSON.stringify(inv);
+  const found = errors(await run('archive/', { digests: true, patch: { [url]: text, [url + '.sha512']: `${digestOf(text)}  inventory.json\n` } }));
+  assert.ok(found.includes("alpha: the content path 'v1/content/../../../secret.txt' is not a relative path inside the object " +
+                           '(section 4.1): it is not read, nor the object checked further'), found.join('\n'));
+  assert.ok(!found.some((e) => e.includes('missing v1/content/..')), found.join('\n'));
+});
+
 test('a configuration of the hashed layout that is not JSON is an error', async () => {
   const config = `${ORIGIN}other/ocfl/extensions/0003-hash-and-id-n-tuple-storage-layout/config.json`;
   const found = errors(await run('other/', { patch: { [config]: '[1' } }));
