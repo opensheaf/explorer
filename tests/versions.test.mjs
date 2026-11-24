@@ -59,6 +59,19 @@ test('the rules of section 7.3', () => {
   ]);
 });
 
+test('a documentVersion that is not a positive integer stops the check of the numbering', () => {
+  for (const [bad, repr] of [['1', "'1'"], [null, 'None'], [0, '0'], [1.5, '1.5']]) {
+    const { inv, objOf } = make([
+      { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+      { obj: { documentVersion: bad }, files: { 'a.tex': 'a2' } },
+      { obj: { documentVersion: 7 }, files: { 'a.tex': 'a3' } },
+    ]);
+    assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+      `v2 documentVersion is a positive integer, not ${repr} (section 4.3): the document versions are not checked further`,
+    ]);
+  }
+});
+
 test('the fields of a document version and its external records (section 4.2)', () => {
   const pdf = { path: 'p.pdf', mediaType: 'application/pdf' };
   const arxiv = { role: 'source', service: 'arXiv', record: 'https://arxiv.org/abs/2601.00001v1' };

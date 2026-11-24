@@ -1216,6 +1216,19 @@ number of the version it completes; each rule broken gives its message.
       ]);
     });
 
+    test('a documentVersion that is not a positive integer stops the check of the numbering', () => {
+      for (const [bad, repr] of [['1', "'1'"], [null, 'None'], [0, '0'], [1.5, '1.5']]) {
+        const { inv, objOf } = make([
+          { obj: { documentVersion: 1 }, files: { 'a.tex': 'a1' } },
+          { obj: { documentVersion: bad }, files: { 'a.tex': 'a2' } },
+          { obj: { documentVersion: 7 }, files: { 'a.tex': 'a3' } },
+        ]);
+        assert.deepEqual(documentVersionErrors(inv, objOf).map((e) => `${e.ver} ${e.message}`), [
+          `v2 documentVersion is a positive integer, not ${repr} (section 4.3): the document versions are not checked further`,
+        ]);
+      }
+    });
+
     test('the fields of a document version and its external records (section 4.2)', () => {
       const pdf = { path: 'p.pdf', mediaType: 'application/pdf' };
       const arxiv = { role: 'source', service: 'arXiv', record: 'https://arxiv.org/abs/2601.00001v1' };
@@ -1915,7 +1928,8 @@ with an `ocfl_layout.json` in the owner-name layout; a home page that
 does not show the pins of the owner catalogue, which is an error for an
 archive declaring the profile `website` and a warning otherwise; a key
 log without the signature files of its second version; a tombstone of an
-object listed; a label given twice; an index file that starts with a
+object listed; a label given twice; a configuration of the hashed layout
+that is not JSON (opensheaf-js 10180cf); an index file that starts with a
 byte order mark, or holds bytes that are not UTF-8, which is not JSON for
 `osheaf verify` either.
 
@@ -1990,6 +2004,13 @@ without a readable inventory (a port of the test of opensheaf-js).
       }
       const found = errors(await run('archive/', { patch }));
       assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
+    });
+
+    test('a configuration of the hashed layout that is not JSON is an error', async () => {
+      const config = `${ORIGIN}other/ocfl/extensions/0003-hash-and-id-n-tuple-storage-layout/config.json`;
+      const found = errors(await run('other/', { patch: { [config]: '[1' } }));
+      assert.ok(found.includes('ocfl: extensions/0003-hash-and-id-n-tuple-storage-layout/config.json is not a JSON object'), found.join('\n'));
+      assert.ok(!errors(await run('other/', { patch: { [config]: '{"tupleSize": 3}' } })).some((e) => e.includes('config.json')));
     });
 
     test('labels given twice, a tombstone of an object listed', async () => {

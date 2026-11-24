@@ -171,6 +171,13 @@ test('JSON nested too deep is a finding (section 15.2)', async () => {
   assert.ok(found.some((e) => e.includes('an object without a readable inventory')), found.join('\n'));
 });
 
+test('a configuration of the hashed layout that is not JSON is an error', async () => {
+  const config = `${ORIGIN}other/ocfl/extensions/0003-hash-and-id-n-tuple-storage-layout/config.json`;
+  const found = errors(await run('other/', { patch: { [config]: '[1' } }));
+  assert.ok(found.includes('ocfl: extensions/0003-hash-and-id-n-tuple-storage-layout/config.json is not a JSON object'), found.join('\n'));
+  assert.ok(!errors(await run('other/', { patch: { [config]: '{"tupleSize": 3}' } })).some((e) => e.includes('config.json')));
+});
+
 test('labels given twice, a tombstone of an object listed', async () => {
   const twice = (text) => {
     const disc = JSON.parse(text);
