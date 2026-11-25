@@ -498,6 +498,27 @@ file, and finds the pin verified.
       assert.equal((await pin(r, [at('tampered')])).status, 'verified');
     });
 
+A resolver reads at most `LIMITS.runFiles` files from other archives, as
+opensheaf-py's `MAX_RUN_FILES`, through a client of its own; its home is
+not counted.
+
+    // in tests of the statuses of pins:
+    test('a resolver reads a bounded number of files from other archives (section 15.2)', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const saved = LIMITS.runFiles;
+      try {
+        LIMITS.runFiles = 1;
+        let r = new Resolver(new Http({ fetch: diskFetch() }));
+        assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('archive')])).status, 'unavailable');
+        assert.ok(r.notes.some((n) => n.message.includes('not read: the copies of this run have brought 1 files')), JSON.stringify(r.notes));
+        const home = await open('archive/');
+        r = new Resolver(home.http, home);
+        assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512)).status, 'verified');
+      } finally {
+        LIMITS.runFiles = saved;
+      }
+    });
+
 An unsigned head cannot restate a signed version (sections 4.1 and 14.2),
 as opensheaf-py's `test_an_unsigned_head_cannot_restate_a_signed_version`
 and opensheaf-js 06206b4: a copy of `archive/`, `restated/`, serves a

@@ -1059,6 +1059,41 @@ none, as the verification is.
       assert.match(explain({ kind: 'budget' }), /one page/);
     });
 
+One request may take `LIMITS.deadline` in all, as opensheaf-py's
+`DEADLINE`: a server sending a byte every few milliseconds, which never
+stalls, is stopped, "not read in ... seconds", as opensheaf-py says it. A
+client given the `counts` of a run reads at most `LIMITS.runFiles` files
+for it, as opensheaf-py's `MAX_RUN_FILES`, and adds its requests to those
+of its `upstream`.
+
+    // in tests of requests:
+    test('the deadline of a request and the files of a run (section 15.2)', async () => {
+      const saved = { deadline: LIMITS.deadline, runFiles: LIMITS.runFiles };
+      try {
+        LIMITS.deadline = 300;
+        const slow = async (url, init = {}) => new Response(new ReadableStream({
+          start(c) { init.signal?.addEventListener('abort', () => c.error(new DOMException('aborted', 'AbortError'))); },
+          async pull(c) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            try { c.enqueue(new Uint8Array([32])); } catch { /* aborted */ }
+          },
+        }), { status: 200 });
+        await assert.rejects(new Http({ fetch: slow, budget: null }).request('https://example.org/slow'),
+                             (e) => e.kind === 'timeout' && e.message === 'https://example.org/slow: not read in 0.3 seconds');
+        LIMITS.deadline = saved.deadline;
+        LIMITS.runFiles = 2;
+        const http = new Http({ fetch: async () => new Response(new Uint8Array(10)), budget: null });
+        const counted = http.another({ counts: { files: 0, bytes: 0 }, upstream: http });
+        await counted.request('https://example.org/1');
+        await counted.request('https://example.org/2');
+        await assert.rejects(counted.request('https://example.org/3'), (e) => e.kind === 'budget' &&
+          e.detail === `not read: the copies of this run have brought 2 files or ${LIMITS.runBytes} bytes (section 15.2)`);
+        assert.deepEqual([counted.counts, http.requests, http.bytesRead], [{ files: 2, bytes: 20 }, 2, 20]);
+      } finally {
+        Object.assign(LIMITS, saved);
+      }
+    });
+
 Untrusted names and layouts
 ---------------------------
 

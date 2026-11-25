@@ -344,6 +344,22 @@ test('a version is resolved to only when every file of it is found with its dige
   assert.equal((await pin(r, [at('tampered')])).status, 'verified');
 });
 
+test('a resolver reads a bounded number of files from other archives (section 15.2)', async () => {
+  const alpha = pinOf('archive', 'alpha');
+  const saved = LIMITS.runFiles;
+  try {
+    LIMITS.runFiles = 1;
+    let r = new Resolver(new Http({ fetch: diskFetch() }));
+    assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, [at('archive')])).status, 'unavailable');
+    assert.ok(r.notes.some((n) => n.message.includes('not read: the copies of this run have brought 1 files')), JSON.stringify(r.notes));
+    const home = await open('archive/');
+    r = new Resolver(home.http, home);
+    assert.equal((await r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512)).status, 'verified');
+  } finally {
+    LIMITS.runFiles = saved;
+  }
+});
+
 test('an unsigned head cannot restate a signed version (section 14.2)', async () => {
   const alpha = pinOf('archive', 'alpha');
   const dir = `${ORIGIN}archive/ocfl/${alpha.owner}/${alpha.name}/`;
