@@ -127,7 +127,11 @@ opened), the summaries of objects (the most recently used, see
 [the summaries](22-pieces.md)), the schemas (read once, when a
 verification first needs them), the verification in progress, and the
 `signal` of the page shown, which is aborted when the reader goes to
-another page, so that its pending requests stop.
+another page, so that its pending requests stop. The resolver of the
+pages does not read the content files of the members it resolves
+(`contents: false`, chapter [15](15-resolve.md)): a page of a collection
+would download the PDF of every member to show it; the verification, with
+"also check file digests", reads them.
 
     // in the context of the explorer:
     const ctx = {
@@ -339,7 +343,7 @@ computer, `https:` otherwise.
         return showStart(main, given ? error : null, given || '');
       }
       ctx.archive = found.archive;
-      ctx.resolver = new Resolver(ctx.http, ctx.archive, { pins: Infinity });
+      ctx.resolver = new Resolver(ctx.http, ctx.archive, { pins: Infinity, contents: false });
       const collection = params.get('collection');
       if (!location.hash || location.hash === '#') {
         const hash = found.hash || (isObjectId(collection) || LABEL.test(collection || '') ? pages.collection(collection) : null);

@@ -152,7 +152,7 @@ async function start() {
     return showStart(main, given ? error : null, given || '');
   }
   ctx.archive = found.archive;
-  ctx.resolver = new Resolver(ctx.http, ctx.archive, { pins: Infinity });
+  ctx.resolver = new Resolver(ctx.http, ctx.archive, { pins: Infinity, contents: false });
   const collection = params.get('collection');
   if (!location.hash || location.hash === '#') {
     const hash = found.hash || (isObjectId(collection) || LABEL.test(collection || '') ? pages.collection(collection) : null);

@@ -397,7 +397,9 @@ it is not read, since a line is read through the copy of the inventory
 in the folder of the head version, and the title is the genuine one.
 `swapped/` serves other bytes at the content paths of `datacite.json`,
 which are refused, since they do not have the digest the inventory
-states.
+states: the copy is not resolved to, and a resolver that does not read
+the files of the version (`contents: false`, the pages') refuses them
+when it describes the member.
 
     // in tests of the statuses of pins:
     test('a mirror serving a root inventory or content of its own (section 12.3)', async () => {
@@ -447,7 +449,53 @@ states.
       assert.notEqual(genuineTitle, 'A forged title');
       r = fresh();
       res = await r.latest(alpha.name, alpha.owner, [at('swapped')]);
+      assert.equal(res.status, 'unavailable');
+      assert.ok(r.notes.some((n) => / is missing, or does not have its digest: not read \(section 12\.3\)$/.test(n.message)));
+      r = new Resolver(new Http({ fetch }), null, { contents: false });
+      res = await r.latest(alpha.name, alpha.owner, [at('swapped')]);
       await assert.rejects(r.describe(res), (e) => e.kind === 'digest' && /does not have the digest/.test(e.message));
+    });
+
+A version is resolved to only when every file of it is found in the copy
+with its digest, as opensheaf-js and opensheaf-py's
+`test_only_the_version_resolved_to_is_read_whole` decide: `tampered/`, a
+copy of `archive/`, serves other bytes for a file of `alpha`'s head; the
+pin of the head is unavailable there, noted, and verified at `archive/`
+when both are given; the files of the other versions are not read; a
+resolver made with `contents: false`, as the pages' is, does not read the
+file, and finds the pin verified.
+
+    // in tests of the statuses of pins:
+    test('a version is resolved to only when every file of it is found with its digest (section 12.3)', async () => {
+      const alpha = pinOf('archive', 'alpha');
+      const dir = `${ORIGIN}archive/ocfl/${alpha.owner}/${alpha.name}/`;
+      const inner = diskFetch();
+      const inv = JSON.parse(new TextDecoder().decode(new Uint8Array(await (await inner(dir + 'inventory.json')).arrayBuffer())));
+      const own = Object.keys(inv.versions[alpha.head].state).flatMap((d) => inv.manifest[d]);
+      const file = own.find((cp) => cp.endsWith('.pdf')) || own[0];
+      const others = Object.values(inv.manifest).flat().filter((cp) => !own.includes(cp));
+      const asked = [];
+      const fetch = async (url, init = {}) => {
+        asked.push(url);
+        if (url.startsWith(`${ORIGIN}tampered/`)) {
+          const real = url.replace('tampered/', 'archive/');
+          if (real === dir + file) return new Response(new TextEncoder().encode('changed'), { status: 200 });
+          return inner(real, init);
+        }
+        return inner(url, init);
+      };
+      const pin = (r, where) => r.pin(alpha.name, alpha.owner, alpha.head, alpha.inventorySha512, where);
+      let r = new Resolver(new Http({ fetch }));
+      assert.equal((await pin(r, [at('tampered')])).status, 'unavailable');
+      assert.ok(r.notes.some((n) => n.message === `${at('tampered')}: ${ALPHA} ${alpha.head}: ${file} is missing, or does not ` +
+        'have its digest: not read (section 12.3)'), JSON.stringify(r.notes));
+      assert.ok(!asked.some((u) => others.some((cp) => u === `${ORIGIN}tampered/ocfl/${alpha.owner}/${alpha.name}/${cp}` &&
+        !cp.endsWith('.json'))));
+      r = new Resolver(new Http({ fetch }));
+      const res = await pin(r, [at('tampered'), at('archive')]);
+      assert.deepEqual([res.status, res.copy.where], ['verified', at('archive')]);
+      r = new Resolver(new Http({ fetch }), null, { contents: false });
+      assert.equal((await pin(r, [at('tampered')])).status, 'verified');
     });
 
 An unsigned head cannot restate a signed version (sections 4.1 and 14.2),
