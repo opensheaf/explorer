@@ -1,0 +1,18 @@
+{
+  "format": "opensheaf-object/0.2",
+  "specification": "0.2",
+  "kind": "document",
+  "name": "lexapo2nga574rzzu7e4q4mmtkyfpyts6wypmdpiw5irc2gndrua",
+  "owner": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+  "documentVersion": 1,
+  "renditions": [
+    {
+      "path": "paper.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "status": "active",
+  "mainSource": "beta-1.tex",
+  "sourceFormat": "application/x-tex",
+  "previous": "b0b80b7503d95551a2047036ecce8ac13f16b9be0d8089decea7cc7a8e9fa88a5eddd97aabadde8bdb74ddef84190e9f09aead0993c8fe2abb93dc642772cd8f"
+}

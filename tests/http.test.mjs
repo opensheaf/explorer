@@ -219,7 +219,7 @@ test('JSON whose numbers are all exact integers', () => {
   const ways = [{ source: false }, ...(JSON.parse('1', (k, v, c) => c?.source === '1') ? [{ source: true }] : [])];
   for (const way of ways) {
     for (const text of ['{"t":1.0}', '{"t":1e0}', '[1E2]', '{"t":-1.5}', '{"t":9007199254740993}', '[-9007199254740993]', '[9007199254740992]', '[-9007199254740992]', '[0.0]']) {
-      assert.throws(() => parseIntegers(text, way), /is not an integer|no exact form/, `${text} ${way.source}`);
+      assert.throws(() => parseIntegers(text, way), /is not an integer written without a fraction or an exponent|is beyond 2\^53 - 1/, `${text} ${way.source}`);
     }
     for (const [text, value] of [['{"t":1}', { t: 1 }], ['[-0, 0, 9007199254740991, -9007199254740991]', [-0, 0, 2 ** 53 - 1, -(2 ** 53 - 1)]],
                                  ['{"s":"1.0e5 \\" 2.5","n":[3]}', { s: '1.0e5 " 2.5', n: [3] }]]) {

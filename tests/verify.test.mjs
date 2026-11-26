@@ -72,9 +72,12 @@ test('what the broken copies break', async () => {
   assert.ok(errors(await run('broken/unsigned/')).includes('main v2 member beta v2: not a version: a collection pins only signed versions (section 8.5)'));
   const noLog = await run('broken/no-key-log/');
   assert.ok(errors(noLog).includes(`alpha: the key log of its owner ${ALPHA.split(':')[2]} is not in the storage root (section 6.5)`));
-  const branch = await run('broken/unchecked-branch/');
+  const branch = await run('broken/unchecked-branch/', { remote: false });
   assert.ok(branch.findings.some((f) => f.level === 'warning' && f.place === 'alpha-accepted v1' && /^unchecked branch point: /.test(f.message)));
   assert.ok(branch.findings.some((f) => f.level === 'result' && f.message.endsWith(': unchecked (section 9.3)')));
+  const resolved = await run('broken/unchecked-branch/');
+  assert.ok(!resolved.findings.some((f) => /unchecked branch point/.test(f.message)));
+  assert.ok(resolved.findings.some((f) => f.level === 'result' && f.place === 'alpha-accepted' && f.message.endsWith(': confirmed (section 9.3)')));
 });
 
 test('a verification reads the archive afresh, and counts its own requests', async () => {
@@ -155,7 +158,8 @@ test('an index file with a byte order mark, or bytes that are not UTF-8', async 
   const text = await (await diskFetch()(url)).text();
   for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
     const found = errors(await run('archive/', { patch: { [url]: change } }));
-    assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: not JSON: `) && /(starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+    assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: JSON is UTF-8`) &&
+              /(without a byte order mark, and this file starts with one|and this file is not \('utf-8' codec can't decode byte 0xff)/.test(f)), found.join('\n'));
   }
 });
 

@@ -916,7 +916,7 @@ the text.
       const ways = [{ source: false }, ...(JSON.parse('1', (k, v, c) => c?.source === '1') ? [{ source: true }] : [])];
       for (const way of ways) {
         for (const text of ['{"t":1.0}', '{"t":1e0}', '[1E2]', '{"t":-1.5}', '{"t":9007199254740993}', '[-9007199254740993]', '[9007199254740992]', '[-9007199254740992]', '[0.0]']) {
-          assert.throws(() => parseIntegers(text, way), /is not an integer|no exact form/, `${text} ${way.source}`);
+          assert.throws(() => parseIntegers(text, way), /is not an integer written without a fraction or an exponent|is beyond 2\^53 - 1/, `${text} ${way.source}`);
         }
         for (const [text, value] of [['{"t":1}', { t: 1 }], ['[-0, 0, 9007199254740991, -9007199254740991]', [-0, 0, 2 ** 53 - 1, -(2 ** 53 - 1)]],
                                      ['{"s":"1.0e5 \\" 2.5","n":[3]}', { s: '1.0e5 " 2.5', n: [3] }]]) {
@@ -1895,9 +1895,12 @@ and the explorer together would go unseen by it.
       assert.ok(errors(await run('broken/unsigned/')).includes('main v2 member beta v2: not a version: a collection pins only signed versions (section 8.5)'));
       const noLog = await run('broken/no-key-log/');
       assert.ok(errors(noLog).includes(`alpha: the key log of its owner ${ALPHA.split(':')[2]} is not in the storage root (section 6.5)`));
-      const branch = await run('broken/unchecked-branch/');
+      const branch = await run('broken/unchecked-branch/', { remote: false });
       assert.ok(branch.findings.some((f) => f.level === 'warning' && f.place === 'alpha-accepted v1' && /^unchecked branch point: /.test(f.message)));
       assert.ok(branch.findings.some((f) => f.level === 'result' && f.message.endsWith(': unchecked (section 9.3)')));
+      const resolved = await run('broken/unchecked-branch/');
+      assert.ok(!resolved.findings.some((f) => /unchecked branch point/.test(f.message)));
+      assert.ok(resolved.findings.some((f) => f.level === 'result' && f.place === 'alpha-accepted' && f.message.endsWith(': confirmed (section 9.3)')));
     });
 
 The archive explored is read afresh by each verification, which counts
@@ -2018,7 +2021,8 @@ byte order mark, or holds bytes that are not UTF-8, which is not JSON for
       const text = await (await diskFetch()(url)).text();
       for (const change of ['\ufeff' + text, new Uint8Array([...new TextEncoder().encode(text.slice(0, -3)), 0xff, 0x0a])]) {
         const found = errors(await run('archive/', { patch: { [url]: change } }));
-        assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: not JSON: `) && /(starts with a byte order mark|is not UTF-8)/.test(f)), found.join('\n'));
+        assert.ok(found.some((f) => f.startsWith(`owners/${shard}.json: JSON is UTF-8`) &&
+                  /(without a byte order mark, and this file starts with one|and this file is not \('utf-8' codec can't decode byte 0xff)/.test(f)), found.join('\n'));
       }
     });
 

@@ -107,7 +107,7 @@ test('thresholds that are not integers in their text', async () => {
   for (const t of ['1.0', '1e0', '1E0', '9007199254740992', '9007199254740993']) {
     const changed = text.replace('"threshold": 1,', `"threshold": ${t},`);
     assert.notEqual(changed, text);
-    await assert.rejects(readGenesis(utf8(changed)), /a genesis record is JSON in UTF-8 \(the (number|integer) /, t);
+    await assert.rejects(readGenesis(utf8(changed)), new RegExp(`the number ${t} is (not an integer written without a fraction or an exponent|beyond 2\\^53 - 1) \\(section 2\\)`), t);
   }
   const keys = (t) => new Version(2, new Map([['keys.json', utf8(`{"format":"opensheaf-keys/0.2","keys":["${K1}"],"threshold":${t},` +
     `"next":["oxthfb6b4q3sqathmcpnciqggfxlr3aekgfg2tpm2lgrm2qnalha"],"nextThreshold":1}`)]]), new Uint8Array()).keys;

@@ -1,23 +1,18 @@
 [
   {
     "severity": "result",
-    "place": "owner zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq",
-    "message": "key log of zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq: latest version v1"
-  },
-  {
-    "severity": "result",
-    "place": "alpha",
-    "message": "latest signed version v4"
-  },
-  {
-    "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
+    "place": "owner 3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+    "message": "key log of 3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja: latest version v1"
   },
   {
     "severity": "result",
     "place": "main",
     "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "alpha",
+    "message": "latest signed version v4"
   },
   {
     "severity": "warning",
@@ -27,6 +22,11 @@
   {
     "severity": "result",
     "place": "beta",
+    "message": "latest signed version v1"
+  },
+  {
+    "severity": "result",
+    "place": "reading",
     "message": "latest signed version v1"
   },
   {
@@ -41,11 +41,6 @@
   },
   {
     "severity": "error",
-    "place": "reading v1 member beta v2",
-    "message": "not a version: a collection pins only signed versions (section 8.5)"
-  },
-  {
-    "severity": "error",
     "place": "main v2 member beta v2",
     "message": "not a version: a collection pins only signed versions (section 8.5)"
   },
@@ -55,8 +50,13 @@
     "message": "document version 1 is withdrawn, in v2 (section 13.1)"
   },
   {
+    "severity": "error",
+    "place": "reading v1 member beta v2",
+    "message": "not a version: a collection pins only signed versions (section 8.5)"
+  },
+  {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:xx4kbbzhrgaz3gbarqmkpavy2xlts5rcgmkqpnrx7n7y547jis6a:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq (2026-11-23: Taken down for the tests.)"
+    "message": "removed: sheaf:4fixgfzynadpvzozfwuo5jbn7lsacypo5xppazvhfxjl72fqokda:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja (2026-11-26: Taken down for the tests.)"
   }
 ]

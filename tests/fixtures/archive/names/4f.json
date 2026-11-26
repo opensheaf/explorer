@@ -1,0 +1,15 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "4fixgfzynadpvzozfwuo5jbn7lsacypo5xppazvhfxjl72fqokda",
+      "owner": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "id": "sheaf:4fixgfzynadpvzozfwuo5jbn7lsacypo5xppazvhfxjl72fqokda:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "status": "removed",
+      "originator": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"document\",\n  \"created\": \"2026-11-26T14:51:59Z\",\n  \"originator\": \"3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja\",\n  \"nonce\": \"9befb832dc482ea2e610ae8f5077230a\"\n}\n",
+      "label": "delta"
+    }
+  ]
+}

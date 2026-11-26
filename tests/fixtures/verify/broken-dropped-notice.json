@@ -1,8 +1,13 @@
 [
   {
     "severity": "result",
-    "place": "owner zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq",
-    "message": "key log of zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq: latest version v1"
+    "place": "owner 3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+    "message": "key log of 3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja: latest version v1"
+  },
+  {
+    "severity": "result",
+    "place": "main",
+    "message": "latest signed version v2"
   },
   {
     "severity": "error",
@@ -26,18 +31,13 @@
   },
   {
     "severity": "result",
-    "place": "reading",
-    "message": "latest signed version v1"
-  },
-  {
-    "severity": "result",
-    "place": "main",
-    "message": "latest signed version v2"
-  },
-  {
-    "severity": "result",
     "place": "beta",
     "message": "latest signed version v2"
+  },
+  {
+    "severity": "result",
+    "place": "reading",
+    "message": "latest signed version v1"
   },
   {
     "severity": "result",
@@ -62,16 +62,16 @@
   {
     "severity": "result",
     "place": "opensheaf.json",
-    "message": "removed: sheaf:xx4kbbzhrgaz3gbarqmkpavy2xlts5rcgmkqpnrx7n7y547jis6a:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq (2026-11-23: Taken down for the tests.)"
+    "message": "removed: sheaf:4fixgfzynadpvzozfwuo5jbn7lsacypo5xppazvhfxjl72fqokda:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja (2026-11-26: Taken down for the tests.)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "no entry, or a stale one, for sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v4 (section 12.5)"
+    "message": "no entry, or a stale one, for sheaf:coe7ndc7fo3wwg53h2q6vxz3ksnncp6tvxvscha2lngdvxm3f4ta:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja v4 (section 12.5)"
   },
   {
     "severity": "error",
     "place": "sha512/",
-    "message": "an entry the storage root does not justify: sheaf:mw7y3zhf662tvbk6k62nso4klcpc6nj62mkbbp53sny472hueqoa:zvwh65gaqntplbaivvxznzg4eyicwng5mbhznyjcwnocuz232qnq v4 (section 12.5)"
+    "message": "an entry the storage root does not justify: sheaf:coe7ndc7fo3wwg53h2q6vxz3ksnncp6tvxvscha2lngdvxm3f4ta:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja v4 (section 12.5)"
   }
 ]

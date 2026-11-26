@@ -1,0 +1,14 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "owner": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "id": "sheaf:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja:3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "status": "active",
+      "originator": "3p4iiwkynivwyukq6zetmioo432uds5wdpgt53nnutoh7zqkypja",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"owner\",\n  \"created\": \"2026-11-26T14:51:58Z\",\n  \"nonce\": \"dd9a4897821e788697726e7771bc1246\",\n  \"keys\": [\n    \"did:key:z6MkpWBf2uAFUMVZsKJTDuBAkZpFzUc3mojFgwXYy4s3MATM\"\n  ],\n  \"threshold\": 1,\n  \"next\": [\n    \"gvhmk4edbsq5dmlo3fbd3ii6myf7p6bfom6cbtceka4mbv45c2ca\",\n    \"qxudrywo6sjohpgvg55hvhcymrabzktwcc43c7hiass7i3uv23qq\",\n    \"75etre7fou3vtimijk2kwzlra5jciclus2r753hjgq3akcr6l6ra\"\n  ],\n  \"nextThreshold\": 2\n}\n"
+    }
+  ]
+}

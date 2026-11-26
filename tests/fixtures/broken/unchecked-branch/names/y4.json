@@ -1,0 +1,15 @@
+{
+  "format": "opensheaf-index/0.2",
+  "index": "names",
+  "entries": [
+    {
+      "name": "y4u6pxp6kgkhgqch7agmha6eoktous5c5nxhwkxfaz5hmpxf2cba",
+      "owner": "72o7zz4p2kfvrbjds2dbcfnyfrm6pny6fp2g4zegeysxophsvi4a",
+      "id": "sheaf:y4u6pxp6kgkhgqch7agmha6eoktous5c5nxhwkxfaz5hmpxf2cba:72o7zz4p2kfvrbjds2dbcfnyfrm6pny6fp2g4zegeysxophsvi4a",
+      "status": "active",
+      "originator": "72o7zz4p2kfvrbjds2dbcfnyfrm6pny6fp2g4zegeysxophsvi4a",
+      "genesis": "{\n  \"format\": \"opensheaf-genesis/0.2\",\n  \"kind\": \"document\",\n  \"created\": \"2026-11-26T14:52:01Z\",\n  \"originator\": \"72o7zz4p2kfvrbjds2dbcfnyfrm6pny6fp2g4zegeysxophsvi4a\",\n  \"nonce\": \"4cb2793de9de878231a5975415dffc6d\"\n}\n",
+      "label": "vouched"
+    }
+  ]
+}

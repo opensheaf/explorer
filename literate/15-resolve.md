@@ -236,9 +236,10 @@ each, and the pages one of their own.
         if (!this.notes.some((n) => n.level === level && n.message === message)) this.notes.push({ level, message });
       }
 
-An archive is opened once; one that cannot be read, or is not of version
-0.2, counts as none, and is noted as unavailable, in the words of
-opensheaf-py. The places a resolver looks in are the archive explored and
+An archive is opened once; one that cannot be read, is not of version
+0.2, or names a storage root that is not a relative path below it
+(chapter [11](11-paths.md)), counts as none, and is noted as
+unavailable, in the words of opensheaf-py. The places a resolver looks in are the archive explored and
 the locations it is given (the `at` of a URI or of a member, a parent's
 `url`): hints, which a hostile collection may make many, each costing
 requests and perhaps a time limit; at most `LIMITS.mirrors` of them are
@@ -265,6 +266,12 @@ page of a collection shows under "What was met" and a verification under
             }
             if (archive.pageProblems?.length) {
               this.note('warning', `unavailable: ${where}: ${archive.pageProblems[0]}`);
+              return null;
+            }
+            if (archive.rootRefused) {
+              const root = archive.disc.storageRoot;
+              this.note('warning', `unavailable: ${where}: the storage root ` +
+                        `${typeof root === 'string' ? `'${root}'` : JSON.stringify(root)} is not a relative path below the archive`);
               return null;
             }
             return archive;
@@ -689,12 +696,15 @@ URI with its owner part names its line; otherwise the candidates are the
 lines whose name and owner start with the parts given, without an owner
 part only the originators' lines (whose owner is the originator its
 genesis record names, or an owner's own key log). Exactly one candidate
-is needed; several are ambiguous, and listed (section 12.2).
+is needed; several are ambiguous, and listed (section 12.2), each with
+its originator, as opensheaf-py lists them: the owner itself for a key
+log or a URI without owner part, else the originator its genesis record
+names, `not read` when it cannot be read.
 
     // in app/resolve.js:
       async expand(u, where, options = {}) {
         if (u.isComplete() && u.owner !== null) return [u.name, u.owner];
-        const candidates = new Set();
+        const candidates = new Map();
         for (const w of this.places(where)) {
           const archive = await this.source(w, options);
           if (!archive) continue;
@@ -704,15 +714,23 @@ is needed; several are ambiguous, and listed (section 12.2).
             if (u.owner === null) {
               if (o.kind === 'owner' ? name !== owner : await this.originator(archive, o.id, options) !== owner) continue;
             }
-            candidates.add(`${name} ${owner}`);
+            if (!candidates.has(`${name} ${owner}`)) candidates.set(`${name} ${owner}`, { archive, o });
           }
         }
         if (candidates.size !== 1) {
-          const listed = [...candidates].sort().map((c) => `  sheaf:${c.replace(' ', ':')}`).join('\n');
+          const lines = [];
+          for (const c of [...candidates.keys()].sort()) {
+            const [name, owner] = c.split(' ');
+            const { archive, o } = candidates.get(c);
+            const originator = u.owner === null || o.kind === 'owner' ? owner
+              : (await this.originator(archive, o.id, options)) ?? 'not read';
+            lines.push(`  sheaf:${name}:${owner}  originator ${originator}`);
+          }
+          const listed = lines.join('\n');
           throw new Error(`${u}: ` + (candidates.size ? 'ambiguous, the candidates are:\n' + listed
             : 'no line of that name in the archives read'));
         }
-        return [...candidates][0].split(' ');
+        return [...candidates.keys()][0].split(' ');
       }
 
       async originator(archive, id, options = {}) {
