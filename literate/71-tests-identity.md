@@ -215,15 +215,15 @@ forms; short forms, accepted only when asked; and URIs that are not.
       const J = 'tqr6lchnd2vk7ezskdc5zdxpaidpsiuduo5sqhiis3i55iautdka';
       const at = 'at=https%3A%2F%2Fmgubi.org%2Fpapers%2F';
       for (const text of [`sheaf:${N}`, `sheaf:${N}/v2`, `sheaf:${N}/v2?sha512=${D2}`, `sheaf:${N}/v2?sha512=${D2}&${at}`,
-                          `sheaf:${N}:${J}/v2`, `sheaf:${N}:*`, `sheaf:${A}`, `sheaf:${A}/v2?sha512=${KL2}`]) {
+                          `sheaf:${N}:${J}/v1`, `sheaf:${N}:*`, `sheaf:${A}`, `sheaf:${A}/v2?sha512=${KL2}`]) {
         assert.equal(String(parseSheaf(text)), text);
       }
       const u = parseSheaf(`sheaf:${N}/v2?sha512=${D2}&${at}`);
       assert.deepEqual([u.name, u.owner, u.version, u.sha512, u.at], [N, null, 2, D2, 'https://mgubi.org/papers/']);
       assert.equal(u.canonical(A), `sheaf:${N}/v2?sha512=${D2}`);
       assert.equal(parseSheaf(`sheaf:${N}:${A}/v2`).canonical(A), `sheaf:${N}/v2`);
-      assert.equal(parseSheaf(`sheaf:${N}:${J}/v2`).canonical(A), `sheaf:${N}:${J}/v2`);
-      const short = parseSheaf('sheaf:zzgdggwl:tqr6lchn/v2', { short: true });
+      assert.equal(parseSheaf(`sheaf:${N}:${J}/v1`).canonical(A), `sheaf:${N}:${J}/v1`);
+      const short = parseSheaf('sheaf:zzgdggwl:tqr6lchn/v1', { short: true });
       assert.ok(!short.isComplete() && short.matches(N, J) && !short.matches(N, A));
       assert.throws(() => parseSheaf('sheaf:zzgdggwl/v2'), /52 characters/);
       assert.equal(String(parseSheaf(`SHEAF:${N.toUpperCase()}/V2`, { fold: true })), `sheaf:${N}/v2`);
