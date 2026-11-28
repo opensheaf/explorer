@@ -91,7 +91,7 @@ and the chain, level by level. A file of the evidence is read only with
 the digest its inventory states; one that does not have it makes the
 branch point inconsistent, with the words of opensheaf-py ("the evidence
 of the branch point cannot be read: PATH does not have the digest its
-inventory states").
+inventory states"), as does one missing ("PATH is missing").
 
 The answer is the verdict and its reasons: an inconsistent branch point
 with every problem found at its level, a confirmed one with none, an
@@ -112,6 +112,9 @@ does. A cancellation is passed on.
         if (error?.kind === 'digest' && error.logical) {
           return [INCONSISTENT, [`the evidence of the branch point cannot be read: ${error.logical} does not have the digest its ` +
                                  'inventory states (section 4.1)']];
+        }
+        if (error?.kind === 'not-found' && error.logical) {
+          return [INCONSISTENT, [`the evidence of the branch point cannot be read: ${error.logical} is missing (section 4.1)`]];
         }
         return [INCONSISTENT, [`the evidence of the branch point cannot be read: ${error?.detail || error?.message || error}`]];
       }
